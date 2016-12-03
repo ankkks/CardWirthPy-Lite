@@ -115,8 +115,8 @@ def create_environment(name, dpath, skindirname, is_autoloadparty):
     _create_xml("Environment", path, d)
     return path
 
-def create_settings(setting, writeplayingdata=True, fpath="Settings.xml"):
-    """Settings.xmlを新しく作る。
+def create_settings(setting, writeplayingdata=True, fpath="Settings_Lite.xml"):
+    """Settings_Lite.xmlを新しく作る。
     _create_xmlは不使用。
     setting: Settingインスタンス。
     writeplayingdata: デバッグ状態やスキンの選択状態などを保存するか。

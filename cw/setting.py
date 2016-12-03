@@ -282,7 +282,7 @@ class Setting(object):
 
         self.skin_local = LocalSetting()
 
-        # "Settings.xml"がなかったら新しく作る
+        # "Settings_Lite.xml"がなかったら新しく作る
         self.local = LocalSetting()
 
         self.show_advancedsettings = True
@@ -430,14 +430,14 @@ class Setting(object):
             return
 
         if not loadfile:
-            if not os.path.isfile("Settings.xml"):
+            if not os.path.isfile("Settings_Lite.xml"):
                 self.write()
                 self.init_skin()
                 self.set_dealspeed(self.dealspeed, self.dealspeed_battle, self.use_battlespeed)
-                self.data = cw.data.xml2etree("Settings.xml")
+                self.data = cw.data.xml2etree("Settings_Lite.xml")
                 return
 
-            self.data = cw.data.xml2etree("Settings.xml")
+            self.data = cw.data.xml2etree("Settings_Lite.xml")
         elif os.path.isfile(loadfile):
             self.data = cw.data.xml2etree(loadfile)
         else:
