@@ -68,7 +68,7 @@ class TransferYadoDataDialog(wx.Dialog):
         self.imgidx_completestamp = self.imglist.Add(cw.wins(cw.cwpy.rsrc.debugs_noscale["EVT_GET_COMPLETESTAMP"]))
         self.imgidx_money = self.imglist.Add(cw.wins(cw.cwpy.rsrc.debugs_noscale["MONEY"]))
         self.imgidx_album = self.imglist.Add(cw.wins(cw.cwpy.rsrc.debugs_noscale["CARD"]))
-        self.imgidx_partyrecord = self.imglist.Add(cw.wins(cw.cwpy.rsrc.debugs_noscale["SELECTION"]))
+        self.imgidx_partyrecord = self.imglist.Add(cw.wins(cw.cwpy.rsrc.debugs_noscale["EVT_GET_CAST"]))
         self.imgidx_savedjpdcimage = self.imglist.Add(cw.wins(cw.cwpy.rsrc.debugs_noscale["JPDCIMAGE"]))
         self.datalist.SetImageList(self.imglist, wx.IMAGE_LIST_SMALL)
 
