@@ -36,8 +36,7 @@ class CharaInfo(wx.Dialog):
         self.csize = self.GetClientSize()
         # panel
         self.panel = wx.Panel(self, -1, size=(self.width,cw.wins(30)))
-        
-#style=wx.RAISED_BORDER
+        #style=wx.RAISED_BORDER
         # close
         self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, cw.wins((85, 24)), cw.cwpy.msgs["close"])
         # left
@@ -451,7 +450,7 @@ class TopPanel(wx.Panel):
     def __init__(self, parent, ccard, redrawfunc):
         wx.Panel.__init__(self, parent, -1, size=(parent.width, cw.wins(105)))
         self.SetDoubleBuffered(True)
-        #CW本来の背景値。暗くなりすぎるので保留
+        #CW本来の背景値。
         #将来的にはスキンオプション化出来た方が良いかも
         self.SetBackgroundColour(wx.Colour(192, 192, 192))
         self.csize = self.GetClientSize()
@@ -476,6 +475,7 @@ class TopPanel(wx.Panel):
             self.age = cw.cwpy.setting.periods[0].name
             self.ep = "0"
             self.race = cw.cwpy.setting.unknown_race
+            self.otherrace = u""
 
             for coupon in self.ccard.data.getfind("Property/Coupons"):
                 if coupon.text in ages:
@@ -489,11 +489,16 @@ class TopPanel(wx.Panel):
                         if coupon.text == u"＠Ｒ" + race.name:
                             self.race = race
                             break
+                        #別スキンの種族でも表示する
+                        else:
+                            self.otherrace = coupon.text.replace(u"＠Ｒ", "", 1)
+
         else:
             self.sex = u""
             self.age = u""
             self.ep = u""
             self.race = cw.cwpy.setting.unknown_race
+            self.otherrace = u""
 
         if update:
             dc = wx.ClientDC(self)
@@ -638,6 +643,11 @@ class TopPanel(wx.Panel):
                     dc.SetFont(cw.cwpy.rsrc.get_wxfont("charaparam2", pixelsize=cw.wins(16)))
                     w = dc.GetTextExtent(s)[0]
                     cw.util.draw_witharound_simple(dc, s, cw.wins(5), cw.wins(82), backcolor)
+                else:
+                    s = self.otherrace
+                    dc.SetFont(cw.cwpy.rsrc.get_wxfont("charaparam2", pixelsize=cw.wins(16)))
+                    cw.util.draw_witharound_simple(dc, s, cw.wins(5), cw.wins(82), backcolor)
+
             # 年代
             dc.SetFont(cw.cwpy.rsrc.get_wxfont("charaparam2", pixelsize=cw.wins(16)))
             s = self.age + self.sex

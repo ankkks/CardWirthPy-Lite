@@ -10,7 +10,7 @@ Data/Debugger にあるPy独自機能の画像ファイル
 それ以外はgroupASKの著作物です。(後述)
 
 Data/SkinBase 以下にあるすべての画像及び音声ファイル
-SUMMARY、DIRECTORYのみgroupASKの著作物です。(後述)
+SUMMARY、DIRECTORY、SUMMARY_INVISIBLEのみgroupASKの著作物です。(後述)
 > : CWXEditorからの流用か、CardWirthPy用に作成されたものです。
 > : "Sound/System_ScreenShot.wav"は、CardWirth 1.50のパッケージに含まれるPublic Domainのファイル"システム・スクリーンショット.wav"を流用したものです。
 > : License: Public Domain
