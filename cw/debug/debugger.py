@@ -1677,8 +1677,8 @@ class VariableListCtrl(wx.ListCtrl):
             wx.LC_SORT_ASCENDING|wx.LC_VIRTUAL)
         self.list = []
         self.imglist = wx.ImageList(cw.ppis(16), cw.ppis(16))
-        self.imgidx_flag = self.imglist.Add(cw.cwpy.rsrc.debugs["FLAG"])
-        self.imgidx_step = self.imglist.Add(cw.cwpy.rsrc.debugs["STEP"])
+        self.imgidx_flag = self.imglist.Add(cw.cwpy.rsrc.debugs["EVT_SET_FLAG"])
+        self.imgidx_step = self.imglist.Add(cw.cwpy.rsrc.debugs["EVT_BRANCH_STEPVALUE"])
         self.SetImageList(self.imglist, wx.IMAGE_LIST_SMALL)
         self.InsertColumn(0, u"名称")
         self.InsertColumn(1, u"現在値")

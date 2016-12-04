@@ -2184,13 +2184,9 @@ CWXEDITOR_RESOURCES = {
     "BATTLE": "battle.png",
     "CARD": "cards.png",
     "COMPSTAMP": "end.png",
-    "COUPON": "coupon_high.png",
-    "COUPON_MINUS": "coupon_minus.png",
-    "COUPON_PLUS": "coupon_plus.png",
-    "COUPON_ZERO": "coupon_n.png",
+    "COUPON": "coupon_plus.png",
     "EDITOR": "cwxeditor.png",
     "EVENT": "event_tree.png",
-    "FLAG": "flag.png",
     "FRIEND": "cast.png",
     "GOSSIP": "gossip.png",
     "IGNITION": "def_start.png",
@@ -2205,9 +2201,7 @@ CWXEDITOR_RESOURCES = {
     "ROUND": "round.png",
     "SAVE": "save.png",
     "SELECTION": "sc_m.png",
-    "STEP": "step.png",
     "UPDATE": "refresh.png",
-    "YADO": "sc_y.png",
 
     # Terminal
     "EVT_START": "evt_start.png",  # スタート

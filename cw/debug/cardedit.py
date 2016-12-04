@@ -103,7 +103,7 @@ class CardEditDialog(wx.Dialog):
         self.timgidx_storehouse = self.timglist.Add(cw.cwpy.rsrc.buttons["DECK_dbg"])
         self.timgidx_backpack = self.timglist.Add(cw.cwpy.rsrc.buttons["SACK_dbg"])
         self.timgidx_party = self.timglist.Add(cw.cwpy.rsrc.debugs["MEMBER_dbg"])
-        self.timgidx_yado = self.timglist.Add(cw.cwpy.rsrc.debugs["YADO_dbg"])
+        self.timgidx_yado = self.timglist.Add(cw.cwpy.rsrc.debugs["EVT_GET_GOSSIP_dbg"])
         self.timgidx_member = self.timglist.Add(cw.cwpy.rsrc.buttons["CAST_dbg"])
         self.timgidx_skill = self.timglist.Add(cw.cwpy.rsrc.debugs["EVT_GET_SKILL_dbg"])
         self.timgidx_item = self.timglist.Add(cw.cwpy.rsrc.debugs["EVT_GET_ITEM_dbg"])

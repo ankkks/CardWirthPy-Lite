@@ -60,7 +60,7 @@ class TransferYadoDataDialog(wx.Dialog):
             self.imglist.Add(cw.wins(cw.cwpy.rsrc.debugs_noscale["CHECK"]))
         self.imgidx_bookmark = self.imglist.Add(cw.cwpy.rsrc.dialogs["BOOKMARK"])
         self.imgidx_party = self.imglist.Add(cw.wins(cw.cwpy.rsrc.debugs_noscale["MEMBER"]))
-        self.imgidx_standby = self.imglist.Add(cw.wins(cw.cwpy.rsrc.debugs_noscale["EVT_GET_CAST"]))
+        self.imgidx_standby = self.imglist.Add(cw.wins(cw.cwpy.rsrc.debugs_noscale["FRIEND"]))
         self.imgidx_skill = self.imglist.Add(cw.wins(cw.cwpy.rsrc.debugs_noscale["EVT_GET_SKILL"]))
         self.imgidx_item = self.imglist.Add(cw.wins(cw.cwpy.rsrc.debugs_noscale["EVT_GET_ITEM"]))
         self.imgidx_beast = self.imglist.Add(cw.wins(cw.cwpy.rsrc.debugs_noscale["EVT_GET_BEAST"]))
