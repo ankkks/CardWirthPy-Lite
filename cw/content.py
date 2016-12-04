@@ -832,13 +832,8 @@ class BranchStatusContent(BranchContent):
                         selectedmember = target
                         break
 
-        # 選択設定
+        # 選択設定1
         if not targetm == "Selected":
-            if self.targetm == "Party" and not self.someone and flag:
-                # CWでは称号所持分岐と能力判定分岐で
-                #      「パーティ全員」判定が成功すると選択メンバがいなくなる
-                selectedmember = None
-
             if selectedmember:
                 cw.cwpy.event.set_selectedmember(selectedmember)
 
@@ -1018,7 +1013,7 @@ class BranchCouponContent(BranchContent):
                     selectedmember = target
                     break
 
-        # 選択設定
+        # 選択設定2
         if scope <> "Selected":
             if scope == "Party" and not someone and flag:
                 # CardWirthでは称号所持分岐と能力判定分岐で
@@ -1364,8 +1359,13 @@ class BranchAbilityContent(BranchContent):
                 selectedmember = target
                 break
 
-        # 選択設定
+        # 選択設定3
         if not targetm == "Selected":
+            if self.targetm == "Party" and not self.someone and flag:
+                # CWでは称号所持分岐と能力判定分岐で
+                #      「パーティ全員」判定が成功すると選択メンバがいなくなる
+                selectedmember = None
+            
             if selectedmember:
                 cw.cwpy.event.set_selectedmember(selectedmember)
             else:
