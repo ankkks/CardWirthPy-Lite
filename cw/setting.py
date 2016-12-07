@@ -1227,8 +1227,8 @@ class Resource(object):
         if not os.path.isfile(path):
             path = cw.util.join_paths(fontdir, "gothic.ttf")
 
-                #if not os.path.isfile(path):
-                #    raise NoFontError(fname + " not found.")
+            if not os.path.isfile(path):
+                raise NoFontError("gothic.ttf" + " not found.")
 
         d[os.path.splitext("gothic.ttf")[0]] = path
 

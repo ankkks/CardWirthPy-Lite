@@ -70,9 +70,9 @@ class BuildExe(object):
 
         #Extra files/dirs copied to game
         self.extra_datas = ["Data/SoundFont", "Data/SkinBase", "Data/Debugger",
-            "Data/Compatibility.xml", "Data/SystemCoupons.xml", "Data/SearchEngines.xml",
+            "Data/Compatibility.xml", "Data/SystemCoupons.xml", "Data/SearchEngines.xml", "Data/gothic.ttf",
             "License.txt", "msvcr90.dll", "msvcp90.dll", "gdiplus.dll",
-            "bass.dll", "bass_fx.dll", "bassmidi.dll",
+            "bass.dll", "bass_fx.dll", "bassmidi.dll", 
             "Microsoft.VC90.CRT.manifest", "ReadMe.txt", self.srcfile_name]
 
         #Extra/excludes python modules
