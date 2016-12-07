@@ -1216,7 +1216,7 @@ class Resource(object):
         """
         フォントパス(辞書)
         """
-        fontdir = "Data/SkinBase/Font"
+        fontdir = "Data/"
         fontdir_skin = cw.util.join_paths(self.skindir, "Resource/Font")
 
         d = {}
@@ -1559,7 +1559,7 @@ class Resource(object):
             bottomright.fill(color, special_flags=pygame.locals.BLEND_RGBA_SUB)
 
         bmp = pygame.Surface((w, h)).convert_alpha()
-
+        """グラデーション解除
         if flags & SB_DISABLE:
             r1 = g1 = b1 = 240
             bmp.fill((r1, g1, b1))
@@ -1578,11 +1578,16 @@ class Resource(object):
             else:
                 r1 = g1 = b1 = 255
                 r2 = g2 = b2 = 232
+            
             mid = h / 2
             for y in xrange(0, mid+1, 1):
                 bmp.fill((r1-y/4, g1-y/4, b1-y/4), pygame.Rect(0, mid-y, w, 1))
                 bmp.fill((r2-y, g2-y, b2-y), pygame.Rect(0, mid+y, w, 1))
+            """
+        r1 = g1 = b1 = 240
+        bmp.fill((r1, g1, b1))
 
+        
         # 枠の部分。四隅には角丸の画像を描写する
         if flags & SB_PRESSED:
             # 押下済みの画像であれば上と左の縁を暗くする

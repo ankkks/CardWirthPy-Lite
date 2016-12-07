@@ -307,7 +307,7 @@ class CWPy(_Singleton, threading.Thread):
 
     def _init_resources(self):
         """スキンが関わるリソースの初期化"""
-        self.init_fullscreenparams()
+        """self.init_fullscreenparams()
 
         # リソース(辞書)
         if self.rsrc:
@@ -344,9 +344,9 @@ class CWPy(_Singleton, threading.Thread):
 
         self.update_fullscreenbackground()
 
-        return True
+        return True"""
         
-        """try:
+        try:
             self.init_fullscreenparams()
 
             # リソース(辞書)
@@ -388,11 +388,11 @@ class CWPy(_Singleton, threading.Thread):
         except cw.setting.NoFontError:
             def func():
                 s = (u"CardWirthPyの実行に必要なフォントがありません。\n"
-                     u"Data/Skinbase/Font以下にIPAフォントをインストールしてください。")
+                     u"Data/以下にIPAフォントをインストールしてください。")
                 wx.MessageBox(s, u"メッセージ", wx.OK|wx.ICON_ERROR, cw.cwpy.frame)
                 cw.cwpy.frame.Destroy()
             cw.cwpy.frame.exec_func(func)
-            return False"""
+            return False
 
 
     def init_sounds(self):

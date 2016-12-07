@@ -42,7 +42,13 @@ class StatusBar(base.CWPySprite):
 
     def _init_image(self):
         self.image = pygame.Surface(cw.s((632, 33))).convert()
+        #ステータスバー スケーリング時
         subimg = cw.cwpy.rsrc.get_statusbtnbmp(2, 0)
+        #bmp = pygame.Surface((2, 0)).convert_alpha()
+        #r1 = g1 = b1 = 240
+        #bmp.fill((r1, g1, b1))
+        #subimg = bmp
+        
         if not self.showbuttons and self._statusbarmask:
             subimg.fill((64, 64, 64), special_flags=pygame.locals.BLEND_RGB_SUB)
         self.image.fill((240, 240, 240))
