@@ -6,7 +6,6 @@ import sys
 import itertools
 import wx
 import wx.grid
-import wx.lib.foldpanelbar
 import pygame
 
 import cw
@@ -19,7 +18,6 @@ try:
     import versioninfo
 except ImportError:
     versioninfo = None
-
 
 def _settings_width():
     return cw.ppis(250)
@@ -116,6 +114,7 @@ class SettingsDialog(wx.Dialog):
         cw.cwpy.frame.filter_event = None
         self.panel.close()
         self.Destroy()
+        #ここで数秒応答不能になる(12.3でも確認)
 
     def show_details(self):
         simple = self.panel
@@ -190,7 +189,7 @@ class SimpleSettingsPanel(wx.Panel):
 
     def OnOk(self, event):
         self.apply()
-
+        
         # FIXME: クローズしながらスキンを切り替えると時々エラーになる
         #        原因不明の不具合があるので、ダイアログのクローズを遅延する
         def func(self):
@@ -312,7 +311,7 @@ class SettingsPanel(wx.Panel):
         self.note.AddPage(self.pane_sound, u"音声")
         self.note.AddPage(self.pane_font, u"フォント")
         self.note.AddPage(self.pane_scenario, u"シナリオ")
-        self.note.AddPage(self.pane_ui, u"詳細")
+        self.note.AddPage(self.pane_ui, u"その他")
         self.pane_gene.skin.pane_scenario = self.pane_scenario
 
         create_versioninfo(self)
@@ -771,6 +770,7 @@ class SettingsPanel(wx.Panel):
 
     def OnClose(self, event):
         self.Parent.Close()
+        #重い
 
     def close(self):
         cw.cwpy.settingtab = self.note.GetSelection()
@@ -2370,186 +2370,113 @@ class ScenarioSettingPanel(wx.Panel):
         dlg.ShowModal()
         dlg.Destroy()
 
-class UISettingPanel(wx.ScrolledWindow):
+class UISettingPanel(wx.Panel):
     def __init__(self, parent):
-        wx.ScrolledWindow.__init__(self, parent)
-        if 3 <= wx.VERSION[0]:
-            self.ShowScrollbars(wx.SHOW_SB_NEVER, wx.SHOW_SB_ALWAYS)
-        self.SetScrollbars(1, 1, 1, 1)
-        self.SetScrollRate(1, cw.ppis(15))
-        self.SetScrollPageSize(1, cw.ppis(250))
-
-        self.panel = wx.lib.foldpanelbar.FoldPanelBar(self, -1,
-                                                      agwStyle=wx.lib.foldpanelbar.FPB_VERTICAL)
+        wx.Panel.__init__(self, parent)
+        #self.SetScrollbars(1, 10, 1, 1)
+        #self.SetScrollRate(1, cw.ppis(15))
+        #self.SetScrollPageSize(1, cw.ppis(250))
 
         # 空白時間オプション
-        panel = self.panel.AddFoldPanel(caption=u"スキップと空白時間")
+        self.box_wait = wx.StaticBox(self, -1, u"スキップと空白時間")
         self.cb_can_skipwait = wx.CheckBox(
-            panel, -1, u"空白時間をスキップ可能にする")
-        panel.AddWindow(self.cb_can_skipwait, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"空白時間をスキップ可能にする")
         self.cb_can_skipanimation = wx.CheckBox(
-            panel, -1, u"アニメーションをスキップ可能にする")
-        panel.AddWindow(self.cb_can_skipanimation, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"アニメーションをスキップ可能にする")
         self.cb_can_skipwait_with_wheel = wx.CheckBox(
-            panel, -1, u"マウスのホイールで空白時間とアニメーションをスキップする")
-        panel.AddWindow(self.cb_can_skipwait_with_wheel, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"マウスホイールで空白時間とアニメーションをスキップ")
         self.cb_can_forwardmessage_with_wheel = wx.CheckBox(
-            panel, -1, u"マウスのホイールでメッセージ送りを行う")
-        panel.AddWindow(self.cb_can_forwardmessage_with_wheel, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"マウスホイールでメッセージ送りを行う")
         self.cb_wait_usecard = wx.CheckBox(
-            panel, -1, u"カードの使用前に空白時間を入れる")
-        panel.AddWindow(self.cb_wait_usecard, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"カードの使用前に空白時間を入れる")
         self.cb_can_repeatlclick = wx.CheckBox(
-            panel, -1, u"マウスの左ボタンを押し続けた時は連打状態にする")
-        panel.AddWindow(self.cb_can_repeatlclick, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"マウスの左ボタンを押し続けた時は連打状態にする")
         self.cb_autoenter_on_sprite = wx.CheckBox(
-            panel, -1, u"連打状態の時、カードなどの選択を自動的に決定する")
-        panel.AddWindow(self.cb_autoenter_on_sprite, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
-        spacer = wx.Panel(panel, -1, size=(-1, cw.ppis(0)))
-        panel.AddWindow(spacer, spacing=cw.ppis(3))
+            self, -1, u"連打状態の時、カードなどの選択を自動的に決定する")
 
         # 描画オプション
-        panel = self.panel.AddFoldPanel(caption=u"カード")
+        self.box_draw = wx.StaticBox(self, -1, u"カード")
         self.cb_quickdeal = wx.CheckBox(
-            panel, -1, u"キャンプモードへ高速で切り替える")
-        panel.AddWindow(self.cb_quickdeal, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"キャンプモードへ高速で切り替える")
         self.cb_allquickdeal = wx.CheckBox(
-            panel, -1, u"全てのシステムカードを高速表示する")
-        panel.AddWindow(self.cb_allquickdeal, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"全てのシステムカードを高速表示する")
         self.cb_showallselectedcards = wx.CheckBox(
-            panel, -1, u"戦闘行動を全員分表示する")
-        panel.AddWindow(self.cb_showallselectedcards, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"戦闘行動を全員分表示する")
         self.cb_showstatustime = wx.CheckBox(
-            panel, -1, u"状態の残り時間をカード上に表示する")
-        panel.AddWindow(self.cb_showstatustime, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"状態の残り時間をカード上に表示する")
         self.cb_show_cardkind = wx.CheckBox(
-            panel, -1, u"カード置場と荷物袋でカードの種類を表示する")
-        panel.AddWindow(self.cb_show_cardkind, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"カード置場と荷物袋でカードの種類を表示する")
         self.cb_show_premiumicon = wx.CheckBox(
-            panel, -1, u"カードの希少度をアイコンで表示する")
-        panel.AddWindow(self.cb_show_premiumicon, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
-        spacer = wx.Panel(panel, -1, size=(-1, cw.ppis(0)))
-        panel.AddWindow(spacer, spacing=cw.ppis(3))
+            self, -1, u"カードの希少度をアイコンで表示する")
 
         # インタフェースオプション
-        panel = self.panel.AddFoldPanel(caption=u"操作")
+        self.box_gene = wx.StaticBox(self, -1, u"操作")
+        self.cb_show_advancedsettings = wx.CheckBox(
+            self, -1, u"最初から詳細モードで設定を行う")
+        self.cb_show_addctrlbtn = wx.CheckBox(
+            self, -1, u"絞り込み等の表示切替ボタンを表示(Ctrl+F)")
+        self.cb_show_addctrlbtn.SetToolTipString( u"非表示にしてもCtrl+Fは有効" )
         self.cb_showbackpackcard = wx.CheckBox(
-            panel, -1, u"荷物袋のカードを一時的に取り出して使えるようにする")
-        panel.AddWindow(self.cb_showbackpackcard, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"荷物袋のカードを一時的に取り出して使えるようにする")
         self.cb_showbackpackcardatend = wx.CheckBox(
-            panel, -1, u"荷物袋カードを最後に配置する")
-        panel.AddWindow(self.cb_showbackpackcardatend, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"荷物袋カードを最後に配置する")
         self.cb_can_clicksidesofcardcontrol = wx.CheckBox(
-            panel, -1, u"カード選択ダイアログの背景クリックで左右移動を行う")
-        panel.AddWindow(self.cb_can_clicksidesofcardcontrol, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"カード選択ダイアログの背景クリックで左右移動を行う")
         self.cb_revertcardpocket = wx.CheckBox(
-            panel, -1, u"レベル調節で手放したカードを自動的に戻す")
-        panel.AddWindow(self.cb_revertcardpocket, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"レベル調節で手放したカードを自動的に戻す")
         self.cb_showlogwithwheelup = wx.CheckBox(
-            panel, -1, u"マウスホイールを上に回すとログを表示")
-        panel.AddWindow(self.cb_showlogwithwheelup, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"マウスホイールを上に回すとログを表示")
         self.cb_showroundautostartbutton = wx.CheckBox(
-            panel, -1, u"バトルで自動的に行動を開始できるようにする")
-        panel.AddWindow(self.cb_showroundautostartbutton, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"バトルで自動的に行動を開始できるようにする")
         self.cb_showautobuttoninentrydialog = wx.CheckBox(
-            panel, -1, u"新規登録ダイアログに自動ボタンを表示する")
-        panel.AddWindow(self.cb_showautobuttoninentrydialog, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"新規登録ダイアログに自動ボタンを表示する")
         self.cb_protect_staredcard = wx.CheckBox(
-            panel, -1, u"スターつきのカードの売却や破棄を禁止する")
-        panel.AddWindow(self.cb_protect_staredcard, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"スターつきのカードの売却や破棄を禁止する")
         self.cb_protect_premiercard = wx.CheckBox(
-            panel, -1, u"プレミアカードの売却や破棄を禁止する")
-        panel.AddWindow(self.cb_protect_premiercard, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
-        spacer = wx.Panel(panel, -1, size=(-1, cw.ppis(0)))
-        panel.AddWindow(spacer, spacing=cw.ppis(3))
+            self, -1, u"プレミアカードの売却や破棄を禁止する")
 
         # 通知オプション
-        panel = self.panel.AddFoldPanel(caption=u"通知と解説")
+        self.box_notice = wx.StaticBox(self, -1, u"通知と解説")
         # ステータスバーのボタンの解説を表示する
         self.cb_show_btndesc = wx.CheckBox(
-            panel, -1, u"ステータスバーのボタンの解説を表示する")
-        panel.AddWindow(self.cb_show_btndesc, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"ステータスバーのボタンの解説を表示する")
         # イベント中にステータスバーの色を変える
         self.cb_statusbarmask = wx.CheckBox(
-            panel, -1, u"イベント中にステータスバーの色を変える")
-        panel.AddWindow(self.cb_statusbarmask, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"イベント中にステータスバーの色を変える")
         # 通知のあるステータスボタンを点滅させる
         self.cb_blink_statusbutton = wx.CheckBox(
-            panel, -1, u"通知のあるステータスボタンを点滅させる")
-        panel.AddWindow(self.cb_blink_statusbutton, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"通知のあるステータスボタンを点滅させる")
         # 所持金が増減した時に所持金欄を点滅させる
         self.cb_blink_partymoney = wx.CheckBox(
-            panel, -1, u"所持金が増減した時に所持金欄を点滅させる")
-        panel.AddWindow(self.cb_blink_partymoney, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
-        spacer = wx.Panel(panel, -1, size=(-1, cw.ppis(0)))
-        panel.AddWindow(spacer, spacing=cw.ppis(3))
+            self, -1, u"所持金が増減した時に所持金欄を点滅させる")
 
         # セーブとロードオプション
-        panel = self.panel.AddFoldPanel(caption=u"セーブとロード")
-        panel_confirm = wx.Panel(panel, -1)
-        self.st_confirm_beforesaving = wx.StaticText(panel_confirm, -1,
-                                                     u"セーブ前の確認ダイアログ:")
-        choices = [u"常に表示", u"拠点にいる時だけ表示", u"表示しない"]
-        self.ch_confirm_beforesaving = wx.Choice(panel_confirm, -1, choices=choices)
-        bsizer_confirm_beforesaving = wx.BoxSizer(wx.HORIZONTAL)
-        bsizer_confirm_beforesaving.Add(self.st_confirm_beforesaving, 0, wx.ALIGN_CENTER|wx.RIGHT, cw.ppis(3))
-        bsizer_confirm_beforesaving.Add(self.ch_confirm_beforesaving, 0, wx.ALIGN_CENTER, cw.ppis(0))
-        panel_confirm.SetSizer(bsizer_confirm_beforesaving)
-        panel_confirm.SetSize(bsizer_confirm_beforesaving.CalcMin())
-        panel.AddWindow(panel_confirm, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
-        self.cb_showsavedmessage = wx.CheckBox(
-            panel, -1, u"セーブ完了時に確認ダイアログを表示")
-        panel.AddWindow(self.cb_showsavedmessage, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
-        self.cb_cautionbeforesaving = wx.CheckBox(
-            panel, -1, u"保存せずに終了しようとしたら警告する")
-        panel.AddWindow(self.cb_cautionbeforesaving, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
-        self.cb_store_skinoneachbase = wx.CheckBox(
-            panel, -1, u"拠点ごとにスキンを記憶する")
-        panel.AddWindow(self.cb_store_skinoneachbase, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
-        spacer = wx.Panel(panel, -1, size=(-1, cw.ppis(0)))
-        panel.AddWindow(spacer, spacing=cw.ppis(3))
+        # self.box_saveandload = wx.StaticBox(self, -1, u"セーブとロード")
+
 
         # ダイアログオプション
-        panel = self.panel.AddFoldPanel(caption=u"ダイアログ")
-        self.cb_show_advancedsettings = wx.CheckBox(
-            panel, -1, u"最初から詳細モードで設定を行う")
-        panel.AddWindow(self.cb_show_advancedsettings, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
-        self.cb_show_addctrlbtn = wx.CheckBox(
-            panel, -1, u"絞り込み等の表示切替ボタンを表示する(非表示時はCtrl+Fで切替可能)")
-        panel.AddWindow(self.cb_show_addctrlbtn, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+        self.box_dlg = wx.StaticBox(self, -1, u"ダイアログ")
+
+        self.st_confirm_beforesaving = wx.StaticText(self, -1,
+                                                     u"セーブ前の確認ダイアログ:")
+        choices = [u"常に表示", u"拠点にいる時だけ表示", u"表示しない"]
+        self.ch_confirm_beforesaving = wx.Choice(self, -1, choices=choices)
+        self.cb_showsavedmessage = wx.CheckBox(
+            self, -1, u"セーブ完了時に確認ダイアログを表示")
+        self.cb_cautionbeforesaving = wx.CheckBox(
+            self, -1, u"保存せずに終了しようとしたら警告する")
+        self.cb_store_skinoneachbase = wx.CheckBox(
+            self, -1, u"拠点ごとにスキンを記憶する")
         self.cb_show_experiencebar = wx.CheckBox(
-            panel, -1, u"キャラクター情報に次のレベルアップまでの割合を表示する")
-        panel.AddWindow(self.cb_show_experiencebar, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"キャラクター情報に次のレベルアップまでの割合を表示")
         self.cb_confirmbeforeusingcard = wx.CheckBox(
-            panel, -1, u"カード使用時に確認ダイアログを表示")
-        panel.AddWindow(self.cb_confirmbeforeusingcard, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
+            self, -1, u"カード使用時に確認ダイアログを表示")
         self.cb_noticeimpossibleaction = wx.CheckBox(
-            panel, -1, u"不可能な行動を選択した時に警告を表示")
-        panel.AddWindow(self.cb_noticeimpossibleaction, spacing=cw.ppis(3), leftSpacing=cw.ppis(10))
-        spacer = wx.Panel(panel, -1, size=(-1, cw.ppis(0)))
-        panel.AddWindow(spacer, spacing=cw.ppis(3))
+            self, -1, u"不可能な行動を選択した時に警告を表示")
+        self.cb_noticeimpossibleaction.SetToolTipString( u"Capを超えてカードを配ろうとした場合等" )
 
         self._do_layout()
         self._bind()
-
-        cbstyle = wx.lib.foldpanelbar.CaptionBarStyle()
-        cbstyle.SetCaptionStyle(wx.lib.foldpanelbar.CAPTIONBAR_GRADIENT_H)
-        self.panel.ApplyCaptionStyleAll(cbstyle)
-        self._calc_scrollsize()
-
-    def _calc_scrollsize(self):
-        h = 0
-        for item in xrange(self.panel.GetCount()):
-            panel = self.panel.GetFoldPanel(item)
-            h += panel.GetSize()[1]
-        self.panel.SetMinSize((-1, h))
-        if wx.VERSION[0] < 3:
-            self.panel.SetSize((self.GetClientSize()[0], h))
-            def func():
-                self.panel.FitInside()
-                self.panel.SetMinSize((self.GetClientSize()[0], h))
-                self.panel.SetSize((self.GetClientSize()[0], h))
-            wx.CallAfter(func)
 
     def load(self, setting):
         self.cb_can_skipwait.SetValue(setting.can_skipwait)
@@ -2653,22 +2580,79 @@ class UISettingPanel(wx.ScrolledWindow):
         if self.cb_allquickdeal.GetValue():
             self.cb_quickdeal.SetValue(True)
 
-    def OnCaptionBar(self, event):
-        def func():
-            self._calc_scrollsize()
-            self.FitInside()
-        cw.cwpy.frame.exec_func(func)
-        event.Skip()
-
     def _bind(self):
         self.Bind(wx.EVT_CHECKBOX, self.OnQuickDeal, self.cb_quickdeal)
         self.Bind(wx.EVT_CHECKBOX, self.OnAllQuickDeal, self.cb_allquickdeal)
-        self.panel.Bind(wx.lib.foldpanelbar.EVT_CAPTIONBAR, self.OnCaptionBar)
 
     def _do_layout(self):
-        sizer = wx.BoxSizer(wx.VERTICAL)
+        #sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer = wx.GridSizer( 0, 2, 0, 0 )
+        #sizer_v1 = wx.BoxSizer(wx.VERTICAL)
+        sizer_v1 = wx.BoxSizer(wx.VERTICAL)
+        sizer_v2 = wx.BoxSizer(wx.VERTICAL)
+        bsizer_wait = wx.StaticBoxSizer(self.box_wait, wx.VERTICAL)
+        bsizer_draw = wx.StaticBoxSizer(self.box_draw, wx.VERTICAL)
+        bsizer_gene = wx.StaticBoxSizer(self.box_gene, wx.VERTICAL)
+        bsizer_notice = wx.StaticBoxSizer(self.box_notice, wx.VERTICAL)
+        #bsizer_saveandload = wx.StaticBoxSizer(self.box_saveandload, wx.VERTICAL)
+        bsizer_dlg = wx.StaticBoxSizer(self.box_dlg, wx.VERTICAL)
 
-        sizer.Add(self.panel, 1, wx.ALL|wx.EXPAND, cw.ppis(0))
+        bsizer_wait.Add(self.cb_can_skipwait, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_wait.Add(self.cb_can_skipanimation, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_wait.Add(self.cb_can_skipwait_with_wheel, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_wait.Add(self.cb_can_forwardmessage_with_wheel, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_wait.Add(self.cb_wait_usecard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_wait.Add(self.cb_can_repeatlclick, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_wait.Add(self.cb_autoenter_on_sprite, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_wait.SetMinSize((_settings_width(), -1))
+
+        bsizer_draw.Add(self.cb_quickdeal, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_draw.Add(self.cb_allquickdeal, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_draw.Add(self.cb_showallselectedcards, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_draw.Add(self.cb_showstatustime, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_draw.Add(self.cb_show_cardkind, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_draw.Add(self.cb_show_premiumicon, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_draw.SetMinSize((_settings_width(), -1))
+
+        bsizer_gene.Add(self.cb_show_advancedsettings, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_gene.Add(self.cb_show_addctrlbtn, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_gene.Add(self.cb_showbackpackcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_gene.Add(self.cb_showbackpackcardatend, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_gene.Add(self.cb_can_clicksidesofcardcontrol, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_gene.Add(self.cb_revertcardpocket, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_gene.Add(self.cb_showlogwithwheelup, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_gene.Add(self.cb_showroundautostartbutton, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_gene.Add(self.cb_showautobuttoninentrydialog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_gene.Add(self.cb_protect_staredcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_gene.Add(self.cb_protect_premiercard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_gene.SetMinSize((_settings_width(), -1))
+
+        bsizer_notice.Add(self.cb_show_btndesc, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_notice.Add(self.cb_statusbarmask, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_notice.Add(self.cb_blink_statusbutton, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_notice.Add(self.cb_blink_partymoney, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+
+        bsizer_confirm_beforesaving = wx.BoxSizer(wx.HORIZONTAL)
+        bsizer_confirm_beforesaving.Add(self.st_confirm_beforesaving, 0, wx.ALIGN_CENTER|wx.RIGHT, 3)
+        bsizer_confirm_beforesaving.Add(self.ch_confirm_beforesaving, 0, wx.ALIGN_CENTER, 0)
+
+        bsizer_dlg.Add(self.cb_show_experiencebar, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_dlg.Add(self.cb_confirmbeforeusingcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_dlg.Add(self.cb_noticeimpossibleaction, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_dlg.Add(bsizer_confirm_beforesaving, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_dlg.Add(self.cb_showsavedmessage, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_dlg.Add(self.cb_cautionbeforesaving, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_dlg.Add(self.cb_store_skinoneachbase, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_dlg.SetMinSize((_settings_width(), -1))
+
+        sizer_v1.Add(bsizer_wait, 0, wx.BOTTOM|wx.EXPAND, 5)
+        sizer_v1.Add(bsizer_draw, 0, wx.BOTTOM|wx.EXPAND, 5)
+        sizer_v2.Add(bsizer_gene, 0, wx.BOTTOM|wx.EXPAND, 5)
+        sizer_v1.Add(bsizer_notice, 0, wx.BOTTOM|wx.EXPAND, 5)
+        #sizer_v2.Add(bsizer_saveandload, 0, wx.BOTTOM|wx.EXPAND, 5)
+        sizer_v2.Add(bsizer_dlg, 0, wx.EXPAND, 0)
+        sizer.Add(sizer_v1, 1, wx.ALL|wx.EXPAND, 2)
+        sizer.Add(sizer_v2, 1, wx.ALL|wx.EXPAND, 2)  
 
         self.SetSizer(sizer)
         sizer.Fit(self)

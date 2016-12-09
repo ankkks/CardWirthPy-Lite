@@ -349,7 +349,7 @@ class Setting(object):
         self.noticeimpossibleaction = True
         self.initmoneyamount = basedata.getint("Property/InitialCash", 4000)
         self.initmoneyisinitialcash = True
-        self.autosave_partyrecord = True
+        self.autosave_partyrecord = False
         self.overwrite_partyrecord = True
         self.folderoftype = []
         self.scenario_narrow = ""
