@@ -308,7 +308,7 @@ class SettingsPanel(wx.Panel):
         self.pane_ui = UISettingPanel(self.note)
         self.note.AddPage(self.pane_gene, u"一般")
         self.note.AddPage(self.pane_draw, u"描画")
-        self.note.AddPage(self.pane_sound, u"音声")
+        self.note.AddPage(self.pane_sound, u"音響")
         self.note.AddPage(self.pane_font, u"フォント")
         self.note.AddPage(self.pane_scenario, u"シナリオ")
         self.note.AddPage(self.pane_ui, u"その他")
@@ -694,8 +694,8 @@ class SettingsPanel(wx.Panel):
         setting.show_experiencebar = value
         value = self.pane_ui.cb_cautionbeforesaving.GetValue()
         setting.caution_beforesaving = value
-        value = self.pane_ui.cb_store_skinoneachbase.GetValue()
-        setting.store_skinoneachbase = value
+        #value = self.pane_ui.cb_store_skinoneachbase.GetValue()
+        #setting.store_skinoneachbase = value
         value = self.pane_ui.cb_showbackpackcard.GetValue()
         setting.show_backpackcard = value
         value = self.pane_ui.cb_showbackpackcardatend.GetValue()
@@ -1205,18 +1205,15 @@ class GeneralSettingPanel(wx.Panel):
 
         ssdic = [
             (u"application", u"アプリケーション名"),
-            (u"version", u"バージョン情報"),
-            None,
+            (u"version", u"バージョン情報"),None,
             (u"skin", u"スキン名"),
             (u"yado", u"拠点名"),
-            (u"party", u"パーティ名"),
-            None,
+            (u"party", u"パーティ名"),None,
             (u"scenario", u"シナリオ名"),
             (u"author", u"作者名"),
             (u"path", u"シナリオのファイルパス"),
             (u"file", u"シナリオのファイル名"),
-            (u"compatibility", u"互換モード"),
-            None,
+            (u"compatibility", u"互換モード"),None,
             (u"date", u"日付"),
             (u"time", u"時刻"),
             (u"year", u"年"),
@@ -2389,6 +2386,7 @@ class UISettingPanel(wx.Panel):
             self, -1, u"マウスホイールでメッセージ送りを行う")
         self.cb_wait_usecard = wx.CheckBox(
             self, -1, u"カードの使用前に空白時間を入れる")
+        self.cb_wait_usecard.SetToolTipString( u"戦闘中の描画速度にも影響します" )
         self.cb_can_repeatlclick = wx.CheckBox(
             self, -1, u"マウスの左ボタンを押し続けた時は連打状態にする")
         self.cb_autoenter_on_sprite = wx.CheckBox(
@@ -2414,10 +2412,10 @@ class UISettingPanel(wx.Panel):
         self.cb_show_advancedsettings = wx.CheckBox(
             self, -1, u"最初から詳細モードで設定を行う")
         self.cb_show_addctrlbtn = wx.CheckBox(
-            self, -1, u"絞り込み等の表示切替ボタンを表示(Ctrl+F)")
+            self, -1, u"各ダイアログで検索モード切替ボタンを表示(Ctrl+F)")
         self.cb_show_addctrlbtn.SetToolTipString( u"非表示にしてもCtrl+Fは有効" )
         self.cb_showbackpackcard = wx.CheckBox(
-            self, -1, u"荷物袋のカードを一時的に取り出して使えるようにする")
+            self, -1, u"荷物袋のカードを一時的に取り出して使用する")
         self.cb_showbackpackcardatend = wx.CheckBox(
             self, -1, u"荷物袋カードを最後に配置する")
         self.cb_can_clicksidesofcardcontrol = wx.CheckBox(
@@ -2427,11 +2425,11 @@ class UISettingPanel(wx.Panel):
         self.cb_showlogwithwheelup = wx.CheckBox(
             self, -1, u"マウスホイールを上に回すとログを表示")
         self.cb_showroundautostartbutton = wx.CheckBox(
-            self, -1, u"バトルで自動的に行動を開始できるようにする")
+            self, -1, u"バトル中自動で行動開始するボタンを表示(F7)")
         self.cb_showautobuttoninentrydialog = wx.CheckBox(
-            self, -1, u"新規登録ダイアログに自動ボタンを表示する")
+            self, -1, u"キャラクターの新規登録で自動ボタンを表示")
         self.cb_protect_staredcard = wx.CheckBox(
-            self, -1, u"スターつきのカードの売却や破棄を禁止する")
+            self, -1, u"スター付きのカードの売却や破棄を禁止する")
         self.cb_protect_premiercard = wx.CheckBox(
             self, -1, u"プレミアカードの売却や破棄を禁止する")
 
@@ -2465,8 +2463,8 @@ class UISettingPanel(wx.Panel):
             self, -1, u"セーブ完了時に確認ダイアログを表示")
         self.cb_cautionbeforesaving = wx.CheckBox(
             self, -1, u"保存せずに終了しようとしたら警告する")
-        self.cb_store_skinoneachbase = wx.CheckBox(
-            self, -1, u"拠点ごとにスキンを記憶する")
+        #self.cb_store_skinoneachbase = wx.CheckBox(
+        #    self, -1, u"拠点ごとにスキンを記憶する")
         self.cb_show_experiencebar = wx.CheckBox(
             self, -1, u"キャラクター情報に次のレベルアップまでの割合を表示")
         self.cb_confirmbeforeusingcard = wx.CheckBox(
@@ -2517,7 +2515,7 @@ class UISettingPanel(wx.Panel):
             self.ch_confirm_beforesaving.SetSelection(0)
         self.cb_cautionbeforesaving.SetValue(setting.caution_beforesaving)
         self.cb_showsavedmessage.SetValue(setting.show_savedmessage)
-        self.cb_store_skinoneachbase.SetValue(setting.store_skinoneachbase)
+        #self.cb_store_skinoneachbase.SetValue(setting.store_skinoneachbase)
 
         self.cb_show_advancedsettings.SetValue(setting.show_advancedsettings)
         self.cb_show_addctrlbtn.SetValue(setting.show_addctrlbtn)
@@ -2562,7 +2560,7 @@ class UISettingPanel(wx.Panel):
             self.ch_confirm_beforesaving.SetSelection(0)
         self.cb_showsavedmessage.SetValue(setting.show_savedmessage_init)
         self.cb_cautionbeforesaving.SetValue(setting.caution_beforesaving_init)
-        self.cb_store_skinoneachbase.SetValue(setting.store_skinoneachbase_init)
+        #self.cb_store_skinoneachbase.SetValue(setting.store_skinoneachbase_init)
 
         self.cb_showbackpackcard.SetValue(setting.show_backpackcard_init)
         self.cb_showbackpackcardatend.SetValue(setting.show_backpackcardatend_init)
@@ -2580,9 +2578,19 @@ class UISettingPanel(wx.Panel):
         if self.cb_allquickdeal.GetValue():
             self.cb_quickdeal.SetValue(True)
 
+    def OnShowBackPackCard(self, event):
+        if not self.cb_showbackpackcard.GetValue():
+            self.cb_showbackpackcardatend.SetValue(False)
+
+    def OnShowBackPackCardAtEnd(self, event):
+        if self.cb_showbackpackcardatend.GetValue():
+            self.cb_showbackpackcard.SetValue(True) 
+
     def _bind(self):
         self.Bind(wx.EVT_CHECKBOX, self.OnQuickDeal, self.cb_quickdeal)
         self.Bind(wx.EVT_CHECKBOX, self.OnAllQuickDeal, self.cb_allquickdeal)
+        self.Bind(wx.EVT_CHECKBOX, self.OnShowBackPackCard, self.cb_showbackpackcard)
+        self.Bind(wx.EVT_CHECKBOX, self.OnShowBackPackCardAtEnd, self.cb_showbackpackcardatend)
 
     def _do_layout(self):
         #sizer = wx.BoxSizer(wx.VERTICAL)
@@ -2642,7 +2650,7 @@ class UISettingPanel(wx.Panel):
         bsizer_dlg.Add(bsizer_confirm_beforesaving, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
         bsizer_dlg.Add(self.cb_showsavedmessage, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
         bsizer_dlg.Add(self.cb_cautionbeforesaving, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
-        bsizer_dlg.Add(self.cb_store_skinoneachbase, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        #bsizer_dlg.Add(self.cb_store_skinoneachbase, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
         bsizer_dlg.SetMinSize((_settings_width(), -1))
 
         sizer_v1.Add(bsizer_wait, 0, wx.BOTTOM|wx.EXPAND, 5)
@@ -2651,8 +2659,8 @@ class UISettingPanel(wx.Panel):
         sizer_v1.Add(bsizer_notice, 0, wx.BOTTOM|wx.EXPAND, 5)
         #sizer_v2.Add(bsizer_saveandload, 0, wx.BOTTOM|wx.EXPAND, 5)
         sizer_v2.Add(bsizer_dlg, 0, wx.EXPAND, 0)
-        sizer.Add(sizer_v1, 1, wx.ALL|wx.EXPAND, 2)
-        sizer.Add(sizer_v2, 1, wx.ALL|wx.EXPAND, 2)  
+        sizer.Add(sizer_v1, 1, wx.ALL|wx.EXPAND, 3)
+        sizer.Add(sizer_v2, 1, wx.ALL|wx.EXPAND, 3)  
 
         self.SetSizer(sizer)
         sizer.Fit(self)
