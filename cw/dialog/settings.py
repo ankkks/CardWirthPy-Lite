@@ -422,6 +422,7 @@ class SettingsPanel(wx.Panel):
         self.apply(cw.cwpy.setting)
 
     def apply(self, setting):
+        #設定したオプションの反映
         update = (setting == cw.cwpy.setting)
 
         # 設定変更前はレベル上昇が可能な状態だったか
@@ -728,8 +729,8 @@ class SettingsPanel(wx.Panel):
                 cw.cwpy.exec_func(func)
         value = self.pane_ui.cb_showautobuttoninentrydialog.GetValue()
         setting.show_autobuttoninentrydialog = value
-        value = self.pane_ui.cb_protect_staredcard.GetValue()
-        setting.protect_staredcard = value
+        #value = self.pane_ui.cb_protect_staredcard.GetValue()
+        #setting.protect_staredcard = value
         value = self.pane_ui.cb_protect_premiercard.GetValue()
         setting.protect_premiercard = value
 
@@ -2412,7 +2413,7 @@ class UISettingPanel(wx.Panel):
         self.cb_show_advancedsettings = wx.CheckBox(
             self, -1, u"最初から詳細モードで設定を行う")
         self.cb_show_addctrlbtn = wx.CheckBox(
-            self, -1, u"各ダイアログで検索モード切替ボタンを表示(Ctrl+F)")
+            self, -1, u"選択ダイアログで検索モード切替ボタンを表示(Ctrl+F)")
         self.cb_show_addctrlbtn.SetToolTipString( u"非表示にしてもCtrl+Fは有効" )
         self.cb_showbackpackcard = wx.CheckBox(
             self, -1, u"荷物袋のカードを一時的に取り出して使用する")
@@ -2428,8 +2429,10 @@ class UISettingPanel(wx.Panel):
             self, -1, u"バトル中自動で行動開始するボタンを表示(F7)")
         self.cb_showautobuttoninentrydialog = wx.CheckBox(
             self, -1, u"キャラクターの新規登録で自動ボタンを表示")
-        self.cb_protect_staredcard = wx.CheckBox(
-            self, -1, u"スター付きのカードの売却や破棄を禁止する")
+        self.cb_show_experiencebar = wx.CheckBox(
+            self, -1, u"キャラクター情報に次のレベルアップまでの割合を表示")
+        #self.cb_protect_staredcard = wx.CheckBox(
+        #    self, -1, u"スター付きのカードの売却や破棄を禁止する")
         self.cb_protect_premiercard = wx.CheckBox(
             self, -1, u"プレミアカードの売却や破棄を禁止する")
 
@@ -2465,13 +2468,11 @@ class UISettingPanel(wx.Panel):
             self, -1, u"保存せずに終了しようとしたら警告する")
         #self.cb_store_skinoneachbase = wx.CheckBox(
         #    self, -1, u"拠点ごとにスキンを記憶する")
-        self.cb_show_experiencebar = wx.CheckBox(
-            self, -1, u"キャラクター情報に次のレベルアップまでの割合を表示")
         self.cb_confirmbeforeusingcard = wx.CheckBox(
             self, -1, u"カード使用時に確認ダイアログを表示")
         self.cb_noticeimpossibleaction = wx.CheckBox(
             self, -1, u"不可能な行動を選択した時に警告を表示")
-        self.cb_noticeimpossibleaction.SetToolTipString( u"Capを超えてカードを配ろうとした場合等" )
+        self.cb_noticeimpossibleaction.SetToolTipString( u"Capを超えてカードを配ろうとした時等" )
 
         self._do_layout()
         self._bind()
@@ -2499,7 +2500,7 @@ class UISettingPanel(wx.Panel):
         self.cb_showlogwithwheelup.SetValue(setting.wheelup_operation == cw.setting.WHEEL_SHOWLOG)
         self.cb_showroundautostartbutton.SetValue(setting.show_roundautostartbutton)
         self.cb_showautobuttoninentrydialog.SetValue(setting.show_autobuttoninentrydialog)
-        self.cb_protect_staredcard.SetValue(setting.protect_staredcard)
+        #self.cb_protect_staredcard.SetValue(setting.protect_staredcard)
         self.cb_protect_premiercard.SetValue(setting.protect_premiercard)
 
         self.cb_show_btndesc.SetValue(setting.show_btndesc)
@@ -2540,7 +2541,7 @@ class UISettingPanel(wx.Panel):
         self.cb_show_premiumicon.SetValue(setting.show_premiumicon_init)
         self.cb_showroundautostartbutton.SetValue(setting.show_roundautostartbutton_init)
         self.cb_showautobuttoninentrydialog.SetValue(setting.show_autobuttoninentrydialog_init)
-        self.cb_protect_staredcard.SetValue(setting.protect_staredcard_init)
+        #self.cb_protect_staredcard.SetValue(setting.protect_staredcard_init)
         self.cb_protect_premiercard.SetValue(setting.protect_premiercard_init)
 
         self.cb_show_btndesc.SetValue(setting.show_btndesc_init)
@@ -2631,7 +2632,8 @@ class UISettingPanel(wx.Panel):
         bsizer_gene.Add(self.cb_showlogwithwheelup, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
         bsizer_gene.Add(self.cb_showroundautostartbutton, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
         bsizer_gene.Add(self.cb_showautobuttoninentrydialog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
-        bsizer_gene.Add(self.cb_protect_staredcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        bsizer_gene.Add(self.cb_show_experiencebar, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
+        #bsizer_gene.Add(self.cb_protect_staredcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
         bsizer_gene.Add(self.cb_protect_premiercard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
         bsizer_gene.SetMinSize((_settings_width(), -1))
 
@@ -2644,7 +2646,6 @@ class UISettingPanel(wx.Panel):
         bsizer_confirm_beforesaving.Add(self.st_confirm_beforesaving, 0, wx.ALIGN_CENTER|wx.RIGHT, 3)
         bsizer_confirm_beforesaving.Add(self.ch_confirm_beforesaving, 0, wx.ALIGN_CENTER, 0)
 
-        bsizer_dlg.Add(self.cb_show_experiencebar, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
         bsizer_dlg.Add(self.cb_confirmbeforeusingcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
         bsizer_dlg.Add(self.cb_noticeimpossibleaction, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
         bsizer_dlg.Add(bsizer_confirm_beforesaving, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
@@ -2654,9 +2655,9 @@ class UISettingPanel(wx.Panel):
         bsizer_dlg.SetMinSize((_settings_width(), -1))
 
         sizer_v1.Add(bsizer_wait, 0, wx.BOTTOM|wx.EXPAND, 5)
-        sizer_v1.Add(bsizer_draw, 0, wx.BOTTOM|wx.EXPAND, 5)
-        sizer_v2.Add(bsizer_gene, 0, wx.BOTTOM|wx.EXPAND, 5)
-        sizer_v1.Add(bsizer_notice, 0, wx.BOTTOM|wx.EXPAND, 5)
+        sizer_v2.Add(bsizer_draw, 0, wx.BOTTOM|wx.EXPAND, 5)
+        sizer_v1.Add(bsizer_gene, 0, wx.BOTTOM|wx.EXPAND, 5)
+        sizer_v2.Add(bsizer_notice, 0, wx.BOTTOM|wx.EXPAND, 5)
         #sizer_v2.Add(bsizer_saveandload, 0, wx.BOTTOM|wx.EXPAND, 5)
         sizer_v2.Add(bsizer_dlg, 0, wx.EXPAND, 0)
         sizer.Add(sizer_v1, 1, wx.ALL|wx.EXPAND, 3)
