@@ -297,7 +297,7 @@ class SettingsPanel(wx.Panel):
         self.SetDoubleBuffered(True)
         self.Hide()
 
-        self.note = wx.Notebook(self)
+        self.note = wx.Notebook(self, style=wx.NB_FIXEDWIDTH)
         self.pane_gene = GeneralSettingPanel(self.note)
         self.pane_draw = DrawingSettingPanel(self.note, for_local=False, get_localsettings=None,
                                              use_copybase=True)
@@ -438,10 +438,8 @@ class SettingsPanel(wx.Panel):
             if not value == cw.cwpy.setting.debug:
                 cw.cwpy.exec_func(cw.cwpy.set_debug, value)
 
-        value = self.pane_gene.cb_show_debuglogdialog.GetValue()
-        setting.show_debuglogdialog = value
-        value = self.pane_gene.cb_nolevelup.GetValue()
-        setting.no_levelup_in_debugmode = value
+        value = self.pane_gene.cb_show_advancedsettings.GetValue()
+        setting.show_advancedsettings = value
         value = self.pane_gene.sc_initmoneyamount.GetValue()
         setting.initmoneyamount = value
         value = self.pane_gene.cb_initmoneyisinitialcash.GetValue()
@@ -510,6 +508,7 @@ class SettingsPanel(wx.Panel):
 
         self.pane_draw.speed.apply_speed(setting)
 
+        """カーソル
         value = self.pane_draw.cb_whitecursor.GetValue()
         if value <> (setting.cursor_type == cw.setting.CURSOR_WHITE):
             if value:
@@ -520,6 +519,7 @@ class SettingsPanel(wx.Panel):
                 def func():
                     cw.cwpy.change_cursor(cw.cwpy.cursor, force=True)
                 cw.cwpy.exec_func(func)
+        """
 
         # オーディオ
         value = self.pane_sound.cb_playbgm.GetValue()
@@ -634,6 +634,10 @@ class SettingsPanel(wx.Panel):
             skintype = self.pane_scenario.grid_folderoftype.GetCellValue(row, 0)
             folder = self.pane_scenario.grid_folderoftype.GetCellValue(row, 1)
             setting.folderoftype.append((skintype, folder))
+        value = self.pane_scenario.cb_show_debuglogdialog.GetValue()
+        setting.show_debuglogdialog = value
+        value = self.pane_scenario.cb_nolevelup.GetValue()
+        setting.no_levelup_in_debugmode = value
 
         # 詳細
         value = self.pane_ui.cb_can_skipwait.GetValue()
@@ -651,10 +655,14 @@ class SettingsPanel(wx.Panel):
         value = self.pane_ui.cb_autoenter_on_sprite.GetValue()
         setting.autoenter_on_sprite = value
 
-        value = self.pane_ui.cb_quickdeal.GetValue()
-        setting.quickdeal = value
-        value = self.pane_ui.cb_allquickdeal.GetValue()
-        setting.all_quickdeal = value
+        value = self.pane_ui.ch_quickdeal.GetSelection()
+        if value == 2:
+            setting.quickdeal = setting.all_quickdeal = False
+        elif value == 0:
+            setting.quickdeal = setting.all_quickdeal = True
+        else:
+            setting.quickdeal = True
+            setting.all_quickdeal = False
         value = self.pane_ui.cb_showallselectedcards.GetValue()
         setting.show_allselectedcards = value
         value = self.pane_ui.cb_showstatustime.GetValue()
@@ -687,20 +695,23 @@ class SettingsPanel(wx.Panel):
         value = self.pane_ui.cb_blink_partymoney.GetValue()
         setting.blink_partymoney = value
 
-        value = self.pane_ui.cb_show_advancedsettings.GetValue()
-        setting.show_advancedsettings = value
         value = self.pane_ui.cb_show_addctrlbtn.GetValue()
         setting.show_addctrlbtn = value
         value = self.pane_ui.cb_show_experiencebar.GetValue()
         setting.show_experiencebar = value
         value = self.pane_ui.cb_cautionbeforesaving.GetValue()
         setting.caution_beforesaving = value
+
         #value = self.pane_ui.cb_store_skinoneachbase.GetValue()
         #setting.store_skinoneachbase = value
-        value = self.pane_ui.cb_showbackpackcard.GetValue()
-        setting.show_backpackcard = value
-        value = self.pane_ui.cb_showbackpackcardatend.GetValue()
-        setting.show_backpackcardatend = value
+        value = self.pane_ui.ch_showbackpackcard.GetSelection()
+        if value == 2:
+            setting.show_backpackcard = setting.show_backpackcardatend = False
+        elif value == 1:
+            setting.show_backpackcard = setting.show_backpackcardatend = True
+        else:
+            setting.show_backpackcard = True
+            setting.show_backpackcardatend = False
         value = self.pane_ui.cb_can_clicksidesofcardcontrol.GetValue()
         setting.can_clicksidesofcardcontrol = value
         value = self.pane_ui.cb_revertcardpocket.GetValue()
@@ -729,8 +740,8 @@ class SettingsPanel(wx.Panel):
                 cw.cwpy.exec_func(func)
         value = self.pane_ui.cb_showautobuttoninentrydialog.GetValue()
         setting.show_autobuttoninentrydialog = value
-        #value = self.pane_ui.cb_protect_staredcard.GetValue()
-        #setting.protect_staredcard = value
+        value = self.pane_ui.cb_protect_staredcard.GetValue()
+        setting.protect_staredcard = value
         value = self.pane_ui.cb_protect_premiercard.GetValue()
         setting.protect_premiercard = value
 
@@ -771,7 +782,6 @@ class SettingsPanel(wx.Panel):
 
     def OnClose(self, event):
         self.Parent.Close()
-        #重い
 
     def close(self):
         cw.cwpy.settingtab = self.note.GetSelection()
@@ -1143,10 +1153,9 @@ class GeneralSettingPanel(wx.Panel):
         self.box_gene = wx.StaticBox(self, -1, u"詳細")
         self.cb_debug = wx.CheckBox(self, -1, u"デバッグモードでプレイする")
         self.cb_debug.SetValue(cw.cwpy.debug)
-        self.cb_show_debuglogdialog = wx.CheckBox(
-            self, -1, u"シナリオの終了時にデバッグ情報を表示する")
-        self.cb_nolevelup = wx.CheckBox(
-            self, -1, u"デバッグ中はレベル上昇を抑止する")
+        
+        self.cb_show_advancedsettings = wx.CheckBox(
+            self, -1, u"最初から詳細モードで設定を行う")
 
         self.st_startupscene = wx.StaticText(self, -1, u"起動時の動作:")
         self.ch_startupscene = wx.Choice(self, -1, choices=[u"タイトル画面を開く", u"最後に選択した拠点を開く"])
@@ -1215,15 +1224,8 @@ class GeneralSettingPanel(wx.Panel):
             (u"path", u"シナリオのファイルパス"),
             (u"file", u"シナリオのファイル名"),
             (u"compatibility", u"互換モード"),None,
-            (u"date", u"日付"),
-            (u"time", u"時刻"),
-            (u"year", u"年"),
-            (u"month", u"月"),
-            (u"day", u"日"),
-            (u"hour", u"時"),
-            (u"minute", u"分"),
-            (u"second", u"秒"),
-            (u"millisecond", u"ミリ秒"),
+            (u"date", u"日付"),(u"time", u"時刻"),(u"year", u"年"),(u"month", u"月"),(u"day", u"日"),
+            (u"hour", u"時"),(u"minute", u"分"),(u"second", u"秒"),(u"millisecond", u"ミリ秒"),
         ]
         if versioninfo:
             ssdic.insert(2, (u"build", u"ビルド情報"))
@@ -1250,8 +1252,7 @@ class GeneralSettingPanel(wx.Panel):
             tx.Bind(wx.EVT_KILL_FOCUS, self.OnSSFocus)
 
     def load(self, setting):
-        self.cb_show_debuglogdialog.SetValue(setting.show_debuglogdialog)
-        self.cb_nolevelup.SetValue(setting.no_levelup_in_debugmode)
+        self.cb_show_advancedsettings.SetValue(setting.show_advancedsettings)
         if setting.messagelog_type == cw.setting.LOG_SINGLE:
             self.ch_messagelog_type.SetSelection(0) # 単一表示
         elif setting.messagelog_type == cw.setting.LOG_COMPRESS:
@@ -1279,9 +1280,8 @@ class GeneralSettingPanel(wx.Panel):
         self.expand.load(setting)
 
     def init_values(self, setting):
-        self.cb_show_debuglogdialog.SetValue(setting.show_debuglogdialog_init)
+        self.cb_show_advancedsettings.SetValue(setting.show_advancedsettings_init)
 
-        self.cb_nolevelup.SetValue(setting.no_levelup_in_debugmode_init)
         if setting.messagelog_type_init == cw.setting.LOG_SINGLE:
             self.ch_messagelog_type.SetSelection(0)
         elif setting.messagelog_type_init == cw.setting.LOG_LIST:
@@ -1351,8 +1351,7 @@ class GeneralSettingPanel(wx.Panel):
         bsizer_expandmode = wx.StaticBoxSizer(self.box_expandmode, wx.VERTICAL)
 
         bsizer_gene.Add(self.cb_debug, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_gene.Add(self.cb_show_debuglogdialog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_gene.Add(self.cb_nolevelup, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_gene.Add(self.cb_show_advancedsettings, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
 
         bsizer_startup = wx.BoxSizer(wx.HORIZONTAL)
         bsizer_startup.Add(self.st_startupscene, 0, wx.ALIGN_CENTER, cw.ppis(0))
@@ -1443,6 +1442,7 @@ class SpeedPanel(wx.Panel):
             self, -1, 0, 0, 10, size=(_settings_width()-cw.ppis(10), -1),
             style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
         self.sl_deal.SetTickFreq(1, 1)
+
         if self.battlespeed:
             # 戦闘行動描画速度
             self.box_deal_battle = wx.StaticBox(
@@ -1452,7 +1452,7 @@ class SpeedPanel(wx.Panel):
                 style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS)
             self.sl_deal_battle.SetTickFreq(1, 1)
             self.cb_use_battlespeed = wx.CheckBox(
-                self, -1, u"カード描画速度に合わせる")
+                self, -1, u"戦闘中の描画速度を同期")
         # メッセージ表示速度
         self.box_msgs = wx.StaticBox(
             self, -1, u"メッセージ表示速度(速い⇔遅い)")
@@ -1493,7 +1493,7 @@ class SpeedPanel(wx.Panel):
         bsizer_deal.Add(self.sl_deal, 0, wx.EXPAND, cw.ppis(0))
         if self.battlespeed:
             bsizer_deal_battle.Add(self.sl_deal_battle, 0, wx.EXPAND, cw.ppis(0))
-            bsizer_deal_battle.Add(self.cb_use_battlespeed, 0, wx.ALIGN_RIGHT, cw.ppis(0))
+            bsizer_deal.Add(self.cb_use_battlespeed, 0, wx.ALIGN_RIGHT, cw.ppis(0))
         bsizer_msgs.Add(self.sl_msgs, 0, wx.EXPAND, cw.ppis(0))
 
         sizer.Add(bsizer_tran, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
@@ -1549,7 +1549,7 @@ class DrawingSettingPanel(wx.Panel):
             self.cb_smoothing_card_up = wx.CheckBox(self, -1, u"拡大したカード画像を滑らかにする")
             self.cb_smoothing_card_down = wx.CheckBox(self, -1, u"縮小したカード画像を滑らかにする")
             self.cb_smooth_bg = wx.CheckBox(self, -1, u"拡大・縮小した背景画像を滑らかにする")
-            self.cb_whitecursor = wx.CheckBox(self, -1, u"メイン画面で白いカーソルを使用する")
+            #self.cb_whitecursor = wx.CheckBox(self, -1, u"メイン画面で白いカーソルを使用する")
 
             # 背景切替方式と各種速度
             self.speed = SpeedPanel(self, True)
@@ -1616,7 +1616,7 @@ class DrawingSettingPanel(wx.Panel):
             self.cb_smooth_bg.SetValue(setting.smoothscale_bg)
             self.cb_smoothing_card_up.SetValue(setting.smoothing_card_up)
             self.cb_smoothing_card_down.SetValue(setting.smoothing_card_down)
-            self.cb_whitecursor.SetValue(setting.cursor_type == cw.setting.CURSOR_WHITE)
+            #self.cb_whitecursor.SetValue(setting.cursor_type == cw.setting.CURSOR_WHITE)
 
             self.speed.load(setting)
 
@@ -1655,7 +1655,7 @@ class DrawingSettingPanel(wx.Panel):
             self.cb_smoothing_card_up.SetValue(setting.smoothing_card_up_init)
             self.cb_smoothing_card_down.SetValue(setting.smoothing_card_down_init)
             self.cb_smooth_bg.SetValue(setting.smoothscale_bg_init)
-            self.cb_whitecursor.SetValue(setting.cursor_type_init == cw.setting.CURSOR_WHITE)
+            #self.cb_whitecursor.SetValue(setting.cursor_type_init == cw.setting.CURSOR_WHITE)
             self.speed.sl_deal.SetValue(setting.dealspeed_init)
             self.speed.sl_deal_battle.SetValue(setting.dealspeed_battle_init)
             self.speed.cb_use_battlespeed.SetValue(not setting.use_battlespeed_init)
@@ -1780,7 +1780,7 @@ class DrawingSettingPanel(wx.Panel):
             bsizer_gene.Add(self.cb_smoothing_card_up, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
             bsizer_gene.Add(self.cb_smoothing_card_down, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
             bsizer_gene.Add(self.cb_smooth_bg, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-            bsizer_gene.Add(self.cb_whitecursor, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+            #bsizer_gene.Add(self.cb_whitecursor, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
             bsizer_gene.SetMinSize((_settings_width(), -1))
 
         bsizer_mwin = wx.BoxSizer(wx.HORIZONTAL)
@@ -2126,6 +2126,13 @@ class ScenarioSettingPanel(wx.Panel):
         self.cb_show_paperandtree = wx.CheckBox(self, -1, u"シナリオ選択ダイアログで貼紙と一覧を同時に表示する")
         self.cb_write_playlog = wx.CheckBox(self, -1, u"シナリオのプレイログを出力する")
 
+        # デバッグオプション
+        self.box_debug = wx.StaticBox(self, -1, u"デバッグ")
+        self.cb_show_debuglogdialog = wx.CheckBox(
+            self, -1, u"シナリオの終了時にデバッグ情報を表示する")
+        self.cb_nolevelup = wx.CheckBox(
+            self, -1, u"デバッグ中はレベル上昇を抑止する")
+
         # スキンタイプ毎の初期フォルダ
         self.box_folderoftype = wx.StaticBox(self, -1, u"シナリオフォルダ(スキンタイプ別)")
         self.btn_reffolder = wx.Button(self, -1, u"参照...")
@@ -2185,6 +2192,9 @@ class ScenarioSettingPanel(wx.Panel):
         self.cb_selectscenariofromtype.SetValue(setting.selectscenariofromtype)
         self.cb_show_paperandtree.SetValue(setting.show_paperandtree)
         self.cb_write_playlog.SetValue(setting.write_playlog)
+        self.cb_show_debuglogdialog.SetValue(setting.show_debuglogdialog)
+        self.cb_nolevelup.SetValue(setting.no_levelup_in_debugmode)
+
         if 0 < self.grid_folderoftype.GetNumberRows():
             self.grid_folderoftype.DeleteRows(0, self.grid_folderoftype.GetNumberRows())
         self.grid_folderoftype.InsertRows(0, len(setting.folderoftype) + 1)
@@ -2205,6 +2215,9 @@ class ScenarioSettingPanel(wx.Panel):
         self.cb_selectscenariofromtype.SetValue(setting.selectscenariofromtype_init)
         self.cb_show_paperandtree.SetValue(setting.show_paperandtree)
         self.cb_write_playlog.SetValue(setting.write_playlog)
+        self.cb_show_debuglogdialog.SetValue(setting.show_debuglogdialog_init)
+        self.cb_nolevelup.SetValue(setting.no_levelup_in_debugmode_init)
+
         self.tx_filer_dir.SetValue(setting.filer_dir_init)
         self.tx_filer_file.SetValue(setting.filer_file_init)
 
@@ -2237,14 +2250,22 @@ class ScenarioSettingPanel(wx.Panel):
     def _do_layout(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
         sizer_v1 = wx.BoxSizer(wx.VERTICAL)
+        sizer_v2 = wx.GridSizer( 0, 2, 0, 0 )
 
         bsizer_gene = wx.StaticBoxSizer(self.box_gene, wx.VERTICAL)
+        bsizer_debug = wx.StaticBoxSizer(self.box_debug, wx.VERTICAL)
         bsizer_folderoftype = wx.StaticBoxSizer(self.box_folderoftype, wx.VERTICAL)
 
         bsizer_gene.Add(self.cb_selectscenariofromtype, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.Add(self.cb_show_paperandtree, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.Add(self.cb_write_playlog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_gene.SetMinSize((_settings_width(), -1))
+        #bsizer_gene.SetMinSize((_settings_width(), -1))
+
+        bsizer_debug.Add(self.cb_show_debuglogdialog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_debug.Add(self.cb_nolevelup, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+
+        sizer_v2.Add(bsizer_gene, 1, wx.RIGHT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
+        sizer_v2.Add(bsizer_debug, 1, wx.LEFT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
 
         sizer_folderbtns = wx.BoxSizer(wx.HORIZONTAL)
         sizer_folderbtns.Add(self.btn_reffolder, 0, wx.RIGHT, cw.ppis(3))
@@ -2277,7 +2298,7 @@ class ScenarioSettingPanel(wx.Panel):
         gbsizer_application.AddGrowableCol(1)
         bsizer_application.Add(gbsizer_application, 1, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
 
-        sizer_v1.Add(bsizer_gene, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
+        sizer_v1.Add(sizer_v2, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
         sizer_v1.Add(bsizer_folderoftype, 1, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
         sizer_v1.Add(bsizer_application, 0, wx.EXPAND, cw.ppis(0))
 
@@ -2376,7 +2397,7 @@ class UISettingPanel(wx.Panel):
         #self.SetScrollPageSize(1, cw.ppis(250))
 
         # 空白時間オプション
-        self.box_wait = wx.StaticBox(self, -1, u"スキップと空白時間")
+        self.box_wait = wx.StaticBox(self, -1, u"マウス操作とスキップ")
         self.cb_can_skipwait = wx.CheckBox(
             self, -1, u"空白時間をスキップ可能にする")
         self.cb_can_skipanimation = wx.CheckBox(
@@ -2385,9 +2406,8 @@ class UISettingPanel(wx.Panel):
             self, -1, u"マウスホイールで空白時間とアニメーションをスキップ")
         self.cb_can_forwardmessage_with_wheel = wx.CheckBox(
             self, -1, u"マウスホイールでメッセージ送りを行う")
-        self.cb_wait_usecard = wx.CheckBox(
-            self, -1, u"カードの使用前に空白時間を入れる")
-        self.cb_wait_usecard.SetToolTipString( u"戦闘中の描画速度にも影響します" )
+        self.cb_showlogwithwheelup = wx.CheckBox(
+            self, -1, u"マウスホイールを上に回すとログを表示")
         self.cb_can_repeatlclick = wx.CheckBox(
             self, -1, u"マウスの左ボタンを押し続けた時は連打状態にする")
         self.cb_autoenter_on_sprite = wx.CheckBox(
@@ -2395,10 +2415,14 @@ class UISettingPanel(wx.Panel):
 
         # 描画オプション
         self.box_draw = wx.StaticBox(self, -1, u"カード")
-        self.cb_quickdeal = wx.CheckBox(
-            self, -1, u"キャンプモードへ高速で切り替える")
-        self.cb_allquickdeal = wx.CheckBox(
-            self, -1, u"全てのシステムカードを高速表示する")
+        self.st_quickdeal = wx.StaticText(self, -1,
+                                                     u"メニューカードの高速表示:")
+        choices = [u"全てのシステムカード", u"キャンプモードへの切替のみ", u"使用しない"]
+        self.st_quickdeal.SetToolTipString( u"一度にカードアニメーションを行うことで瞬時に画面を移行します" )
+        self.ch_quickdeal = wx.Choice(self, -1, choices=choices)
+        self.cb_wait_usecard = wx.CheckBox(
+            self, -1, u"カードの使用前に空白時間を入れる")
+        self.cb_wait_usecard.SetToolTipString( u"戦闘中の描画速度にも影響します" )
         self.cb_showallselectedcards = wx.CheckBox(
             self, -1, u"戦闘行動を全員分表示する")
         self.cb_showstatustime = wx.CheckBox(
@@ -2409,51 +2433,43 @@ class UISettingPanel(wx.Panel):
             self, -1, u"カードの希少度をアイコンで表示する")
 
         # インタフェースオプション
-        self.box_gene = wx.StaticBox(self, -1, u"操作")
-        self.cb_show_advancedsettings = wx.CheckBox(
-            self, -1, u"最初から詳細モードで設定を行う")
-        self.cb_show_addctrlbtn = wx.CheckBox(
-            self, -1, u"選択ダイアログで検索モード切替ボタンを表示(Ctrl+F)")
-        self.cb_show_addctrlbtn.SetToolTipString( u"非表示にしてもCtrl+Fは有効" )
-        self.cb_showbackpackcard = wx.CheckBox(
-            self, -1, u"荷物袋のカードを一時的に取り出して使用する")
-        self.cb_showbackpackcardatend = wx.CheckBox(
-            self, -1, u"荷物袋カードを最後に配置する")
+        self.box_gene = wx.StaticBox(self, -1, u"インターフェース補助")
+        self.st_showbackpackcard = wx.StaticText(self, -1,
+                                                     u"荷物袋のカードを一時的に使用:")
+        self.st_showbackpackcard.SetToolTipString( u"シナリオ中、テーブルモードでキャラクターの手札に特殊カードが配置されます" )
+        choices = [u"最初に配置", u"最後に配置", u"使用しない"]
+        self.ch_showbackpackcard = wx.Choice(self, -1, choices=choices)
         self.cb_can_clicksidesofcardcontrol = wx.CheckBox(
             self, -1, u"カード選択ダイアログの背景クリックで左右移動を行う")
         self.cb_revertcardpocket = wx.CheckBox(
             self, -1, u"レベル調節で手放したカードを自動的に戻す")
-        self.cb_showlogwithwheelup = wx.CheckBox(
-            self, -1, u"マウスホイールを上に回すとログを表示")
         self.cb_showroundautostartbutton = wx.CheckBox(
-            self, -1, u"バトル中自動で行動開始するボタンを表示(F7)")
+            self, -1, u"バトル中自動で行動開始するボタンを追加(F7)")
+        self.cb_show_addctrlbtn = wx.CheckBox(
+            self, -1, u"選択ダイアログで検索モード切替ボタンを追加(Ctrl+F)")
+        self.cb_show_addctrlbtn.SetToolTipString( u"非表示にしてもCtrl+Fは有効" )
         self.cb_showautobuttoninentrydialog = wx.CheckBox(
-            self, -1, u"キャラクターの新規登録で自動ボタンを表示")
-        #self.cb_protect_staredcard = wx.CheckBox(
-        #    self, -1, u"スター付きのカードの売却や破棄を禁止する")
+            self, -1, u"キャラクターの新規登録で自動ボタンを追加")
         self.cb_protect_premiercard = wx.CheckBox(
             self, -1, u"プレミアカードの売却や破棄を禁止する")
 
         # 通知オプション
         self.box_notice = wx.StaticBox(self, -1, u"通知と解説")
         self.cb_show_experiencebar = wx.CheckBox(
-            self, -1, u"キャラクター情報に次のレベルアップまでの割合を表示する")
-        # ステータスバーのボタンの解説を表示する
+            self, -1, u"キャラクター情報に次のレベルアップまでの割合を表示")
         self.cb_show_btndesc = wx.CheckBox(
             self, -1, u"ステータスバーのボタンの解説を表示する")
-        # イベント中にステータスバーの色を変える
         self.cb_statusbarmask = wx.CheckBox(
             self, -1, u"イベント中にステータスバーの色を変える")
-        # 通知のあるステータスボタンを点滅させる
         self.cb_blink_statusbutton = wx.CheckBox(
             self, -1, u"通知のあるステータスボタンを点滅させる")
-        # 所持金が増減した時に所持金欄を点滅させる
         self.cb_blink_partymoney = wx.CheckBox(
             self, -1, u"所持金が増減した時に所持金欄を点滅させる")
 
-        # セーブとロードオプション
-        # self.box_saveandload = wx.StaticBox(self, -1, u"セーブとロード")
-
+        #self.cb_store_skinoneachbase = wx.CheckBox(
+        #    self, -1, u"拠点ごとにスキンを記憶する")
+        self.cb_protect_staredcard = wx.CheckBox(
+            self, -1, u"スター付きのカードの売却や破棄を禁止する")
 
         # ダイアログオプション
         self.box_dlg = wx.StaticBox(self, -1, u"ダイアログ省略")
@@ -2466,8 +2482,6 @@ class UISettingPanel(wx.Panel):
             self, -1, u"セーブ完了時に確認ダイアログを表示")
         self.cb_cautionbeforesaving = wx.CheckBox(
             self, -1, u"保存せずに終了しようとしたら警告する")
-        #self.cb_store_skinoneachbase = wx.CheckBox(
-        #    self, -1, u"拠点ごとにスキンを記憶する")
         self.cb_confirmbeforeusingcard = wx.CheckBox(
             self, -1, u"カード使用時に確認ダイアログを表示")
         self.cb_noticeimpossibleaction = wx.CheckBox(
@@ -2475,7 +2489,7 @@ class UISettingPanel(wx.Panel):
         self.cb_noticeimpossibleaction.SetToolTipString( u"Capを超えてカードを配ろうとした時等" )
 
         self._do_layout()
-        self._bind()
+        #self._bind()
 
     def load(self, setting):
         self.cb_can_skipwait.SetValue(setting.can_skipwait)
@@ -2486,21 +2500,29 @@ class UISettingPanel(wx.Panel):
         self.cb_can_repeatlclick.SetValue(setting.can_repeatlclick)
         self.cb_autoenter_on_sprite.SetValue(setting.autoenter_on_sprite)
 
-        self.cb_quickdeal.SetValue(setting.quickdeal)
-        self.cb_allquickdeal.SetValue(setting.all_quickdeal)
+        if setting.all_quickdeal:
+            self.ch_quickdeal.SetSelection(0)
+        elif setting.quickdeal:
+            self.ch_quickdeal.SetSelection(1)
+        else:
+            self.ch_quickdeal.SetSelection(2)
         self.cb_showallselectedcards.SetValue(setting.show_allselectedcards)
         self.cb_showstatustime.SetValue(setting.show_statustime)
         self.cb_show_cardkind.SetValue(setting.show_cardkind)
         self.cb_show_premiumicon.SetValue(setting.show_premiumicon)
 
-        self.cb_showbackpackcard.SetValue(setting.show_backpackcard)
-        self.cb_showbackpackcardatend.SetValue(setting.show_backpackcardatend)
+        if setting.show_backpackcardatend:
+            self.ch_showbackpackcard.SetSelection(1)
+        elif setting.show_backpackcard:
+            self.ch_showbackpackcard.SetSelection(0)
+        else:
+            self.ch_showbackpackcard.SetSelection(2)
         self.cb_can_clicksidesofcardcontrol.SetValue(setting.can_clicksidesofcardcontrol)
         self.cb_revertcardpocket.SetValue(setting.revert_cardpocket)
         self.cb_showlogwithwheelup.SetValue(setting.wheelup_operation == cw.setting.WHEEL_SHOWLOG)
         self.cb_showroundautostartbutton.SetValue(setting.show_roundautostartbutton)
         self.cb_showautobuttoninentrydialog.SetValue(setting.show_autobuttoninentrydialog)
-        #self.cb_protect_staredcard.SetValue(setting.protect_staredcard)
+        self.cb_protect_staredcard.SetValue(setting.protect_staredcard)
         self.cb_protect_premiercard.SetValue(setting.protect_premiercard)
 
         self.cb_show_btndesc.SetValue(setting.show_btndesc)
@@ -2518,7 +2540,6 @@ class UISettingPanel(wx.Panel):
         self.cb_showsavedmessage.SetValue(setting.show_savedmessage)
         #self.cb_store_skinoneachbase.SetValue(setting.store_skinoneachbase)
 
-        self.cb_show_advancedsettings.SetValue(setting.show_advancedsettings)
         self.cb_show_addctrlbtn.SetValue(setting.show_addctrlbtn)
         self.cb_show_experiencebar.SetValue(setting.show_experiencebar)
         self.cb_confirmbeforeusingcard.SetValue(setting.confirm_beforeusingcard)
@@ -2533,15 +2554,19 @@ class UISettingPanel(wx.Panel):
         self.cb_can_repeatlclick.SetValue(setting.can_repeatlclick_init)
         self.cb_autoenter_on_sprite.SetValue(setting.autoenter_on_sprite_init)
 
-        self.cb_quickdeal.SetValue(setting.quickdeal_init)
-        self.cb_allquickdeal.SetValue(setting.all_quickdeal_init)
+        if setting.all_quickdeal_init:
+            self.ch_quickdeal.SetSelection(0)
+        elif setting.quickdeal_init:
+            self.ch_quickdeal.SetSelection(1)
+        else:
+            self.ch_quickdeal.SetSelection(2)
         self.cb_showallselectedcards.SetValue(setting.show_allselectedcards_init)
         self.cb_showstatustime.SetValue(setting.show_statustime_init)
         self.cb_show_cardkind.SetValue(setting.show_cardkind_init)
         self.cb_show_premiumicon.SetValue(setting.show_premiumicon_init)
         self.cb_showroundautostartbutton.SetValue(setting.show_roundautostartbutton_init)
         self.cb_showautobuttoninentrydialog.SetValue(setting.show_autobuttoninentrydialog_init)
-        #self.cb_protect_staredcard.SetValue(setting.protect_staredcard_init)
+        self.cb_protect_staredcard.SetValue(setting.protect_staredcard_init)
         self.cb_protect_premiercard.SetValue(setting.protect_premiercard_init)
 
         self.cb_show_btndesc.SetValue(setting.show_btndesc_init)
@@ -2549,7 +2574,6 @@ class UISettingPanel(wx.Panel):
         self.cb_blink_statusbutton.SetValue(setting.blink_statusbutton_init)
         self.cb_blink_partymoney.SetValue(setting.blink_partymoney_init)
 
-        self.cb_show_advancedsettings.SetValue(setting.show_advancedsettings_init)
         self.cb_show_addctrlbtn.SetValue(setting.show_addctrlbtn_init)
         self.cb_show_experiencebar.SetValue(setting.show_experiencebar_init)
 
@@ -2563,40 +2587,20 @@ class UISettingPanel(wx.Panel):
         self.cb_cautionbeforesaving.SetValue(setting.caution_beforesaving_init)
         #self.cb_store_skinoneachbase.SetValue(setting.store_skinoneachbase_init)
 
-        self.cb_showbackpackcard.SetValue(setting.show_backpackcard_init)
-        self.cb_showbackpackcardatend.SetValue(setting.show_backpackcardatend_init)
+        if setting.show_backpackcardatend_init:
+            self.ch_showbackpackcard.SetSelection(1)
+        elif setting.show_backpackcard_init:
+            self.ch_showbackpackcard.SetSelection(0)
+        else:
+            self.ch_showbackpackcard.SetSelection(2)
         self.cb_can_clicksidesofcardcontrol.SetValue(setting.can_clicksidesofcardcontrol_init)
         self.cb_revertcardpocket.SetValue(setting.revert_cardpocket_init)
         self.cb_showlogwithwheelup.SetValue(setting.wheelup_operation_init == cw.setting.WHEEL_SHOWLOG)
         self.cb_confirmbeforeusingcard.SetValue(setting.confirm_beforeusingcard_init)
         self.cb_noticeimpossibleaction.SetValue(setting.noticeimpossibleaction_init)
 
-    def OnQuickDeal(self, event):
-        if not self.cb_quickdeal.GetValue():
-            self.cb_allquickdeal.SetValue(False)
-
-    def OnAllQuickDeal(self, event):
-        if self.cb_allquickdeal.GetValue():
-            self.cb_quickdeal.SetValue(True)
-
-    def OnShowBackPackCard(self, event):
-        if not self.cb_showbackpackcard.GetValue():
-            self.cb_showbackpackcardatend.SetValue(False)
-
-    def OnShowBackPackCardAtEnd(self, event):
-        if self.cb_showbackpackcardatend.GetValue():
-            self.cb_showbackpackcard.SetValue(True) 
-
-    def _bind(self):
-        self.Bind(wx.EVT_CHECKBOX, self.OnQuickDeal, self.cb_quickdeal)
-        self.Bind(wx.EVT_CHECKBOX, self.OnAllQuickDeal, self.cb_allquickdeal)
-        self.Bind(wx.EVT_CHECKBOX, self.OnShowBackPackCard, self.cb_showbackpackcard)
-        self.Bind(wx.EVT_CHECKBOX, self.OnShowBackPackCardAtEnd, self.cb_showbackpackcardatend)
-
     def _do_layout(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
-        #sizer = wx.GridSizer( 0, 2, 0, 0 )
-        #sizer_v1 = wx.BoxSizer(wx.VERTICAL)
         sizer_v1 = wx.BoxSizer(wx.VERTICAL)
         sizer_v2 = wx.BoxSizer(wx.VERTICAL)
         sizer_v3 = wx.GridSizer( 0, 2, 0, 0 )
@@ -2611,30 +2615,36 @@ class UISettingPanel(wx.Panel):
         bsizer_wait.Add(self.cb_can_skipanimation, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.Add(self.cb_can_skipwait_with_wheel, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.Add(self.cb_can_forwardmessage_with_wheel, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_wait.Add(self.cb_wait_usecard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_wait.Add(self.cb_showlogwithwheelup, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.Add(self.cb_can_repeatlclick, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.Add(self.cb_autoenter_on_sprite, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_wait.Add(self.cb_show_advancedsettings, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.SetMinSize((_settings_width(), -1))
 
-        bsizer_draw.Add(self.cb_quickdeal, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_draw.Add(self.cb_allquickdeal, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_quickdeal = wx.BoxSizer(wx.HORIZONTAL)
+        bsizer_quickdeal.Add(self.st_quickdeal, 0, wx.ALIGN_CENTER|wx.RIGHT, cw.ppis(3))
+        bsizer_quickdeal.Add(self.ch_quickdeal, 0, wx.ALIGN_CENTER, cw.ppis(3))
+
+        bsizer_draw.Add(bsizer_quickdeal, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_draw.Add(self.cb_wait_usecard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_draw.Add(self.cb_confirmbeforeusingcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_draw.Add(self.cb_showallselectedcards, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_draw.Add(self.cb_showstatustime, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_draw.Add(self.cb_show_cardkind, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_draw.Add(self.cb_show_premiumicon, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_draw.Add(self.cb_protect_staredcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_draw.Add(self.cb_protect_premiercard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_draw.SetMinSize((_settings_width(), -1))
 
-        bsizer_gene.Add(self.cb_show_addctrlbtn, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_gene.Add(self.cb_showbackpackcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_gene.Add(self.cb_showbackpackcardatend, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_showbackpackcard = wx.BoxSizer(wx.HORIZONTAL)
+        bsizer_showbackpackcard.Add(self.st_showbackpackcard, 0, wx.ALIGN_CENTER|wx.RIGHT, cw.ppis(3))
+        bsizer_showbackpackcard.Add(self.ch_showbackpackcard, 0, wx.ALIGN_CENTER, cw.ppis(3))
+        
+        bsizer_gene.Add(bsizer_showbackpackcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.Add(self.cb_can_clicksidesofcardcontrol, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.Add(self.cb_revertcardpocket, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_gene.Add(self.cb_showlogwithwheelup, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.Add(self.cb_showroundautostartbutton, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_gene.Add(self.cb_show_addctrlbtn, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.Add(self.cb_showautobuttoninentrydialog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        #bsizer_gene.Add(self.cb_protect_staredcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_gene.Add(self.cb_protect_premiercard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.SetMinSize((_settings_width(), -1))
 
         bsizer_notice.Add(self.cb_show_experiencebar, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
@@ -2650,22 +2660,21 @@ class UISettingPanel(wx.Panel):
         bsizer_dlg.Add(bsizer_confirm_beforesaving, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.Add(self.cb_showsavedmessage, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.Add(self.cb_cautionbeforesaving, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_dlg.Add(self.cb_confirmbeforeusingcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.Add(self.cb_noticeimpossibleaction, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         #bsizer_dlg.Add(self.cb_store_skinoneachbase, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
         bsizer_dlg.SetMinSize((_settings_width(), -1))
 
         sizer_v1.Add(bsizer_wait, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
-        sizer_v2.Add(bsizer_draw, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
-        sizer_v1.Add(bsizer_gene, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
+        sizer_v1.Add(bsizer_draw, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
+        sizer_v2.Add(bsizer_gene, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
         sizer_v2.Add(bsizer_notice, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
         #sizer_v2.Add(bsizer_saveandload, 0, wx.BOTTOM|wx.EXPAND, 5)
         sizer_v2.Add(bsizer_dlg, 0, wx.EXPAND, cw.ppis(3))
         
-        sizer_v3.Add(sizer_v1, 1, wx.ALL|wx.EXPAND, cw.ppis(2))
-        sizer_v3.Add(sizer_v2, 1, wx.ALL|wx.EXPAND, cw.ppis(2))
+        sizer_v3.Add(sizer_v1, 1, wx.RIGHT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
+        sizer_v3.Add(sizer_v2, 1, wx.LEFT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
 
-        sizer.Add(sizer_v3, 1, wx.ALL|wx.EXPAND, cw.ppis(8))
+        sizer.Add(sizer_v3, 1, wx.ALL|wx.EXPAND, cw.ppis(10))
 
         self.SetSizer(sizer)
         sizer.Fit(self)
