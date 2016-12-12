@@ -1187,17 +1187,17 @@ class GeneralSettingPanel(wx.Panel):
 
         # スクリーンショット情報
         self.box_ss = wx.StaticBox(self, -1, u"スクリーンショット情報(画像上部に表示)")
-        self.tx_ssinfoformat = wx.TextCtrl(self, -1, size=(cw.ppis(150), -1))
+        self.tx_ssinfoformat = wx.TextCtrl(self, -1, size=(cw.ppis(150), -1), style=wx.SIMPLE_BORDER)
         # スクリーンショット情報の色
         choices = [u"黒文字", u"白文字"]
         self.ch_ssinfocolor = wx.Choice(self, -1, size=(-1, -1), choices=choices)
 
         # スクリーンショットのファイル名
         self.st_ssfnameformat = wx.StaticText(self, -1, u"ファイル名:")
-        self.tx_ssfnameformat = wx.TextCtrl(self, -1, size=(cw.ppis(150), -1))
+        self.tx_ssfnameformat = wx.TextCtrl(self, -1, size=(cw.ppis(150), -1), style=wx.SIMPLE_BORDER)
         # 所持カード撮影情報のファイル名
         self.st_cardssfnameformat = wx.StaticText(self, -1, u"所持カード:")
-        self.tx_cardssfnameformat = wx.TextCtrl(self, -1, size=(cw.ppis(150), -1))
+        self.tx_cardssfnameformat = wx.TextCtrl(self, -1, size=(cw.ppis(150), -1), style=wx.SIMPLE_BORDER)
 
         self.ss_tx = set()
         self.ss_tx.add(self.tx_ssinfoformat)
@@ -2151,7 +2151,7 @@ class ScenarioSettingPanel(wx.Panel):
         # シナリオエディタ
         self.box_application = wx.StaticBox(self, -1, u"外部アプリ")
         self.st_editor = wx.StaticText(self, -1, u"エディタ")
-        self.tx_editor = wx.TextCtrl(self, -1, size=(-1, -1))
+        self.tx_editor = wx.TextCtrl(self, -1, size=(-1, -1), style=wx.SIMPLE_BORDER)
         if sys.platform == "win32":
             wildcard = u"実行可能ファイル (*.exe)|*.exe|全てのファイル (*.*)|*.*"
         else:
@@ -2163,14 +2163,14 @@ class ScenarioSettingPanel(wx.Panel):
 
         # シナリオ選択ダイアログでのファイラー(フォルダ用)
         self.st_filer_dir = wx.StaticText(self, -1, u"ファイラー(フォルダ用)")
-        self.tx_filer_dir = wx.TextCtrl(self, -1, size=(-1, -1))
+        self.tx_filer_dir = wx.TextCtrl(self, -1, size=(-1, -1), style=wx.SIMPLE_BORDER)
         self.ref_filer_dir = cw.util.create_fileselection(self,
             target=self.tx_filer_dir,
             message=u"シナリオの場所を開くためのファイラー(フォルダ用)を選択",
             wildcard=wildcard)
         # シナリオ選択ダイアログでのファイラー(ファイル用)
         self.st_filer_file = wx.StaticText(self, -1, u"ファイラー(ファイル用)")
-        self.tx_filer_file = wx.TextCtrl(self, -1, size=(-1, -1))
+        self.tx_filer_file = wx.TextCtrl(self, -1, size=(-1, -1), style=wx.SIMPLE_BORDER)
         self.ref_filer_file = cw.util.create_fileselection(self,
             target=self.tx_filer_file,
             message=u"シナリオの場所を開くためのファイラー(ファイル用)を選択",
