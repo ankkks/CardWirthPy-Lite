@@ -740,8 +740,8 @@ class SettingsPanel(wx.Panel):
                 cw.cwpy.exec_func(func)
         value = self.pane_ui.cb_showautobuttoninentrydialog.GetValue()
         setting.show_autobuttoninentrydialog = value
-        value = self.pane_ui.cb_protect_staredcard.GetValue()
-        setting.protect_staredcard = value
+        #value = self.pane_ui.cb_protect_staredcard.GetValue()
+        #setting.protect_staredcard = value
         value = self.pane_ui.cb_protect_premiercard.GetValue()
         setting.protect_premiercard = value
 
@@ -2411,26 +2411,22 @@ class UISettingPanel(wx.Panel):
         self.cb_can_repeatlclick = wx.CheckBox(
             self, -1, u"マウスの左ボタンを押し続けた時は連打状態にする")
         self.cb_autoenter_on_sprite = wx.CheckBox(
-            self, -1, u"連打状態の時、カードなどの選択を自動的に決定する")
+            self, -1, u"連打状態の時、カードなどの選択を自動的に決定")
 
         # 描画オプション
         self.box_draw = wx.StaticBox(self, -1, u"カード")
         self.st_quickdeal = wx.StaticText(self, -1,
-                                                     u"メニューカードの高速表示:")
+                                                     u"メニューの高速表示:")
         choices = [u"全てのシステムカード", u"キャンプモードへの切替のみ", u"使用しない"]
         self.st_quickdeal.SetToolTipString( u"一度にカードアニメーションを行うことで瞬時に画面を移行します" )
         self.ch_quickdeal = wx.Choice(self, -1, choices=choices)
         self.cb_wait_usecard = wx.CheckBox(
             self, -1, u"カードの使用前に空白時間を入れる")
         self.cb_wait_usecard.SetToolTipString( u"戦闘中の描画速度にも影響します" )
-        self.cb_showallselectedcards = wx.CheckBox(
-            self, -1, u"戦闘行動を全員分表示する")
-        self.cb_showstatustime = wx.CheckBox(
-            self, -1, u"状態の残り時間をカード上に表示する")
         self.cb_show_cardkind = wx.CheckBox(
             self, -1, u"カード置場と荷物袋でカードの種類を表示する")
         self.cb_show_premiumicon = wx.CheckBox(
-            self, -1, u"カードの希少度をアイコンで表示する")
+            self, -1, u"カードの希少度をアイコンで表示する(1.20方式)")
 
         # インタフェースオプション
         self.box_gene = wx.StaticBox(self, -1, u"インターフェース補助")
@@ -2443,8 +2439,6 @@ class UISettingPanel(wx.Panel):
             self, -1, u"カード選択ダイアログの背景クリックで左右移動を行う")
         self.cb_revertcardpocket = wx.CheckBox(
             self, -1, u"レベル調節で手放したカードを自動的に戻す")
-        self.cb_showroundautostartbutton = wx.CheckBox(
-            self, -1, u"バトル中自動で行動開始するボタンを追加(F7)")
         self.cb_show_addctrlbtn = wx.CheckBox(
             self, -1, u"選択ダイアログで検索モード切替ボタンを追加(Ctrl+F)")
         self.cb_show_addctrlbtn.SetToolTipString( u"非表示にしてもCtrl+Fは有効" )
@@ -2452,6 +2446,15 @@ class UISettingPanel(wx.Panel):
             self, -1, u"キャラクターの新規登録で自動ボタンを追加")
         self.cb_protect_premiercard = wx.CheckBox(
             self, -1, u"プレミアカードの売却や破棄を禁止する")
+
+        # 戦闘オプション
+        self.box_battle = wx.StaticBox(self, -1, u"戦闘")
+        self.cb_showroundautostartbutton = wx.CheckBox(
+            self, -1, u"自動で行動開始するボタンを追加(F7)")
+        self.cb_showallselectedcards = wx.CheckBox(
+            self, -1, u"戦闘行動を全員分表示する")
+        self.cb_showstatustime = wx.CheckBox(
+            self, -1, u"状態の残り時間をカード上に表示する")
 
         # 通知オプション
         self.box_notice = wx.StaticBox(self, -1, u"通知と解説")
@@ -2468,8 +2471,8 @@ class UISettingPanel(wx.Panel):
 
         #self.cb_store_skinoneachbase = wx.CheckBox(
         #    self, -1, u"拠点ごとにスキンを記憶する")
-        self.cb_protect_staredcard = wx.CheckBox(
-            self, -1, u"スター付きのカードの売却や破棄を禁止する")
+        #self.cb_protect_staredcard = wx.CheckBox(
+        #    self, -1, u"スター付きのカードの売却や破棄を禁止する")
 
         # ダイアログオプション
         self.box_dlg = wx.StaticBox(self, -1, u"ダイアログ省略")
@@ -2522,7 +2525,7 @@ class UISettingPanel(wx.Panel):
         self.cb_showlogwithwheelup.SetValue(setting.wheelup_operation == cw.setting.WHEEL_SHOWLOG)
         self.cb_showroundautostartbutton.SetValue(setting.show_roundautostartbutton)
         self.cb_showautobuttoninentrydialog.SetValue(setting.show_autobuttoninentrydialog)
-        self.cb_protect_staredcard.SetValue(setting.protect_staredcard)
+        #self.cb_protect_staredcard.SetValue(setting.protect_staredcard)
         self.cb_protect_premiercard.SetValue(setting.protect_premiercard)
 
         self.cb_show_btndesc.SetValue(setting.show_btndesc)
@@ -2566,7 +2569,7 @@ class UISettingPanel(wx.Panel):
         self.cb_show_premiumicon.SetValue(setting.show_premiumicon_init)
         self.cb_showroundautostartbutton.SetValue(setting.show_roundautostartbutton_init)
         self.cb_showautobuttoninentrydialog.SetValue(setting.show_autobuttoninentrydialog_init)
-        self.cb_protect_staredcard.SetValue(setting.protect_staredcard_init)
+        #self.cb_protect_staredcard.SetValue(setting.protect_staredcard_init)
         self.cb_protect_premiercard.SetValue(setting.protect_premiercard_init)
 
         self.cb_show_btndesc.SetValue(setting.show_btndesc_init)
@@ -2608,7 +2611,7 @@ class UISettingPanel(wx.Panel):
         bsizer_draw = wx.StaticBoxSizer(self.box_draw, wx.VERTICAL)
         bsizer_gene = wx.StaticBoxSizer(self.box_gene, wx.VERTICAL)
         bsizer_notice = wx.StaticBoxSizer(self.box_notice, wx.VERTICAL)
-        #bsizer_saveandload = wx.StaticBoxSizer(self.box_saveandload, wx.VERTICAL)
+        bsizer_battle = wx.StaticBoxSizer(self.box_battle, wx.VERTICAL)
         bsizer_dlg = wx.StaticBoxSizer(self.box_dlg, wx.VERTICAL)
 
         bsizer_wait.Add(self.cb_can_skipwait, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
@@ -2626,12 +2629,9 @@ class UISettingPanel(wx.Panel):
 
         bsizer_draw.Add(bsizer_quickdeal, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_draw.Add(self.cb_wait_usecard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_draw.Add(self.cb_confirmbeforeusingcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_draw.Add(self.cb_showallselectedcards, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_draw.Add(self.cb_showstatustime, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_draw.Add(self.cb_show_cardkind, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_draw.Add(self.cb_show_premiumicon, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_draw.Add(self.cb_protect_staredcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_draw.Add(self.cb_show_cardkind, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        #bsizer_draw.Add(self.cb_protect_staredcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_draw.Add(self.cb_protect_premiercard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_draw.SetMinSize((_settings_width(), -1))
 
@@ -2642,10 +2642,14 @@ class UISettingPanel(wx.Panel):
         bsizer_gene.Add(bsizer_showbackpackcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.Add(self.cb_can_clicksidesofcardcontrol, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.Add(self.cb_revertcardpocket, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_gene.Add(self.cb_showroundautostartbutton, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.Add(self.cb_show_addctrlbtn, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.Add(self.cb_showautobuttoninentrydialog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.SetMinSize((_settings_width(), -1))
+
+        
+        bsizer_battle.Add(self.cb_showroundautostartbutton, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_battle.Add(self.cb_showallselectedcards, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_battle.Add(self.cb_showstatustime, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
 
         bsizer_notice.Add(self.cb_show_experiencebar, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_notice.Add(self.cb_show_btndesc, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
@@ -2659,16 +2663,17 @@ class UISettingPanel(wx.Panel):
 
         bsizer_dlg.Add(bsizer_confirm_beforesaving, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.Add(self.cb_showsavedmessage, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_dlg.Add(self.cb_confirmbeforeusingcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.Add(self.cb_cautionbeforesaving, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.Add(self.cb_noticeimpossibleaction, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         #bsizer_dlg.Add(self.cb_store_skinoneachbase, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
         bsizer_dlg.SetMinSize((_settings_width(), -1))
 
         sizer_v1.Add(bsizer_wait, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
-        sizer_v1.Add(bsizer_draw, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
-        sizer_v2.Add(bsizer_gene, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
+        sizer_v2.Add(bsizer_draw, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
+        sizer_v1.Add(bsizer_gene, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
         sizer_v2.Add(bsizer_notice, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
-        #sizer_v2.Add(bsizer_saveandload, 0, wx.BOTTOM|wx.EXPAND, 5)
+        sizer_v1.Add(bsizer_battle, 0, wx.BOTTOM|wx.EXPAND, 5)
         sizer_v2.Add(bsizer_dlg, 0, wx.EXPAND, cw.ppis(3))
         
         sizer_v3.Add(sizer_v1, 1, wx.RIGHT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
