@@ -2396,22 +2396,22 @@ class UISettingPanel(wx.Panel):
         #self.SetScrollRate(1, cw.ppis(15))
         #self.SetScrollPageSize(1, cw.ppis(250))
 
-        # 空白時間オプション
+        # マウスオプション
         self.box_wait = wx.StaticBox(self, -1, u"マウス操作とスキップ")
         self.cb_can_skipwait = wx.CheckBox(
             self, -1, u"空白時間をスキップ可能にする")
         self.cb_can_skipanimation = wx.CheckBox(
             self, -1, u"アニメーションをスキップ可能にする")
-        self.cb_can_skipwait_with_wheel = wx.CheckBox(
-            self, -1, u"マウスホイールで空白時間とアニメーションをスキップ")
-        self.cb_can_forwardmessage_with_wheel = wx.CheckBox(
-            self, -1, u"マウスホイールでメッセージ送りを行う")
-        self.cb_showlogwithwheelup = wx.CheckBox(
-            self, -1, u"マウスホイールを上に回すとログを表示")
         self.cb_can_repeatlclick = wx.CheckBox(
             self, -1, u"マウスの左ボタンを押し続けた時は連打状態にする")
         self.cb_autoenter_on_sprite = wx.CheckBox(
             self, -1, u"連打状態の時、カードなどの選択を自動的に決定")
+        self.cb_can_skipwait_with_wheel = wx.CheckBox(
+            self, -1, u"ホイール下で空白時間とアニメーションをスキップ")
+        self.cb_can_forwardmessage_with_wheel = wx.CheckBox(
+            self, -1, u"ホイール下でメッセージ送りを行う")
+        self.cb_showlogwithwheelup = wx.CheckBox(
+            self, -1, u"ホイールを上に回すとログを表示")
 
         # 描画オプション
         self.box_draw = wx.StaticBox(self, -1, u"カード")
@@ -2616,11 +2616,11 @@ class UISettingPanel(wx.Panel):
 
         bsizer_wait.Add(self.cb_can_skipwait, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.Add(self.cb_can_skipanimation, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_wait.Add(self.cb_can_repeatlclick, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_wait.Add(self.cb_autoenter_on_sprite, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.Add(self.cb_can_skipwait_with_wheel, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.Add(self.cb_can_forwardmessage_with_wheel, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.Add(self.cb_showlogwithwheelup, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_wait.Add(self.cb_can_repeatlclick, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_wait.Add(self.cb_autoenter_on_sprite, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.SetMinSize((_settings_width(), -1))
 
         bsizer_quickdeal = wx.BoxSizer(wx.HORIZONTAL)
