@@ -1584,7 +1584,7 @@ class Resource(object):
                 bmp.fill((r1-y/4, g1-y/4, b1-y/4), pygame.Rect(0, mid-y, w, 1))
                 bmp.fill((r2-y, g2-y, b2-y), pygame.Rect(0, mid+y, w, 1))
             """
-        r1 = g1 = b1 = 240
+        r1 = g1 = b1 = 250
         bmp.fill((r1, g1, b1))
 
         

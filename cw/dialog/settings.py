@@ -2735,9 +2735,8 @@ class FontSettingPanel(wx.Panel):
                           }
 
         self.bases = ("gothic", "pgothic", "mincho", "pmincho", "uigothic")
-        self.types = ("cardname", "ccardname", "level",
-                      "message", "selectionbar", "logpage",
-                      "uselimit", "numcards", "statusnum",
+        self.types = ("message", "selectionbar", "cardname", "ccardname", "level",
+                      "logpage", "uselimit", "numcards", "statusnum",
                       "sbarpanel", "sbarprogress", "sbarbtn", "sbardesctitle", "sbardesc", "screenshot",
                       "scenario", "targetlevel", "paneltitle", "paneltitle2", "dlgmsg", "dlgmsg2", "dlgtitle", "dlgtitle2",
                       "createtitle", "dlglist", "inputname", "datadesc", "charadesc", "charaparam", "charaparam2",  "characre", 
