@@ -717,27 +717,7 @@ class Setting(object):
         if not loadfile:
             self.init_skin(basedata=basedata)
 
-        # 設定バージョンの更新
-        if int(settings_version) < 1 and not loadfile:
-            # バージョン0ではスキンに
-            # 「メッセージでクラシックなフォントを使用する」が
-            # 存在するため、それを使用中の場合に限り
-            # デフォルトフォントをクラシックなものに初期化する
-            if self._classicstyletext:
-                self.local.fontsmoothing_message = False
-                self.local.fonttypes["message"] = self.local.fonttypes_init["message"]
-                self.local.fonttypes["selectionbar"] = self.local.fonttypes_init["selectionbar"]
-            else:
-                self.local.fontsmoothing_message = True
-
-        if int(settings_version) < 2 and not loadfile:
-            # バージョン1ではカード名のスムージングはデフォルトでオン
-            # スムージング設定がデフォルト値でカード名フォントの設定を
-            # 変更している場合は、スムージングを改めてオンにする
-            if not self.local.fontsmoothing_cardname and\
-                    (self.local.fonttypes["cardname"] <> self.local.fonttypes_init["cardname"] or \
-                     self.local.fonttypes["ccardname"] <> self.local.fonttypes_init["ccardname"]):
-                self.local.fontsmoothing_cardname = True
+        # 設定バージョンの更新 設定ファイルを独立させているためカット
 
     def init_skin(self, basedata=None):
         self.skindir = cw.util.join_paths(u"Data/Skin", self.skindirname)
@@ -2205,7 +2185,6 @@ CWXEDITOR_RESOURCES = {
     "RESET": "reload.png",
     "ROUND": "round.png",
     "SAVE": "save.png",
-    "SELECTION": "sc_m.png",
     "UPDATE": "refresh.png",
 
     # Terminal
@@ -2772,14 +2751,12 @@ class ScenarioCompatibilityTable(object):
                 vanishmembercancellation = False
 
             # F9でもゴシップや終了印が復元されない挙動の再現の封印解除
-            ##gossiprestration = False
             try:
                 gossiprestration = conf.get("Compatibility", "disableGossipRestoration")
                 gossiprestration = cw.util.str2bool(gossiprestration)
             except:
                 gossiprestration = False
 
-            ##compstamprestration = False
             try:
                 compstamprestration = conf.get("Compatibility", "disableCompleteStampRestoration")
                 compstamprestration = cw.util.str2bool(compstamprestration)
