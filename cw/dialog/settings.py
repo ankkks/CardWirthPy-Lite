@@ -2484,7 +2484,7 @@ class UISettingPanel(wx.Panel):
         self.cb_showsavedmessage = wx.CheckBox(
             self, -1, u"セーブ完了時に確認ダイアログを表示")
         self.cb_cautionbeforesaving = wx.CheckBox(
-            self, -1, u"保存せずに終了しようとしたら警告する")
+            self, -1, u"保存せずに終了しようとしたら警告を表示")
         self.cb_confirmbeforeusingcard = wx.CheckBox(
             self, -1, u"カード使用時に確認ダイアログを表示")
         self.cb_noticeimpossibleaction = wx.CheckBox(
