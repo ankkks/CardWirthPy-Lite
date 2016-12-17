@@ -2406,6 +2406,8 @@ class UISettingPanel(wx.Panel):
             self, -1, u"マウスの左ボタンを押し続けた時は連打状態にする")
         self.cb_autoenter_on_sprite = wx.CheckBox(
             self, -1, u"連打状態の時、カードなどの選択を自動的に決定")
+        self.cb_can_clicksidesofcardcontrol = wx.CheckBox(
+            self, -1, u"カード選択ダイアログの背景クリックで左右移動を行う")
         self.cb_can_skipwait_with_wheel = wx.CheckBox(
             self, -1, u"ホイール下で空白時間とアニメーションをスキップ")
         self.cb_can_forwardmessage_with_wheel = wx.CheckBox(
@@ -2435,8 +2437,6 @@ class UISettingPanel(wx.Panel):
         self.st_showbackpackcard.SetToolTipString( u"シナリオ中、テーブルモードでキャラクターの手札に特殊カードが配置されます" )
         choices = [u"最初に配置", u"最後に配置", u"使用しない"]
         self.ch_showbackpackcard = wx.Choice(self, -1, choices=choices)
-        self.cb_can_clicksidesofcardcontrol = wx.CheckBox(
-            self, -1, u"カード選択ダイアログの背景クリックで左右移動を行う")
         self.cb_revertcardpocket = wx.CheckBox(
             self, -1, u"レベル調節で手放したカードを自動的に戻す")
         self.cb_show_addctrlbtn = wx.CheckBox(
@@ -2618,6 +2618,7 @@ class UISettingPanel(wx.Panel):
         bsizer_wait.Add(self.cb_can_skipanimation, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.Add(self.cb_can_repeatlclick, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.Add(self.cb_autoenter_on_sprite, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_wait.Add(self.cb_can_clicksidesofcardcontrol, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.Add(self.cb_can_skipwait_with_wheel, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.Add(self.cb_can_forwardmessage_with_wheel, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.Add(self.cb_showlogwithwheelup, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
@@ -2640,7 +2641,6 @@ class UISettingPanel(wx.Panel):
         bsizer_showbackpackcard.Add(self.ch_showbackpackcard, 0, wx.ALIGN_CENTER, cw.ppis(3))
         
         bsizer_gene.Add(bsizer_showbackpackcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_gene.Add(self.cb_can_clicksidesofcardcontrol, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.Add(self.cb_revertcardpocket, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.Add(self.cb_show_addctrlbtn, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.Add(self.cb_showautobuttoninentrydialog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
