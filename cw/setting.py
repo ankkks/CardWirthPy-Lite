@@ -1196,7 +1196,7 @@ class Resource(object):
         """
         フォントパス(辞書)
         """
-        fontdir = "Data/"
+        fontdir = "Data/Font"
         fontdir_skin = cw.util.join_paths(self.skindir, "Resource/Font")
 
         d = {}
@@ -1227,7 +1227,7 @@ class Resource(object):
             self.facenames = set(wx.FontEnumerator().GetFacenames())
             for name, path in self.fontpaths.iteritems():
                 fontname = cw.util.get_truetypefontname(path)
-                d["gothic"],d["uigothic"],d["mincho"],d["pmincho"],d["pgothic"] = ((u"IPAGothic",)*5)
+                d["gothic"],d["uigothic"],d["mincho"],d["pmincho"],d["pgothic"] = ((u"Ume Hy Gothic",)*5)
 
                 def func():
                     if winplatform == 2:
@@ -1249,11 +1249,11 @@ class Resource(object):
 
         else:
             self.facenames = set(wx.FontEnumerator().GetFacenames())
-            d["gothic"],d["uigothic"],d["mincho"],d["pmincho"],d["pgothic"] = ((u"IPA ゴシック",)*5)
+            d["gothic"],d["uigothic"],d["mincho"],d["pmincho"],d["pgothic"] = ((u"梅Hyゴシック",)*5)
 
             for value in d.itervalues():
                 if not value in self.facenames:
-                    raise ValueError(u"IPA font not found: " + value)
+                    raise ValueError(u"font not found: " + value)
 
         init = d.copy()
 
