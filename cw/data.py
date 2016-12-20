@@ -165,8 +165,9 @@ class SystemData(object):
         for mcards in self.sparea_mcards.itervalues():
             for mcard in mcards:
                 mcard.update_scale()
-        for log in self.backlog:
-            log.specialchars.reset()
+        #Attributeエラーが出るので更新しない
+        #for log in self.backlog:
+        #    log.specialchars.reset()
 
     def start(self):
         pass
