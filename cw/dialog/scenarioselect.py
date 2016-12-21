@@ -147,10 +147,10 @@ class ScenarioSelect(select.Select):
                                cw.cwpy.setting.scenario_narrowtype, tworows=True)
 
         # 整列条件
-        font = cw.cwpy.rsrc.get_wxfont("paneltitle2", pixelsize=cw.wins(15))
-        self.sort_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["sort_title2"])
+        font = cw.cwpy.rsrc.get_wxfont("paneltitle2", pixelsize=cw.wins(13))
+        self.sort_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["sort_title"])
         self.sort_label.SetFont(font)
-        font = cw.cwpy.rsrc.get_wxfont("combo", pixelsize=cw.wins(14))
+        font = cw.cwpy.rsrc.get_wxfont("combo", pixelsize=cw.wins(13))
         choices = (cw.cwpy.msgs["target_level"],
                    cw.cwpy.msgs["title"],
                    cw.cwpy.msgs["author"],
@@ -167,13 +167,13 @@ class ScenarioSelect(select.Select):
         self.index = 0
 
         # 検索
-        bmp = cw.cwpy.rsrc.dialogs["FIND_SCENARIO2"]
-        self.find = cw.cwpy.rsrc.create_wxbutton(self, -1, (-1, cw.wins(32)), bmp=bmp)
+        bmp = cw.cwpy.rsrc.dialogs["FIND_SCENARIO"]
+        self.find = cw.cwpy.rsrc.create_wxbutton(self, -1, (-1, cw.wins(23)), bmp=bmp)
         self.find.SetToolTip(wx.ToolTip(cw.cwpy.msgs["find_scenario"]))
 
         # ブックマーク
         bmp = cw.cwpy.rsrc.dialogs["BOOKMARK2"]
-        self.bookmark = cw.cwpy.rsrc.create_wxbutton(self, -1, (-1, cw.wins(32)), bmp=bmp)
+        self.bookmark = cw.cwpy.rsrc.create_wxbutton(self, -1, (-1, cw.wins(30)), bmp=bmp)
         self.bookmark.SetToolTip(wx.ToolTip(cw.cwpy.msgs["bookmark"]))
 
         if cw.cwpy.setting.show_paperandtree:
@@ -191,7 +191,7 @@ class ScenarioSelect(select.Select):
             if self.editorbtn:
                 self.additionals.append((self.editorbtn, lambda: cw.cwpy.setting.show_scenariotree))
 
-            self.additionals.append(self.keyword_label)
+            #self.additionals.append(self.keyword_label)
             self.additionals.append(self.narrow)
             self.additionals.append(self.narrow_label)
             self.additionals.append(self.narrow_type)
@@ -213,9 +213,6 @@ class ScenarioSelect(select.Select):
             self.buttonlist.append(self.viewbtn)
         else:
             self.viewbtn = None
-        # convert
-        ##self.convbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, (buttonwidth, cw.wins(24)), u"変換")
-        ##self.buttonlist.append(self.convbtn)
         # close
         self.nobtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_NO, (buttonwidth, cw.wins(24)), cw.cwpy.msgs["entry_cancel"])
         self.buttonlist.append(self.nobtn)
@@ -479,6 +476,7 @@ class ScenarioSelect(select.Select):
             self.topsizer.Add(self._sizer_top(), 0, wx.EXPAND, 0)
             self.topsizer.Add(self.tree, 1, wx.EXPAND, 0)
 
+            #左表示にする場合入れ替える
             sizer_2.Add(self.toppanel, 0, 0, 0)
             sizer_2.Add(self.topsizer, 0, wx.EXPAND, 0)
 
@@ -512,24 +510,35 @@ class ScenarioSelect(select.Select):
         return hsizer1
 
     def _sizer_find(self):
+        #検索パネル
         nsizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        vsizer1 = wx.BoxSizer(wx.VERTICAL)
-        vsizer1.Add(self.keyword_label, 0, wx.ALIGN_CENTER|wx.TOP|wx.BOTTOM, cw.wins(1))
-        vsizer1.Add(self.narrow, 0, wx.EXPAND, 0)
-        nsizer.Add(vsizer1, 1, wx.CENTER|wx.EXPAND|wx.RIGHT, cw.wins(1))
-
-        vsizer2 = wx.BoxSizer(wx.VERTICAL)
-        vsizer2.Add(self.narrow_label, 0, wx.ALIGN_CENTER|wx.TOP|wx.BOTTOM, cw.wins(1))
-        vsizer2.Add(self.narrow_type, 0, wx.EXPAND, 0)
-        nsizer.Add(vsizer2, 0, wx.CENTER|wx.EXPAND|wx.RIGHT, cw.wins(1))
-
-        vsizer3 = wx.BoxSizer(wx.VERTICAL)
-        vsizer3.Add(self.sort_label, 0, wx.ALIGN_CENTER|wx.TOP|wx.BOTTOM, cw.wins(1))
-        vsizer3.Add(self.sort, 0, wx.EXPAND, 0)
-        nsizer.Add(vsizer3, 0, wx.CENTER|wx.EXPAND|wx.RIGHT, cw.wins(1))
-
+        #vsizer1 = wx.BoxSizer(wx.VERTICAL)
+        #vsizer1.Add(self.keyword_label, 0, wx.ALIGN_CENTER|wx.TOP|wx.BOTTOM, cw.wins(1))
+        #vsizer1.Add(self.narrow, 0, wx.EXPAND, 0)
+        #nsizer.Add(vsizer1, 1, wx.CENTER|wx.EXPAND|wx.RIGHT, cw.wins(1))
+        nsizer.Add(self.narrow_label, 0, wx.LEFT|wx.RIGHT|wx.CENTER, cw.wins(2))
         nsizer.Add(self.find, 0, wx.CENTER|wx.EXPAND, 0)
+        nsizer.Add(self.narrow, 1, wx.CENTER, 0)
+        nsizer.Add(self.narrow_type, 0, wx.CENTER, cw.wins(1))
+
+        #vsizer2 = wx.BoxSizer(wx.VERTICAL)
+        #vsizer2.Add(self.narrow_label, 0, wx.ALIGN_CENTER|wx.TOP|wx.BOTTOM, cw.wins(1))
+        #vsizer2.Add(self.narrow_type, 0, wx.EXPAND, 0)
+        #nsizer.Add(vsizer2, 0, wx.CENTER|wx.EXPAND|wx.RIGHT, cw.wins(1))
+        
+
+        #vsizer3 = wx.BoxSizer(wx.VERTICAL)
+        #vsizer3.Add(self.sort_label, 0, wx.ALIGN_CENTER|wx.TOP|wx.BOTTOM, cw.wins(1))
+        #vsizer3.Add(self.sort, 0, wx.EXPAND, 0)
+        #nsizer.Add(vsizer3, 0, wx.CENTER|wx.EXPAND|wx.RIGHT, cw.wins(1))
+
+        nsizer.Add(self.sort_label, 0, wx.LEFT|wx.RIGHT|wx.CENTER, cw.wins(1))
+        #wx.EXPANDだと貼り紙の移動で描画が乱れる
+        nsizer.Add(self.sort, 0, wx.CENTER, 0)
+        #nsizer.Fit(self)
+
+
         nsizer.Add(self.bookmark, 0, wx.CENTER|wx.EXPAND, 0)
         return nsizer
 

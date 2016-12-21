@@ -320,20 +320,22 @@ class Select(wx.Dialog):
         return True
 
     def _init_narrowpanel(self, choices, narrowtext, narrowtype, tworows=False):
-        font = cw.cwpy.rsrc.get_wxfont("paneltitle2", pixelsize=cw.wins(15))
-        if tworows:
-            self.keyword_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["narrow_keyword"])
-            self.keyword_label.SetFont(font)
-        else:
-            self.narrow_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["narrow_condition"])
-            self.narrow_label.SetFont(font)
-        self.narrow = wx.TextCtrl(self, -1, size=(cw.wins(0), -1))
+        font = cw.cwpy.rsrc.get_wxfont("paneltitle2", pixelsize=cw.wins(13))
+        #if tworows:
+        #    self.keyword_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["narrow_keyword"])
+        #    self.keyword_label.SetFont(font)
+        #else:
+        #    self.narrow_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["narrow_condition"])
+        #    self.narrow_label.SetFont(font)
+        self.narrow_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["narrow_condition"])
+        self.narrow_label.SetFont(font)
+        self.narrow = wx.TextCtrl(self, -1, size=(cw.wins(0), -1), style=wx.SIMPLE_BORDER)
         self.narrow.SetFont(font)
         self.narrow.SetValue(narrowtext)
-        if tworows:
-            self.narrow_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["narrow_condition2"])
-            self.narrow_label.SetFont(font)
-        cfont = cw.cwpy.rsrc.get_wxfont("combo", pixelsize=cw.wins(14))
+        #if tworows:
+        #    self.narrow_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["narrow_condition2"])
+        #    self.narrow_label.SetFont(font)
+        cfont = cw.cwpy.rsrc.get_wxfont("combo", pixelsize=cw.wins(13))
         self.narrow_type = wx.Choice(self, -1, size=(-1, -1), choices=choices)
         self.narrow_type.SetFont(cfont)
         self.narrow_type.SetSelection(narrowtype)
@@ -1785,7 +1787,7 @@ class PartySelect(MultiViewSelect):
 
 class PlayerSelect(MultiViewSelect):
     """
-    冒険者選択ダイアログ。
+    宿帳を開く。
     """
     def __init__(self, parent):
         # ダイアログボックス作成
@@ -1810,7 +1812,7 @@ class PlayerSelect(MultiViewSelect):
         self._init_narrowpanel(choices, u"", cw.cwpy.setting.standbys_narrowtype)
 
         # sort
-        font = cw.cwpy.rsrc.get_wxfont("paneltitle2", pixelsize=cw.wins(15))
+        font = cw.cwpy.rsrc.get_wxfont("paneltitle2", pixelsize=cw.wins(13))
         self.sort_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["sort_title"])
         self.sort_label.SetFont(font)
         choices = (cw.cwpy.msgs["sort_no"],
@@ -1897,6 +1899,7 @@ class PlayerSelect(MultiViewSelect):
         cw.cwpy.setting.show_additional_player = self.addctrlbtn.GetToggle()
 
     def _add_topsizer(self):
+        #検索
         nsizer = wx.BoxSizer(wx.HORIZONTAL)
 
         nsizer.Add(self.narrow_label, 0, wx.LEFT|wx.RIGHT|wx.CENTER, cw.wins(2))
