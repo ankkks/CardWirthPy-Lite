@@ -91,9 +91,6 @@ class ScenarioSelect(select.Select):
                                                                              cw.cwpy.rsrc.dialogs["SUMMARY_INVISIBLE"],
                                                                              cw.cwpy.setting.show_invisiblescenario)
 
-        self.pagelabel = wx.StaticText(self, -1, u"1/1")
-        self.pagelabel.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(15)))
-
         # エクスプローラーで開く
         bmp = cw.cwpy.rsrc.dialogs["DIRECTORY"]
         self.opendirbtn = cw.cwpy.rsrc.create_wxbutton(self, -1, (cw.wins(32), cw.wins(24)), bmp=bmp)
@@ -186,12 +183,10 @@ class ScenarioSelect(select.Select):
             self.additionals.append((self.unfitness, lambda: cw.cwpy.setting.show_scenariotree))
             self.additionals.append((self.completed, lambda: cw.cwpy.setting.show_scenariotree))
             self.additionals.append((self.invisible, lambda: cw.cwpy.setting.show_scenariotree))
-            self.additionals.append((self.pagelabel, lambda: cw.cwpy.setting.show_scenariotree))
             self.additionals.append((self.opendirbtn, lambda: cw.cwpy.setting.show_scenariotree))
             if self.editorbtn:
                 self.additionals.append((self.editorbtn, lambda: cw.cwpy.setting.show_scenariotree))
 
-            #self.additionals.append(self.keyword_label)
             self.additionals.append(self.narrow)
             self.additionals.append(self.narrow_label)
             self.additionals.append(self.narrow_type)
@@ -343,7 +338,7 @@ class ScenarioSelect(select.Select):
         if cw.cwpy.setting.show_scenariotree and not self.addctrlbtn.GetToggle():
             h = size[1]
             h -= max(map(lambda ctrl: ctrl.GetSize()[1] if ctrl else 0,
-                         (self.unfitness, self.completed, self.invisible, self.pagelabel,
+                         (self.unfitness, self.completed, self.invisible, 
                           self.editorbtn, self.opendirbtn, self.addctrlbtn)))
             treesize = (size[0], h)
         else:
@@ -501,7 +496,6 @@ class ScenarioSelect(select.Select):
         hsizer1.Add(self.completed, 0, 0, 0)
         hsizer1.Add(self.invisible, 0, 0, 0)
         hsizer1.AddStretchSpacer(1)
-        hsizer1.Add(self.pagelabel, 0, wx.CENTER|wx.RIGHT, cw.wins(5))
         hsizer1.Add(self.opendirbtn, 0, 0, 0)
         if self.editorbtn:
             hsizer1.Add(self.editorbtn, 0, 0, 0)
@@ -513,25 +507,10 @@ class ScenarioSelect(select.Select):
         #検索パネル
         nsizer = wx.BoxSizer(wx.HORIZONTAL)
 
-        #vsizer1 = wx.BoxSizer(wx.VERTICAL)
-        #vsizer1.Add(self.keyword_label, 0, wx.ALIGN_CENTER|wx.TOP|wx.BOTTOM, cw.wins(1))
-        #vsizer1.Add(self.narrow, 0, wx.EXPAND, 0)
-        #nsizer.Add(vsizer1, 1, wx.CENTER|wx.EXPAND|wx.RIGHT, cw.wins(1))
         nsizer.Add(self.narrow_label, 0, wx.LEFT|wx.RIGHT|wx.CENTER, cw.wins(2))
         nsizer.Add(self.find, 0, wx.CENTER|wx.EXPAND, 0)
         nsizer.Add(self.narrow, 1, wx.CENTER, 0)
         nsizer.Add(self.narrow_type, 0, wx.CENTER, cw.wins(1))
-
-        #vsizer2 = wx.BoxSizer(wx.VERTICAL)
-        #vsizer2.Add(self.narrow_label, 0, wx.ALIGN_CENTER|wx.TOP|wx.BOTTOM, cw.wins(1))
-        #vsizer2.Add(self.narrow_type, 0, wx.EXPAND, 0)
-        #nsizer.Add(vsizer2, 0, wx.CENTER|wx.EXPAND|wx.RIGHT, cw.wins(1))
-        
-
-        #vsizer3 = wx.BoxSizer(wx.VERTICAL)
-        #vsizer3.Add(self.sort_label, 0, wx.ALIGN_CENTER|wx.TOP|wx.BOTTOM, cw.wins(1))
-        #vsizer3.Add(self.sort, 0, wx.EXPAND, 0)
-        #nsizer.Add(vsizer3, 0, wx.CENTER|wx.EXPAND|wx.RIGHT, cw.wins(1))
 
         nsizer.Add(self.sort_label, 0, wx.LEFT|wx.RIGHT|wx.CENTER, cw.wins(1))
         #wx.EXPANDだと貼り紙の移動で描画が乱れる
@@ -1319,17 +1298,6 @@ class ScenarioSelect(select.Select):
     def draw(self, update=False):
         self._draw_impl(update)
 
-    def _update_pagelabel(self):
-        if self.list:
-            self.pagelabel.SetLabel("%s/%s" % (self.index+1, len(self.list)))
-        else:
-            self.pagelabel.SetLabel("1/1")
-        dc = wx.ClientDC(self.pagelabel)
-        w, h, _lh = dc.GetMultiLineTextExtent(self.pagelabel.GetLabel())
-        self.pagelabel.SetSize((w, h))
-        self.pagelabel.SetMinSize((w, h))
-        self.Layout()
-
     def _get_bg(self):
         if self._bg:
             return self._bg
@@ -1482,7 +1450,6 @@ class ScenarioSelect(select.Select):
 
     def _draw_impl(self, update=False, dc=None):
         if update:
-            self._update_pagelabel()
             self.enable_btn()
 
             if cw.cwpy.setting.show_paperandtree:
@@ -1696,20 +1663,12 @@ class ScenarioSelect(select.Select):
 
             self._enable_btn2(header, dc=dc)
 
-        # 上部バーが非表示の時はページ数を表示
-        if self.addctrlbtn and not (self.addctrlbtn.GetToggle() or cw.cwpy.setting.show_scenariotree):
-            dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(15)))
-            page = self.pagelabel.GetLabelText()
-            w, h = dc.GetTextExtent(page)
-            if self.addctrlbtn.IsShown():
-                btnw, btnh = self.addctrlbtn.GetSize()
-                x = bmpw-btnw-cw.wins(5)-w
-                y = (btnh-h)//2
-            else:
-                btnw, btnh = self.addctrlbtn.GetSize()
-                x = bmpw-cw.wins(5)
-                y = bmph-cw.wins(5)
-            cw.util.draw_witharound(dc, page, x, y, 0)
+        # ページ数を表示
+        dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(15)))
+        s = str(self.index+1) if self.list else str(0)
+        s = s + "/" + str(len(self.list))
+        w = dc.GetTextExtent(s)[0]
+        cw.util.draw_witharound(dc, s, bmpw-w-cw.wins(190), cw.wins(340))
 
         if update:
             fc = wx.Window.FindFocus()
@@ -1830,7 +1789,6 @@ class ScenarioSelect(select.Select):
                 self.draw(True)
 
         self._update_saveddirstack()
-        self._update_pagelabel()
 
     def create_treeitems(self, treeitem):
         # 再描画を抑止して軽くする
@@ -2080,7 +2038,6 @@ class ScenarioSelect(select.Select):
 
         self.dirstack = self.get_dirstack(paritem)
         self._update_saveddirstack()
-        self._update_pagelabel()
 
         self.enable_btn()
 
