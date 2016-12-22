@@ -27,16 +27,16 @@ class SelectPartyRecord(select.Select):
         # toppanel
         self.toppanel = wx.Panel(self, -1, size=cw.wins((460, 280)))
         # restore
-        self.restorebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((75, 24)), cw.cwpy.msgs["party_restore"])
+        self.restorebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((75, 23)), cw.cwpy.msgs["party_restore"])
         self.buttonlist.append(self.restorebtn)
         # save
-        self.savebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((75, 24)), cw.cwpy.msgs["party_save"])
+        self.savebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((75, 23)), cw.cwpy.msgs["party_save"])
         self.buttonlist.append(self.savebtn)
         # delete
-        self.deletebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((75, 24)), cw.cwpy.msgs["delete"])
+        self.deletebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((75, 23)), cw.cwpy.msgs["delete"])
         self.buttonlist.append(self.deletebtn)
         # close
-        self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, cw.wins((75, 24)), cw.cwpy.msgs["close"])
+        self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, cw.wins((75, 23)), cw.cwpy.msgs["close"])
         self.buttonlist.append(self.closebtn)
         # enable btn
         self.enable_btn()

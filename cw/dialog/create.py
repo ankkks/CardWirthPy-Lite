@@ -434,18 +434,18 @@ class AdventurerCreater(wx.Dialog):
         else:
             btnwidth = 85
         self.nextbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1,
-                                                            cw.wins((btnwidth, 24)), cw.cwpy.msgs["entry_next"])
+                                                            cw.wins((btnwidth, 23)), cw.cwpy.msgs["entry_next"])
         if cw.cwpy.setting.show_autobuttoninentrydialog:
             self.autobtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1,
-                                                                cw.wins((btnwidth, 24)), cw.cwpy.msgs["auto_selection"])
+                                                                cw.wins((btnwidth, 23)), cw.cwpy.msgs["auto_selection"])
         else:
             self.autobtn = None
         self.prevbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1,
-                                                            cw.wins((btnwidth, 24)), cw.cwpy.msgs["entry_previous"])
+                                                            cw.wins((btnwidth, 23)), cw.cwpy.msgs["entry_previous"])
         self.postbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1,
-                                                            cw.wins((btnwidth, 24)), cw.cwpy.msgs["entry_decide"])
+                                                            cw.wins((btnwidth, 23)), cw.cwpy.msgs["entry_decide"])
         self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1,
-                                                            cw.wins((btnwidth, 24)), cw.cwpy.msgs["entry_cancel"])
+                                                            cw.wins((btnwidth, 23)), cw.cwpy.msgs["entry_cancel"])
         self._init_pages()
         self.enable_btn()
         self.nextbtn.Disable()

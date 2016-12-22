@@ -1404,7 +1404,10 @@ class Resource(object):
             button.SetMinSize(size)
             button.SetFont(self.get_wxfont("button"))
         elif bmp:
-            button = wx.BitmapButton(parent, cid, bmp, style=wx.NO_BORDER)
+            if chain:
+                button = wx.BitmapButton(parent, cid, bmp, style=wx.NO_BORDER)
+            else:
+                button = wx.BitmapButton(parent, cid, bmp)
             button.SetMinSize(size)
             bmp = cw.imageretouch.to_disabledimage(bmp)
             button.SetBitmapDisabled(bmp)
