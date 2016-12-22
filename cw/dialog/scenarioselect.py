@@ -526,6 +526,8 @@ class ScenarioSelect(select.Select):
         value = self.narrow.GetValue()
         if not value:
             cw.cwpy.play_sound("error")
+            self.OnNextButton(event)
+            #ENTERから呼ばれた場合に操作性が悪化するのでFocusを飛ばす
             return
         narrow = self.narrow_type.GetSelection()
         if narrow == 0:
