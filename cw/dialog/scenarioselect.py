@@ -197,19 +197,19 @@ class ScenarioSelect(select.Select):
             self.update_additionals()
 
         # ok
-        self.yesbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_YES, (buttonwidth, cw.wins(24)), cw.cwpy.msgs["decide"])
+        self.yesbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_YES, (buttonwidth, cw.wins(23)), cw.cwpy.msgs["decide"])
         self.buttonlist.append(self.yesbtn)
         # info
-        self.infobtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, (buttonwidth, cw.wins(24)), cw.cwpy.msgs["description"])
+        self.infobtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, (buttonwidth, cw.wins(23)), cw.cwpy.msgs["description"])
         self.buttonlist.append(self.infobtn)
         if not cw.cwpy.setting.show_paperandtree:
             # view
-            self.viewbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, (buttonwidth, cw.wins(24)), cw.cwpy.msgs["scenario_tree"])
+            self.viewbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, (buttonwidth, cw.wins(23)), cw.cwpy.msgs["scenario_tree"])
             self.buttonlist.append(self.viewbtn)
         else:
             self.viewbtn = None
         # close
-        self.nobtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_NO, (buttonwidth, cw.wins(24)), cw.cwpy.msgs["entry_cancel"])
+        self.nobtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_NO, (buttonwidth, cw.wins(23)), cw.cwpy.msgs["entry_cancel"])
         self.buttonlist.append(self.nobtn)
         # ドロップファイル機能ON
         self.DragAcceptFiles(True)
@@ -1253,17 +1253,6 @@ class ScenarioSelect(select.Select):
             dlg.ShowModal()
             dlg.Destroy()
 
-    def convert_scenario(self):
-        if not self.list:
-            return
-        header = self.list[self.index]
-        if not isinstance(header, cw.header.ScenarioHeader) or header.type <> 1:
-            return
-
-        fpath = header.get_fpath()
-        fpath = cw.util.get_linktarget(fpath)
-        self.conv_scenario(fpath)
-
     def OnSelect(self, event):
         #貼り紙バグ
         if not self.list or not self.yesbtn.Enabled:
@@ -1858,14 +1847,17 @@ class ScenarioSelect(select.Select):
     def create_treeitem(self, index, treeitem, header):
         name = header.name
         image = self.tree.imgidx_summary
-
+        
         if self.is_playing(header):
             image = self.tree.imgidx_playing
         elif self.is_complete(header):
             image = self.tree.imgidx_complete
         elif self.is_invisible(header):
             image = self.tree.imgidx_invisible
-        if header.levelmin <> 0 or header.levelmax <> 0:
+        #一覧表示なら省略する
+        if cw.cwpy.setting.show_paperandtree:
+            name = u"%s" % (name)
+        elif header.levelmin <> 0 or header.levelmax <> 0:
             if header.levelmin == header.levelmax:
                 name = u"[    %2d] %s" % (header.levelmin, name)
             else:

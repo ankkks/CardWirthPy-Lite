@@ -63,7 +63,7 @@ class BuildExe(object):
         self.icon_file = "CardWirthPy.ico"
 
         #Manifest file.
-        self.manifest_file = "CardWirthPy.manifest"
+        self.manifest_file = "CardWirthPyLite.manifest"
 
         #Source file name
         self.srcfile_name = "src.zip"
@@ -265,7 +265,7 @@ class BuildExe(object):
 
 def compress_src(zpath):
     fnames = ["cardwirth.py", "build_exe.py", "CardWirthPy.ico",
-              "CardWirthPy.manifest"]
+              "CardWirthPyLite.manifest"]
     encoding = sys.getfilesystemencoding()
     z = zipfile.ZipFile(zpath, "w", zipfile.ZIP_DEFLATED)
 
