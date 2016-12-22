@@ -321,15 +321,9 @@ class Select(wx.Dialog):
 
     def _init_narrowpanel(self, choices, narrowtext, narrowtype, tworows=False):
         font = cw.cwpy.rsrc.get_wxfont("paneltitle2", pixelsize=cw.wins(13))
-        #if tworows:
-        #    self.keyword_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["narrow_keyword"])
-        #    self.keyword_label.SetFont(font)
-        #else:
-        #    self.narrow_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["narrow_condition"])
-        #    self.narrow_label.SetFont(font)
         self.narrow_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["narrow_condition"])
         self.narrow_label.SetFont(font)
-        self.narrow = wx.TextCtrl(self, -1, size=(cw.wins(0), -1), style=wx.SIMPLE_BORDER)
+        self.narrow = wx.TextCtrl(self, -1, size=(cw.wins(0), -1), style= wx.TE_PROCESS_ENTER|wx.SIMPLE_BORDER)
         self.narrow.SetFont(font)
         self.narrow.SetValue(narrowtext)
         #if tworows:
@@ -339,9 +333,12 @@ class Select(wx.Dialog):
         self.narrow_type = wx.Choice(self, -1, size=(-1, -1), choices=choices)
         self.narrow_type.SetFont(cfont)
         self.narrow_type.SetSelection(narrowtype)
-
         self.narrow.Bind(wx.EVT_TEXT, self.OnNarrowCondition)
+        self.narrow.Bind(wx.EVT_TEXT_ENTER, self.OnFind)
         self.narrow_type.Bind(wx.EVT_CHOICE, self.OnNarrowCondition)
+
+    def OnFind(self, event):
+        pass
 
     def OnNarrowCondition(self, event):
         if self._processing:

@@ -112,7 +112,7 @@ class ScenarioSelect(select.Select):
         # toppanelとツリー表示用のビュー
         if cw.cwpy.setting.show_paperandtree:
             self.toppanel = wx.Panel(self, -1, size=(cw.wins(400)+1, cw.wins(370)))
-            size = (cw.wins(270), 0)
+            size = (cw.wins(230), 0)
         else:
             self.toppanel = wx.Panel(self, -1, size=(cw.wins(400), cw.wins(370)+2))
             size = (cw.wins(400), cw.wins(370)+2)
@@ -237,6 +237,7 @@ class ScenarioSelect(select.Select):
         self._do_layout()
         # bind
         self._bind()
+        
         self.toppanel.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDClick)
         self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
         self.Bind(wx.EVT_DROP_FILES, self.OnDropFiles)
