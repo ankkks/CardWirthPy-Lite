@@ -622,20 +622,20 @@ class YadoSelect(MultiViewSelect):
         # toppanel
         self.toppanel = wx.Panel(self, -1, size=cw.wins((400, 370)))
         # ok
-        self.okbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, _okid, cw.wins((50, 24)), cw.cwpy.msgs["decide"])
+        self.okbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, _okid, cw.wins((50, 23)), cw.cwpy.msgs["decide"])
         self.buttonlist.append(self.okbtn)
         # new
-        self.newbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((50, 24)), cw.cwpy.msgs["new"])
+        self.newbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((50, 23)), cw.cwpy.msgs["new"])
         self.buttonlist.append(self.newbtn)
         # extension
-        self.exbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((50, 24)), cw.cwpy.msgs["extension"])
+        self.exbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((50, 23)), cw.cwpy.msgs["extension"])
         self.buttonlist.append(self.exbtn)
         # view
         s = cw.cwpy.msgs["member_list"] if self.views == 1 else cw.cwpy.msgs["member_one"]
-        self.viewbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((50, 24)), s)
+        self.viewbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((50, 23)), s)
         self.buttonlist.append(self.viewbtn)
         # close
-        self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, cw.wins((50, 24)), cw.cwpy.msgs["entry_cancel"])
+        self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, cw.wins((50, 23)), cw.cwpy.msgs["entry_cancel"])
         self.buttonlist.append(self.closebtn)
         # enable bottun
         self.enable_btn()
@@ -1456,23 +1456,23 @@ class PartySelect(MultiViewSelect):
         self.toppanel = wx.Panel(self, -1, size=cw.wins((460, 280)))
         width = 50
         # ok
-        self.okbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_OK, cw.wins((width, 24)), cw.cwpy.msgs["decide"])
+        self.okbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_OK, cw.wins((width, 23)), cw.cwpy.msgs["decide"])
         self.buttonlist.append(self.okbtn)
         # info
-        self.infobtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((width, 24)), cw.cwpy.msgs["information"])
+        self.infobtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((width, 23)), cw.cwpy.msgs["information"])
         self.buttonlist.append(self.infobtn)
         # edit
-        self.editbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((width, 24)), cw.cwpy.msgs["members"])
+        self.editbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((width, 23)), cw.cwpy.msgs["members"])
         self.buttonlist.append(self.editbtn)
         # view
         s = cw.cwpy.msgs["member_list"] if self.views == 1 else cw.cwpy.msgs["member_one"]
-        self.viewbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((width, 24)), s)
+        self.viewbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((width, 23)), s)
         self.buttonlist.append(self.viewbtn)
         # partyrecord
-        self.partyrecordbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((width, 24)), cw.cwpy.msgs["party_record"])
+        self.partyrecordbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((width, 23)), cw.cwpy.msgs["party_record"])
         self.buttonlist.append(self.partyrecordbtn)
         # close
-        self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, cw.wins((width, 24)), cw.cwpy.msgs["entry_cancel"])
+        self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, cw.wins((width, 23)), cw.cwpy.msgs["entry_cancel"])
         self.buttonlist.append(self.closebtn)
         # enable btn
         self.enable_btn()
@@ -1825,23 +1825,23 @@ class PlayerSelect(MultiViewSelect):
             self.sort.Select(0)
 
         # add
-        self.addbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_ADD, cw.wins((50, 24)), cw.cwpy.msgs["add_member"])
+        self.addbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_ADD, cw.wins((50, 23)), cw.cwpy.msgs["add_member"])
         self.buttonlist.append(self.addbtn)
         # info
-        self.infobtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((50, 24)), cw.cwpy.msgs["information"])
+        self.infobtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((50, 23)), cw.cwpy.msgs["information"])
         self.buttonlist.append(self.infobtn)
         # new
-        self.newbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((50, 24)), cw.cwpy.msgs["new"])
+        self.newbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((50, 23)), cw.cwpy.msgs["new"])
         self.buttonlist.append(self.newbtn)
         # extension
-        self.exbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((50, 24)), cw.cwpy.msgs["extension"])
+        self.exbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((50, 23)), cw.cwpy.msgs["extension"])
         self.buttonlist.append(self.exbtn)
         # view
         s = cw.cwpy.msgs["member_list"] if self.views == 1 else cw.cwpy.msgs["member_one"]
-        self.viewbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((50, 24)), s)
+        self.viewbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((50, 23)), s)
         self.buttonlist.append(self.viewbtn)
         # close
-        self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, cw.wins((50, 24)), cw.cwpy.msgs["close"])
+        self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, cw.wins((50, 23)), cw.cwpy.msgs["close"])
         self.buttonlist.append(self.closebtn)
 
         # additionals
@@ -2681,13 +2681,13 @@ class Album(PlayerSelect):
         # toppanel
         self.toppanel = wx.Panel(self, -1, size=cw.wins((460, 280)))
         # info
-        self.infobtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_PROPERTIES, cw.wins((90, 24)), cw.cwpy.msgs["information"])
+        self.infobtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_PROPERTIES, cw.wins((90, 23)), cw.cwpy.msgs["information"])
         self.buttonlist.append(self.infobtn)
         # delete
-        self.delbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_DELETE, cw.wins((90, 24)), cw.cwpy.msgs["delete"])
+        self.delbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_DELETE, cw.wins((90, 23)), cw.cwpy.msgs["delete"])
         self.buttonlist.append(self.delbtn)
         # close
-        self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, cw.wins((90, 24)), cw.cwpy.msgs["close"])
+        self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, cw.wins((90, 23)), cw.cwpy.msgs["close"])
         self.buttonlist.append(self.closebtn)
         # enable btn
         self.enable_btn()
