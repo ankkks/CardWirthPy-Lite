@@ -3494,7 +3494,7 @@ class CWPy(_Singleton, threading.Thread):
                     elif targets:
                         self.set_targetarrow(targets)
                 elif self.setting.show_allselectedcards or selowner:
-                    alpha = 160
+                    alpha = 210
                     if not sprite.alpha is None:
                         alpha = min(alpha, sprite.alpha)
                     self.set_inusecardimg(sprite, header, alpha=alpha)

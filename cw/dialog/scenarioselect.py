@@ -542,6 +542,7 @@ class ScenarioSelect(select.Select):
                 value = int(value)
             except:
                 cw.cwpy.play_sound("error")
+                self.OnNextButton(event)
                 return
         elif narrow == 4:
             ftype = cw.scenariodb.DATA_FNAME
