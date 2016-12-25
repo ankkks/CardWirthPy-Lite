@@ -44,13 +44,13 @@ class CardControl(wx.Dialog):
             self.areaid = areaid
 
         # panel #style=wx.RAISED_BORDERは詰めると見栄えが悪くなるので一旦止める
-        self.panel = wx.Panel(self, -1, size=(-1, cw.wins(30)))
+        self.panel = wx.Panel(self, -1, size=(-1, cw.wins(29)))
         # close
         if self.callname in ("HANDVIEW", "CARDPOCKET_REPLACE"):
             s = cw.cwpy.msgs["entry_cancel"]
         else:
             s = cw.cwpy.msgs["close"]
-        self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, cw.wins((90, 23)), s)
+        self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, (-1,-1), s)
         # left
         bmp = cw.cwpy.rsrc.buttons["LMOVE"]
         self.leftbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((30, 30)), bmp=bmp, chain=True)
@@ -58,8 +58,9 @@ class CardControl(wx.Dialog):
         bmp = cw.cwpy.rsrc.buttons["RMOVE"]
         self.rightbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((30, 30)), bmp=bmp, chain=True)
         # toppanel
-        self.toppanel = wx.Panel(self, -1, size=cw.wins((520, 285)))
-        self.toppanel.SetMinSize(cw.wins((520, 285)))
+        #size = cw.wins((501, 284)) size = cw.wins((501, 254))
+        self.toppanel = wx.Panel(self, -1, size=cw.wins((501, 254)))
+        #self.toppanel.SetMinSize(cw.wins((501, 258)))
         self.toppanel.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
         self.toppanel.SetDoubleBuffered(True)
         self.change_bgs.append(self.toppanel)
@@ -79,7 +80,7 @@ class CardControl(wx.Dialog):
                    cw.cwpy.msgs["sort_price"],
                    cw.cwpy.msgs["scenario_name"],
                    cw.cwpy.msgs["author"]]
-        self.sort = wx.ComboBox(self.toppanel, -1, size=cw.wins((75, 24)), choices=choices, style=wx.CB_READONLY)
+        self.sort = wx.ComboBox(self.toppanel, -1, size=cw.wins((80, 24)), choices=choices, style=wx.CB_READONLY)
         self.sort.SetFont(cw.cwpy.rsrc.get_wxfont("combo", pixelsize=cw.wins(14)))
         self.sortwithstar = wx.lib.buttons.ThemedGenBitmapToggleButton(self.toppanel, -1, None, size=cw.wins((24, 24)))
         self.sortwithstar.SetToolTipString(cw.cwpy.msgs["sort_with_star"])
@@ -151,8 +152,8 @@ class CardControl(wx.Dialog):
             self.addctrlbtn = None
 
         # 絞込条件
-        font = cw.cwpy.rsrc.get_wxfont("paneltitle", pixelsize=cw.wins(15))
-        self.narrow = wx.TextCtrl(self.toppanel, -1, size=cw.wins((100, 20)))
+        font = cw.cwpy.rsrc.get_wxfont("paneltitle", pixelsize=cw.wins(13))
+        self.narrow = wx.TextCtrl(self.toppanel, -1, size=cw.wins((100, 20)), style=wx.SIMPLE_BORDER)
         self.narrow.SetValue(cw.cwpy.setting.card_narrow)
         self.narrow.SetFont(font)
         if self.callname == "INFOVIEW":
@@ -169,7 +170,7 @@ class CardControl(wx.Dialog):
                        cw.cwpy.msgs["description"],
                        cw.cwpy.msgs["scenario_name"],
                        cw.cwpy.msgs["author"])
-        font = cw.cwpy.rsrc.get_wxfont("combo", pixelsize=cw.wins(14))
+        font = cw.cwpy.rsrc.get_wxfont("combo", pixelsize=cw.wins(13))
         self.narrow_type = wx.ComboBox(self.toppanel, -1, size=cw.wins((90, 20)), choices=choices, style=wx.CB_READONLY)
         self.narrow_type.SetFont(font)
         if self.callname == "INFOVIEW":
@@ -310,8 +311,9 @@ class CardControl(wx.Dialog):
         """
         引数に子クラスで設定したsizer_leftbarが必要
         """
-        cwidth = cw.wins(520)
-        cheight = cw.wins(285)
+        cwidth = cw.wins(501)
+        cheight = cw.wins(274)
+        #本来は283,501
 
         # 表示有無を切り替えた時に多少綺麗に再配置されるように、
         # 非表示のコントロールは画面外へ出しておく
@@ -322,79 +324,46 @@ class CardControl(wx.Dialog):
         # toppanelはSizerを使わず自前で座標を計算
         if self.callname == "CARDPOCKET":
             # キャストの手札カード
-            x = cw.wins(10)
-            y = cw.wins(64)
+            x = cw.wins(7)
+            y = cw.wins(54)
             self.skillbtn.SetPosition((x, y))
-            y += self.skillbtn.GetSize()[1]
+            y += self.skillbtn.GetSize()[1]-cw.wins(1)
             self.itembtn.SetPosition((x, y))
-            y += self.itembtn.GetSize()[1]
+            y += self.itembtn.GetSize()[1]-cw.wins(1)
             self.beastbtn.SetPosition((x, y))
         elif not self.callname in ("HANDVIEW", "CARDPOCKET_REPLACE"):
             # カード置き場、荷物袋、情報カード
-            x = cw.wins(10)
-            if cw.cwpy.setting.show_addctrlbtn:
-                y = cw.wins(40)
-            else:
-                y = cw.wins(50)
+            x = cw.wins(8)
+            y = cw.wins(42)
+            
             self.upbtn.SetPosition((x, y))
-            self.upbtn.SetSize(cw.wins((70, 40)))
+            self.upbtn.SetSize(cw.wins((68, 38)))
             y += self.upbtn.GetSize()[1]
-            y += cw.wins(240-110)
+            y += cw.wins(122)
             self.downbtn.SetPosition((x, y))
-            self.downbtn.SetSize(cw.wins((70, 40)))
+            self.downbtn.SetSize(cw.wins((68, 38)))
 
             # ページ番号入力欄
             psize = (cw.wins(34), self.page.GetSize()[1])
             dc = wx.ClientDC(self)
-            dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(14)))
+            dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(13)))
             rect = self.upbtn.GetRect()
             top = rect[1] + rect[3]
             btm = self.downbtn.GetPosition()[1]
-            h = dc.GetTextExtent("#")[1] + cw.wins(1) + cw.wins(cw.SIZE_CARDIMAGE[1])
+            h = dc.GetTextExtent("#")[1] - cw.wins(5) + cw.wins(cw.SIZE_CARDIMAGE[1])
             y = top + (btm-top-h)/2
-            y += cw.wins(cw.SIZE_CARDIMAGE[1])-cw.wins(1)
+            y += cw.wins(cw.SIZE_CARDIMAGE[1])+cw.wins(2)
             te = dc.GetTextExtent("/")
-            sx = cw.wins(40)-te[0]/2+cw.wins(7)
+            sx = cw.wins(40)-te[0]/2+cw.wins(2)
             y += te[1] / 2
-            y -= psize[1]/2
+            y -= psize[1]/2 +cw.wins(2)
             self.page.SetPosition((sx-psize[0], y))
             self.page.SetSize(psize)
 
-        # 絞込条件
-        if self.narrow.IsShown():
-            y = cheight - cw.wins(5)
-            y -= cw.wins(20)
-            x = cwidth - cw.wins(5)
-            x -= cw.wins(90)
-            self.narrow_type.SetSize(cw.wins((90, 20)))
-            yc = y + (cw.wins(20)-self.narrow_type.GetSize()[1]) / 2
-            self.narrow_type.SetPosition((x, yc))
-            x -= cw.wins(100)
-            x -= cw.wins(2)
-            self.narrow.SetPosition((x, y))
-            self.narrow.SetSize(cw.wins((100, 20)))
 
-        # 移動先
+        #種別アイコン
+        y = cheight - cw.wins(25)
         x = cwidth - cw.wins(5)
-        y = cw.wins(0)
-        if self.combo.IsShown():
-            x -= cw.wins(20)
-            self.rightbtn2.SetPosition((x, y))
-            self.rightbtn2.SetSize(cw.wins((20, 24)))
-            x -= cw.wins(100)
-            self.combo.SetSize((cw.wins(100), cw.wins(24)))
-            if sys.platform == "win32":
-                import win32api
-                CB_SETITEMHEIGHT = 0x153
-                win32api.SendMessage(self.combo.Handle, CB_SETITEMHEIGHT, -1, cw.wins(24))
-            yc = y + (cw.wins(24)-self.combo.GetSize()[1]) / 2
-            self.combo.SetPosition((x, yc))
-
-            x -= cw.wins(20)
-            self.leftbtn2.SetPosition((x, y))
-            self.leftbtn2.SetSize(cw.wins((20, 24)))
-            x -= cw.wins(50)
-
         if self.callname in ("BACKPACK", "STOREHOUSE"):
             for cardtype in (cw.POCKET_BEAST, cw.POCKET_ITEM, cw.POCKET_SKILL):
                 shown = False
@@ -402,41 +371,72 @@ class CardControl(wx.Dialog):
                 if not btn.IsShown():
                     continue
                 shown = True
-                x -= cw.wins(24)
+                x -= cw.wins(22)
                 btn.SetPosition((x, y))
                 btn.SetSize(cw.wins((24, 24)))
             if shown:
                 x -= cw.wins(5)
+        # 絞込条件
+        if self.narrow.IsShown():
+            x -= cw.wins(16)
+            self.sortwithstar.SetPosition((x, y))
+            self.sortwithstar.SetSize(cw.wins((24, 24)))
+            x -= cw.wins(138)
+            self.narrow_type.SetSize(cw.wins((90, 20)))
+            y+= cw.wins(3)
+            self.narrow_type.SetPosition((x, y))
+            x -= cw.wins(190)
+            self.narrow.SetPosition((x, y))
+            self.narrow.SetSize(cw.wins((188, 20)))
+
+        # 移動先
+        x = cwidth #- cw.wins(1)
+        y = cw.wins(1)
+        if self.combo.IsShown():
+            x -= cw.wins(23)
+            self.rightbtn2.SetPosition((x, y))
+            self.rightbtn2.SetSize(cw.wins((20, 20)))
+            x -= cw.wins(140)
+            self.combo.SetSize(cw.wins((140, 22)))
+            if sys.platform == "win32":
+                import win32api
+                CB_SETITEMHEIGHT = 0x153
+                win32api.SendMessage(self.combo.Handle, CB_SETITEMHEIGHT, -1, cw.wins(22))
+            yc = y + (cw.wins(22)-self.combo.GetSize()[1]) / 2
+            self.combo.SetPosition((x, yc))
+
+            x -= cw.wins(20)
+            self.leftbtn2.SetPosition((x, y))
+            self.leftbtn2.SetSize(cw.wins((20, 20)))
+            x -= cw.wins(50)
+
 
         if self.editstar.IsShown():
             x -= cw.wins(24)
             self.editstar.SetPosition((x, y))
-            self.editstar.SetSize(cw.wins((24, 24)))
+            self.editstar.SetSize(cw.wins((22, 23)))
         if self.sort.IsShown():
-            x -= cw.wins(24)
-            self.sortwithstar.SetPosition((x, y))
-            self.sortwithstar.SetSize(cw.wins((24, 24)))
             x -= cw.wins(77)
-            self.sort.SetSize(cw.wins((75, 24)))
-            yc = y + (cw.wins(24)-self.sort.GetSize()[1]) / 2
+            self.sort.SetSize(cw.wins((75, 22)))
+            yc = y + (cw.wins(22)-self.sort.GetSize()[1]) / 2
             self.sort.SetPosition((x, yc))
 
         # 追加的コントロールの表示
         if self.addctrlbtn:
             w, h = self.addctrlbtn.GetSize()
-            self.addctrlbtn.SetPosition((cw.wins(2), cheight-h-cw.wins(2)))
+            self.addctrlbtn.SetPosition((cw.wins(55), cheight-h-cw.wins(167)))
 
         # ボタンバー
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
         sizer_panel = wx.BoxSizer(wx.HORIZONTAL)
         sizer_panel.Add(self.leftbtn, 0, 0, 0)
         sizer_panel.AddStretchSpacer(1)
-        sizer_panel.Add(self.closebtn, 0, wx.TOP|wx.BOTTOM, cw.wins(3))
+        sizer_panel.Add(self.closebtn, 0, wx.CENTER, cw.wins(3))
         sizer_panel.AddStretchSpacer(1)
         sizer_panel.Add(self.rightbtn, 0, 0, 0)
         self.panel.SetSizer(sizer_panel)
         # トップパネルとボタンバーのサイザーを設定
-        sizer_1.Add(self.toppanel, 1, wx.EXPAND, 0)
+        sizer_1.Add(self.toppanel, 0, wx.EXPAND, 0)
         sizer_1.Add(self.panel, 0, wx.EXPAND, 0)
         self.SetSizer(sizer_1)
         sizer_1.Fit(self)
@@ -449,13 +449,16 @@ class CardControl(wx.Dialog):
             ctrl.Show(show and is_shown())
         if show:
             bmp = cw.cwpy.rsrc.dialogs["HIDE_CONTROLS"]
+            size = cw.wins((501, 274))
         else:
             bmp = cw.cwpy.rsrc.dialogs["SHOW_CONTROLS"]
+            size = cw.wins((501, 254))
         self.addctrlbtn.SetBitmapFocus(bmp)
         self.addctrlbtn.SetBitmapLabel(bmp)
         self.addctrlbtn.SetBitmapSelected(bmp)
         cw.cwpy.setting.show_additional_card = show
         self.set_cardpos()
+        self.toppanel.SetMinSize(size)
 
     def OnToggleAdditionalControls(self, event):
         if not self.addctrlbtn or not self.callname in ("STOREHOUSE", "BACKPACK", "CARDPOCKETB", "INFOVIEW"):
@@ -779,12 +782,12 @@ class CardControl(wx.Dialog):
         size = bmp.GetSize()
         dc.DrawBitmap(bmp, (tsize[0]-size[0])/2, (tsize[1]-size[1])/2, True)
         # ライン
-        colour = wx.SystemSettings_GetColour(wx.SYS_COLOUR_3DHIGHLIGHT)
-        dc.SetPen(wx.Pen(colour, cw.wins(1), wx.SOLID))
-        dc.DrawLine(cw.wins(0), cw.wins(25), cw.wins(520), cw.wins(25))
         colour = wx.SystemSettings_GetColour(wx.SYS_COLOUR_3DSHADOW)
+        dc.SetPen(wx.Pen(colour, cw.wins(1), wx.SOLID))
+        dc.DrawLine(cw.wins(3), cw.wins(22), cw.wins(498), cw.wins(22))
+        colour = wx.SystemSettings_GetColour(wx.SYS_COLOUR_3DHIGHLIGHT)
         dc.SetPen(wx.Pen(colour, 1, wx.SOLID))
-        dc.DrawLine(cw.wins(0), cw.wins(26), cw.wins(520), cw.wins(26))
+        dc.DrawLine(cw.wins(3), cw.wins(23), cw.wins(498), cw.wins(23))
         # モード見出し
         dc.SetTextForeground(wx.LIGHT_GREY)
         dc.SetFont(cw.cwpy.rsrc.get_wxfont("paneltitle", pixelsize=cw.wins(16)))
@@ -801,7 +804,7 @@ class CardControl(wx.Dialog):
             s = cw.cwpy.msgs["mode_use"]
         fh = dc.GetTextExtent("#")[1]
         fy = (cw.wins(24)-fh) / 2
-        dc.DrawText(s, cw.wins(8), fy)
+        dc.DrawText(s, cw.wins(12), fy)
 
         dc.SetFont(cw.cwpy.rsrc.get_wxfont("paneltitle", pixelsize=cw.wins(14)))
         fh = dc.GetTextExtent("#")[1]
@@ -878,7 +881,7 @@ class CardControl(wx.Dialog):
             w = dc.GetTextExtent(s)[0]
             rect = self.beastbtn.GetRect()
             y = rect[1] + rect[3] + cw.wins(5)
-            dc.DrawText(s, cw.wins(45)-w/2, y)
+            dc.DrawText(s, cw.wins(41)-w/2, y)
         elif self.callname in ("INFOVIEW", "BACKPACK", "STOREHOUSE", "CARDPOCKETB"):
             # カード置き場、荷物袋、情報カード
             if self._leftmarks:
@@ -887,7 +890,7 @@ class CardControl(wx.Dialog):
                 s = "/"
                 sw = dc.GetTextExtent(s)[0]
                 w = sw
-                sx = cw.wins(40)-w/2+cw.wins(7)
+                sx = cw.wins(40)-w/2+cw.wins(4)
                 sy = y+max(map(lambda wxbmp: wxbmp.GetHeight(), self._leftmarks))+cw.wins(1)
                 dc.DrawText(s, sx, sy)
                 s = str(maxpage)
@@ -1373,17 +1376,17 @@ class CardHolder(CardControl):
         # 情報カードダイアログの場合は切り替えが無いため不要
         if self.callname <> "INFOVIEW":
             # skill
-            self.skillbtn = wx.lib.buttons.ThemedGenBitmapToggleButton(self.toppanel, -1, None, size=cw.wins((74, 54)))
+            self.skillbtn = wx.lib.buttons.ThemedGenBitmapToggleButton(self.toppanel, -1, None, size=cw.wins((71, 51)))
             bmp = cw.cwpy.rsrc.buttons["SKILL"]
             self.skillbtn.SetBitmapLabel(bmp, False)
             self.skillbtn.SetBitmapSelected(bmp)
             # item
-            self.itembtn = wx.lib.buttons.ThemedGenBitmapToggleButton(self.toppanel, -1, None, size=cw.wins((74, 54)))
+            self.itembtn = wx.lib.buttons.ThemedGenBitmapToggleButton(self.toppanel, -1, None, size=cw.wins((71, 51)))
             bmp = cw.cwpy.rsrc.buttons["ITEM"]
             self.itembtn.SetBitmapLabel(bmp, False)
             self.itembtn.SetBitmapSelected(bmp)
             # beast
-            self.beastbtn = wx.lib.buttons.ThemedGenBitmapToggleButton(self.toppanel, -1, None, size=cw.wins((74, 54)))
+            self.beastbtn = wx.lib.buttons.ThemedGenBitmapToggleButton(self.toppanel, -1, None, size=cw.wins((71, 51)),style=wx.CLIP_CHILDREN)
             bmp = cw.cwpy.rsrc.buttons["BEAST"]
             self.beastbtn.SetBitmapLabel(bmp, False)
             self.beastbtn.SetBitmapSelected(bmp)
@@ -1395,9 +1398,9 @@ class CardHolder(CardControl):
         # カード置き場、荷物袋、情報カード用のコントロール
         # up
         bmp = cw.cwpy.rsrc.buttons["UP"]
-        self.upbtn = cw.cwpy.rsrc.create_wxbutton(self.toppanel, wx.ID_UP, cw.wins((70, 40)), bmp=bmp, chain=True)
+        self.upbtn = cw.cwpy.rsrc.create_wxbutton(self.toppanel, wx.ID_UP, cw.wins((60, 35)), bmp=bmp, chain=True)
         # ページ指定
-        self.page = wx.lib.intctrl.IntCtrl(self.toppanel, -1, style=wx.TE_RIGHT, size=cw.wins((-1, 22)))
+        self.page = wx.lib.intctrl.IntCtrl(self.toppanel, -1, style=wx.TE_RIGHT|wx.SIMPLE_BORDER, size=(-1, -1))
         font = cw.cwpy.rsrc.get_wxfont("paneltitle", pixelsize=cw.wins(17))
         self.page.SetFont(font)
         self.page.SetValue(1)
@@ -1409,7 +1412,7 @@ class CardHolder(CardControl):
         self.additionals.append((self.page, lambda: self.callname in ("STOREHOUSE", "BACKPACK", "CARDPOCKETB", "INFOVIEW")))
         # down
         bmp = cw.cwpy.rsrc.buttons["DOWN"]
-        self.downbtn = cw.cwpy.rsrc.create_wxbutton(self.toppanel, wx.ID_DOWN, cw.wins((70, 40)), bmp=bmp, chain=True)
+        self.downbtn = cw.cwpy.rsrc.create_wxbutton(self.toppanel, wx.ID_DOWN, cw.wins((60, 35)), bmp=bmp, chain=True)
 
         self._enable_updown()
 
@@ -1913,8 +1916,10 @@ class CardHolder(CardControl):
             if btn == event.GetEventObject():
                 cw.cwpy.setting.last_cardpocket = index
                 btn.SetToggle(True)
+                #btn.Disable()
             else:
                 btn.SetToggle(False)
+                #btn.Enable()
 
         self.draw_cards()
 
@@ -2118,12 +2123,11 @@ class CardHolder(CardControl):
                         # 荷物袋に存在する場合のみ選択肢「荷物袋」を表示
                         if header.type == cardtype:
                             # 「荷物袋」の表示順
-                            if not cw.cwpy.setting.show_backpackcardatend:
-                                self.list.insert(0, cw.cwpy.rsrc.backpackcards[cardtype])
-                                break
-                            else:
-                                self.list.insert(10, cw.cwpy.rsrc.backpackcards[cardtype])
-                                break
+                            x = 0
+                            if cw.cwpy.setting.show_backpackcardatend:
+                                x = 10
+                            self.list.insert(x, cw.cwpy.rsrc.backpackcards[cardtype])
+                            break
 
 
     def get_headers(self):
@@ -2281,7 +2285,7 @@ class HandView(CardControl):
     def _do_layout(self):
         CardControl._do_layout(self)
         if self.redeal:
-            cwidth = cw.wins(520)
+            cwidth = cw.wins(503)
             x = cwidth - cw.wins(5)
             y = cw.wins(0)
             x -= cw.wins(24)
@@ -2480,22 +2484,19 @@ def get_poslist(num, mode=1):
         # 描画エリアサイズ
         w, _h = cw.wins((425, 230))
         # 左,上の余白
-        leftm = cw.wins(90)
+        leftm = cw.wins(83)
 
         poslist = []
 
-        if cw.cwpy.setting.show_additional_card:
-            y1 = cw.wins(31)
-            y2 = cw.wins(145)
-        else:
-            y1 = cw.wins(39)
-            y2 = cw.wins(161)
+        #if cw.cwpy.setting.show_additional_card:
+        y1 = cw.wins(27)
+        y2 = cw.wins(140)
 
         for cnt in xrange(num):
             if cnt < 5:
-                poslist.append((leftm+cw.wins(84)*cnt, y1))
+                poslist.append((leftm+cw.wins(83)*cnt, y1))
             else:
-                poslist.append((leftm+cw.wins(84)*(cnt-5), y2))
+                poslist.append((leftm+cw.wins(83)*(cnt-5), y2))
 
     else:
         if mode == 2:
@@ -2504,23 +2505,23 @@ def get_poslist(num, mode=1):
             # 折り返し枚数
             numb = 5
             # 左,上の余白
-            leftm = cw.wins(88)
+            leftm = cw.wins(79)
         elif mode == 3:
-            w, _h = cw.wins((525, 230))
+            w, _h = cw.wins((500, 230))
             numb = 6
-            leftm = cw.wins(0)
+            leftm = cw.wins(2)
 
         if num < numb or mode == 3 and num == numb:
             x = (w - cw.wins(83) * num) / 2 + leftm
-            y = cw.wins(95)
+            y = cw.wins(85)
             poslist = [(x + (cw.wins(83) * cnt), y) for cnt in xrange(num)]
         else:
             row1, row2 = num / 2 + num % 2, num / 2
             x = (w - cw.wins(83) * row1) / 2 + leftm
-            y = cw.wins(40)
+            y = cw.wins(27)
             row1list = [(x + (cw.wins(83) * cnt), y) for cnt in xrange(row1)]
             x = (w - cw.wins(83) * row2) / 2 + leftm
-            y = cw.wins(160)
+            y = cw.wins(140)
             row2list = [(x + (cw.wins(83) * cnt), y) for cnt in xrange(row2)]
             poslist = row1list + row2list
 
