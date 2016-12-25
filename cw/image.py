@@ -199,8 +199,8 @@ class Image(object):
 #-------------------------------------------------------------------------------
 
 class CardImage(Image):
-    def __init__(self, paths, bgtype, name="", premium="", scaleinfo=None,
-                 is_scenariocard=False):
+    def __init__(self, paths, bgtype, name="", premium="", can_loaded_scaledimage=False,
+                 is_scenariocard=False, scedir=""):
         """
         カード画像と背景画像とカード名を合成・加工し、
         wxPythonとPygame両方で使える画像オブジェクトを生成する。
@@ -210,8 +210,9 @@ class CardImage(Image):
         self.bgtype = bgtype
         self.image_mtime = {}
         self.premium = premium
-        self.scaleinfo = scaleinfo
+        self.can_loaded_scaledimage = can_loaded_scaledimage
         self.is_scenariocard = is_scenariocard
+        self.scedir = scedir
 
         self.update_scale()
 
@@ -229,7 +230,7 @@ class CardImage(Image):
         self.image_mtime.clear()
 
     def _upwinmemo(self):
-        return (cw.UP_WIN, cw.cwpy.setting.fontsmoothing_cardname,
+        return (cw.UP_WIN, cw.UP_SCR, cw.cwpy.setting.fontsmoothing_cardname,
                  cw.cwpy.setting.basefont.copy(),
                  cw.cwpy.setting.fonttypes["cardname"],
                  cw.cwpy.setting.fonttypes["uselimit"])
@@ -252,7 +253,8 @@ class CardImage(Image):
                 path = cw.util.get_yadofilepath(path)
 
             if (not path or self.is_scenariocard) and not info.pcnumber:
-                path = cw.util.get_materialpath(info.path, cw.M_IMG, system=not self.is_scenariocard)
+                path = cw.util.get_materialpath(info.path, cw.M_IMG, system=not self.is_scenariocard,
+                                                scedir=self.scedir)
             if not os.path.isfile(path):
                 continue
 
@@ -284,20 +286,25 @@ class CardImage(Image):
                 image.blit(subimg, (cw.s(5), h-sh-cw.s(5)))
 
         self.image_mtime.clear()
-        for info in self.paths:
+        for i, info in enumerate(self.paths):
             path = info.path
             pisc = cw.binary.image.path_is_code(path)
-            if not pisc and not self.is_scenariocard:
+            if (not pisc and not self.is_scenariocard) or info.pcnumber:
                 path = cw.util.get_yadofilepath(path)
 
             if (not path or self.is_scenariocard) and not info.pcnumber:
-                path = cw.util.get_materialpath(info.path, cw.M_IMG, system=not self.is_scenariocard)
+                path = cw.util.get_materialpath(info.path, cw.M_IMG, system=not self.is_scenariocard,
+                                                scedir=self.scedir)
 
             if not pisc and os.path.isfile(path):
                 self.image_mtime[path] = os.path.getmtime(path)
 
             if pisc or os.path.isfile(path):
-                subimg = cw.s((cw.util.load_image(path, True), cw.SIZE_CARDIMAGE, self.scaleinfo))
+                if isinstance(self.can_loaded_scaledimage, (list, tuple)):
+                    can_loaded_scaledimage = self.can_loaded_scaledimage[i]
+                else:
+                    can_loaded_scaledimage = self.can_loaded_scaledimage
+                subimg = cw.s(cw.util.load_image(path, True, can_loaded_scaledimage=can_loaded_scaledimage))
 
                 baserect = info.calc_basecardposition(subimg.get_size(), noscale=False,
                                                       basecardtype="NormalCard",
@@ -472,20 +479,25 @@ class CardImage(Image):
                 dc.DrawBitmap(subimg, w-sw-cw.wins(5), cw.wins(5), True)
                 dc.DrawBitmap(subimg, cw.wins(5), h-sh-cw.wins(5), True)
 
-        for info in self.paths:
+        for i, info in enumerate(self.paths):
             path = info.path
             pisc = cw.binary.image.path_is_code(path)
-            if not pisc and not self.is_scenariocard:
+            if (not pisc and not self.is_scenariocard) or info.pcnumber:
                 path = cw.util.get_yadofilepath(path)
 
             if (not path or self.is_scenariocard) and not info.pcnumber:
-                path = cw.util.get_materialpath(info.path, cw.M_IMG, system=not self.is_scenariocard)
+                path = cw.util.get_materialpath(info.path, cw.M_IMG, system=not self.is_scenariocard,
+                                                scedir=self.scedir)
 
             if pisc or os.path.isfile(path):
-                subimg = cw.util.load_wxbmp(path, True)
-                subimg2 = cw.wins((subimg, cw.SIZE_CARDIMAGE, self.scaleinfo))
+                if isinstance(self.can_loaded_scaledimage, (list, tuple)):
+                    can_loaded_scaledimage = self.can_loaded_scaledimage[i]
+                else:
+                    can_loaded_scaledimage = self.can_loaded_scaledimage
+                subimg = cw.util.load_wxbmp(path, True, can_loaded_scaledimage=can_loaded_scaledimage)
+                subimg2 = cw.wins(subimg)
 
-                baserect = info.calc_basecardposition_wx(subimg.GetSize(), noscale=False,
+                baserect = info.calc_basecardposition_wx(subimg2.GetSize(), noscale=False,
                                                          basecardtype="NormalCard",
                                                          cardpostype="NormalCard")
 
@@ -649,9 +661,10 @@ class CardImage(Image):
         pass
 
 class LargeCardImage(CardImage):
-    def __init__(self, paths, bgtype, name="", premium="", scaleinfo=None,
-                 is_scenariocard=False):
-        CardImage.__init__(self, paths, "LARGE", name, premium, scaleinfo, is_scenariocard)
+    def __init__(self, paths, bgtype, name="", premium="", can_loaded_scaledimage=False,
+                 is_scenariocard=False, scedir=""):
+        CardImage.__init__(self, paths, "LARGE", name, premium, can_loaded_scaledimage, is_scenariocard,
+                           scedir=scedir)
 
     def get_image(self):
         image = self.cardbg.copy()
@@ -672,17 +685,22 @@ class LargeCardImage(CardImage):
             image.blit(subimg, (w-sw-cw.s(5), cw.s(5)))
             image.blit(subimg, (cw.s(5), h-sh-cw.s(5)))
 
-        for info in self.paths:
+        for i, info in enumerate(self.paths):
             path = info.path
             pisc = cw.binary.image.path_is_code(path)
-            if not pisc and not self.is_scenariocard:
+            if (not pisc and not self.is_scenariocard) or info.pcnumber:
                 path = cw.util.get_yadofilepath(path)
 
             if (not path or self.is_scenariocard) and not info.pcnumber:
-                path = cw.util.get_materialpath(info.path, cw.M_IMG, system=not self.is_scenariocard)
+                path = cw.util.get_materialpath(info.path, cw.M_IMG, system=not self.is_scenariocard,
+                                                scedir=self.scedir)
 
             if pisc or os.path.isfile(path):
-                subimg = cw.s((cw.util.load_image(path, True), cw.SIZE_CARDIMAGE, self.scaleinfo))
+                if isinstance(self.can_loaded_scaledimage, (list, tuple)):
+                    can_loaded_scaledimage = self.can_loaded_scaledimage[i]
+                else:
+                    can_loaded_scaledimage = self.can_loaded_scaledimage
+                subimg = cw.s(cw.util.load_image(path, True, can_loaded_scaledimage=can_loaded_scaledimage))
 
                 baserect = info.calc_basecardposition(subimg.get_size(), noscale=False,
                                                       basecardtype="LargeCard",
@@ -709,6 +727,7 @@ class LargeCardImage(CardImage):
                             image.blit(subimg2, (x, y))
 
             image.blit(subimg, cw.s((5, 5)))
+
         return image
 
     def get_wxbmp(self):
@@ -733,20 +752,25 @@ class LargeCardImage(CardImage):
             dc.DrawBitmap(subimg, w-sw-cw.wins(5), cw.wins(5), True)
             dc.DrawBitmap(subimg, cw.wins(5), h-sh-cw.wins(5), True)
 
-        for info in self.paths:
+        for i, info in enumerate(self.paths):
             path = info.path
             pisc = cw.binary.image.path_is_code(path)
-            if not pisc and not self.is_scenariocard:
+            if (not pisc and not self.is_scenariocard) or info.pcnumber:
                 path = cw.util.get_yadofilepath(path)
 
             if (not path or self.is_scenariocard) and not info.pcnumber:
-                path = cw.util.get_materialpath(info.path, cw.M_IMG, system=not self.is_scenariocard)
+                path = cw.util.get_materialpath(info.path, cw.M_IMG, system=not self.is_scenariocard,
+                                                scedir=self.scedir)
 
             if pisc or os.path.isfile(path):
-                subimg = cw.util.load_wxbmp(path, True)
-                subimg2 = cw.wins((subimg, cw.SIZE_CARDIMAGE, self.scaleinfo))
+                if isinstance(self.can_loaded_scaledimage, (list, tuple)):
+                    can_loaded_scaledimage = self.can_loaded_scaledimage[i]
+                else:
+                    can_loaded_scaledimage = self.can_loaded_scaledimage
+                subimg = cw.util.load_wxbmp(path, True, can_loaded_scaledimage=can_loaded_scaledimage)
+                subimg2 = cw.wins(subimg)
 
-                baserect = info.calc_basecardposition_wx(subimg.GetSize(), noscale=False,
+                baserect = info.calc_basecardposition_wx(subimg2.GetSize(), noscale=False,
                                                          basecardtype="LargeCard",
                                                          cardpostype="LargeCard")
 
@@ -773,17 +797,19 @@ class LargeCardImage(CardImage):
         return bmp
 
 class CharacterCardImage(CardImage):
-    def __init__(self, ccard, pos_noscale=(0, 0), scaleinfo=None, is_scenariocard=False):
+    def __init__(self, ccard, pos_noscale=(0, 0), can_loaded_scaledimage=False, is_scenariocard=False,
+                 scedir=""):
         self.ccard = ccard
         self._pos_noscale = pos_noscale
-        self.scaleinfo = scaleinfo
+        self.can_loaded_scaledimage = can_loaded_scaledimage
         self.is_scenariocard = is_scenariocard
         self.image_mtime = {}
+        self.scedir = scedir
         self.update_scale()
 
     def update_scale(self):
         # カード画像
-        self.set_faceimgs(self.ccard.imgpaths)
+        self.set_faceimgs(self.ccard.imgpaths, self.can_loaded_scaledimage)
         # フォント画像(カード名)
         self.set_nameimg(self.ccard.name)
         # フォント画像(レベル)
@@ -798,15 +824,16 @@ class CharacterCardImage(CardImage):
         # rect
         self.rect = pygame.Rect(cw.s(self._pos_noscale), cw.s((95, 130)))
 
-    def set_faceimgs(self, paths):
+    def set_faceimgs(self, paths, can_loaded_scaledimage):
         self.paths = paths
+        self.can_loaded_scaledimage = can_loaded_scaledimage
         self.cardimgs = []
         for info in self.paths:
             path = info.path
             if not cw.binary.image.path_is_code(path) and isinstance(self.ccard, cw.sprite.card.PlayerCard) and\
                     not self.is_scenariocard:
                 path = cw.util.get_yadofilepath(path)
-            self.cardimgs.append(cw.s((cw.util.load_image(path, True), cw.SIZE_CARDIMAGE, self.scaleinfo)))
+            self.cardimgs.append(cw.s(cw.util.load_image(path, True, can_loaded_scaledimage=self.can_loaded_scaledimage)))
 
     def set_nameimg(self, name):
         if name:
@@ -921,7 +948,7 @@ class CharacterCardImage(CardImage):
             lifeper = float(ccard.life) / ccard.maxlife
             self.lifeimg.blit(self.lifebar, (int(lifeper*(guagesize[0]+1) + 0.5) - (guagesize[0]+1), 1))
             self.lifeimg.blit(self.lifeguage, (0, 0))
-            self.image.blit(cw.s((self.lifeimg, guagesize)), cw.s((8, 110)))
+            self.image.blit(cw.s(self.lifeimg), cw.s((8, 110)))
 
         # ステータス画像追加
         self.update_statusimg(ccard)

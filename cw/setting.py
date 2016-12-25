@@ -1221,10 +1221,11 @@ class Resource(object):
         """
         d = {}
 
-        if sys.platform == "win32":    
+        if sys.platform == "win32":
             gdi32 = ctypes.windll.gdi32
             winplatform = sys.getwindowsversion()[3]
             self.facenames = set(wx.FontEnumerator().GetFacenames())
+
             for name, path in self.fontpaths.iteritems():
                 fontname = cw.util.get_truetypefontname(path)
                 d["gothic"],d["uigothic"],d["mincho"],d["pmincho"],d["pgothic"] = ((u"Ume Hy Gothic",)*5)
@@ -1245,8 +1246,8 @@ class Resource(object):
                     d[name] = fontname
                 else:
                     raise ValueError("Failed to get facename from %s" % name)
-            self.facenames = set(wx.FontEnumerator().GetFacenames())
 
+            self.facenames = set(wx.FontEnumerator().GetFacenames())
         else:
             self.facenames = set(wx.FontEnumerator().GetFacenames())
             d["gothic"],d["uigothic"],d["mincho"],d["pmincho"],d["pgothic"] = ((u"梅Hyゴシック",)*5)
@@ -1423,7 +1424,6 @@ class Resource(object):
                     btnevent = wx.PyCommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, button.GetId())
                     button.ProcessEvent(btnevent)
 
-
                 timer.Start(cw.cwpy.setting.move_repeat, wx.TIMER_ONE_SHOT)
 
             def timerfunc(event):
@@ -1561,7 +1561,6 @@ class Resource(object):
             else:
                 r1 = g1 = b1 = 255
                 r2 = g2 = b2 = 232
-            
             mid = h / 2
             for y in xrange(0, mid+1, 1):
                 bmp.fill((r1-y/4, g1-y/4, b1-y/4), pygame.Rect(0, mid-y, w, 1))
@@ -1570,7 +1569,6 @@ class Resource(object):
         r1 = g1 = b1 = 250
         bmp.fill((r1, g1, b1))
 
-        
         # 枠の部分。四隅には角丸の画像を描写する
         if flags & SB_PRESSED:
             # 押下済みの画像であれば上と左の縁を暗くする
@@ -1737,17 +1735,16 @@ class Resource(object):
                 return emptyfunc()
 
             if mask:
-                res = func(fpath, mask=mask)
+                if ss == cw.ppis and func == cw.util.load_wxbmp:
+                    res = func(fpath, mask=mask, can_loaded_scaledimage=True, up_win=cw.dpi_level)
+                else:
+                    res = func(fpath, mask=mask, can_loaded_scaledimage=True)
             else:
                 res = func(fpath)
 
             if not noscale:
                 if not dbg and ss and not key in noresize:
-                    ressize = get_resourcesize(fpath)
-                    if ressize is None:
-                        res = ss(res)
-                    else:
-                        res = ss((res, ressize))
+                    res = ss(res)
                 elif dbg and ss:
                     res = cw.ppis(res)
 
@@ -1848,19 +1845,19 @@ class Resource(object):
             ss = cw.s
             emptyfunc=empty_image
 
-        def load_image2(fpath, mask=False):
+        def load_image2(fpath, mask=False, can_loaded_scaledimage=True):
             fname = os.path.basename(fpath)
             key = os.path.splitext(fname)[0]
             if key in ("LIFE", "UP0", "UP1", "UP2", "UP3", "DOWN0", "DOWN1", "DOWN2", "DOWN3"):
-                return load_image(fpath, mask=True, maskpos=(1, 1))
+                return load_image(fpath, mask=True, maskpos=(1, 1), can_loaded_scaledimage=can_loaded_scaledimage)
             elif key == "TARGET":
-                return load_image(fpath, mask=True, maskpos="right")
+                return load_image(fpath, mask=True, maskpos="right", can_loaded_scaledimage=can_loaded_scaledimage)
             elif key == "LIFEGUAGE":
-                return load_image(fpath, mask=True, maskpos=(5, 5))
+                return load_image(fpath, mask=True, maskpos=(5, 5), can_loaded_scaledimage=can_loaded_scaledimage)
             elif key == "LIFEBAR":
-                return load_image(fpath, mask=False)
+                return load_image(fpath, mask=False, can_loaded_scaledimage=can_loaded_scaledimage)
             else:
-                return load_image(fpath, mask=False)
+                return load_image(fpath, mask=False, can_loaded_scaledimage=can_loaded_scaledimage)
 
         dpath = cw.util.join_paths(self.skindir, "Resource/Image/Status")
         return self.get_resources(load_image2, "Data/SkinBase/Resource/Image/Status", dpath, self.ext_img, False, ss, ("LIFEGUAGE", "LIFEBAR"), emptyfunc=emptyfunc)
@@ -1877,17 +1874,17 @@ class Resource(object):
             ss = cw.s
             emptyfunc=empty_image
 
-        def load_image2(fpath, mask=False):
+        def load_image2(fpath, mask=False, can_loaded_scaledimage=True):
             fname = os.path.basename(fpath)
             key = os.path.splitext(fname)[0]
             if key in ("LINK", "MONEYY"):
-                return load_image(fpath, mask=False)
+                return load_image(fpath, mask=False, can_loaded_scaledimage=can_loaded_scaledimage)
             elif key == "STATUS8":
-                return load_image(fpath, mask=True, maskpos="right")
+                return load_image(fpath, mask=True, maskpos="right", can_loaded_scaledimage=can_loaded_scaledimage)
             elif key in ("CAUTION", "INVISIBLE"):
-                return load_image(fpath)
+                return load_image(fpath, can_loaded_scaledimage=can_loaded_scaledimage)
             else:
-                return load_image(fpath, mask=mask)
+                return load_image(fpath, mask=mask, can_loaded_scaledimage=can_loaded_scaledimage)
 
         dpath = cw.util.join_paths(self.skindir, "Resource/Image/Dialog")
         return self.get_resources(load_image2, "Data/SkinBase/Resource/Image/Dialog", dpath, self.ext_img, True, ss, emptyfunc=emptyfunc)
@@ -1925,15 +1922,15 @@ class Resource(object):
             ss = cw.s
             emptyfunc=empty_image
 
-        def load_image2(fpath, mask=False):
+        def load_image2(fpath, mask=False, can_loaded_scaledimage=True):
             fname = os.path.basename(fpath)
             key = os.path.splitext(fname)[0]
             if key in ("HOLD", "PENALTY"):
-                return load_image(fpath, mask=True, maskpos="center")
+                return load_image(fpath, mask=True, maskpos="center", can_loaded_scaledimage=can_loaded_scaledimage)
             elif key in ("PREMIER", "RARE"):
-                return load_image(fpath, mask=True, maskpos="right")
+                return load_image(fpath, mask=True, maskpos="right", can_loaded_scaledimage=can_loaded_scaledimage)
             else:
-                return load_image(fpath, mask=mask)
+                return load_image(fpath, mask=mask, can_loaded_scaledimage=can_loaded_scaledimage)
 
         dpath = cw.util.join_paths(self.skindir, "Resource/Image/CardBg")
         return self.get_resources(load_image2, "Data/SkinBase/Resource/Image/CardBg", dpath, self.ext_img, False, ss, nodbg=True, emptyfunc=emptyfunc)
@@ -2035,7 +2032,7 @@ class Resource(object):
         d = ResourceTable("Resource/Image/Font", {}.copy(), empty_image)
         def load(key, name):
             fpath = cw.util.find_resource(cw.util.join_paths(dpath, key), self.ext_img)
-            image = cw.util.load_image(fpath)
+            image = cw.util.load_image(fpath, can_loaded_scaledimage=True)
             image.set_colorkey((255, 255, 255))
             return image, False
 

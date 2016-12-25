@@ -1476,7 +1476,6 @@ class Debugger(wx.Frame):
                 self.tl_area._battletool = False
             self.tb_area.Realize()
 
-
     def refresh_selectedmembername(self):
         assert threading.currentThread() <> cw.cwpy
         if cw.cwpy.frame.debugger is None:

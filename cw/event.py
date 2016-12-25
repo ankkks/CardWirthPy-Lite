@@ -1098,13 +1098,11 @@ class Targeting(object):
         self._target_updated = False
         self._target_index = 0
 
-
     def targets_to_coupon(self):
         self.update_targets()
         self.clear_eventcoupons()
         if self.user:
             self.user.set_coupon(u"＠使用者", 0)
-
 
         for target in self.targets:
             if isinstance(target, cw.character.Character):
@@ -1131,7 +1129,6 @@ class Targeting(object):
 
     def in_effectmotionloop(self):
         return self.waited
-
 
     def update_targets(self):
         if self._target_updated:
@@ -1213,6 +1210,7 @@ def _get_targetinfo():
     seq.append(u"Out of Targets: %s" % u", ".join(outoftargets))
     return seq
 
+
 class CardEvent(Event, Targeting):
     def __init__(self, event, inusecard, user, targets):
         Event.__init__(self, event)
@@ -1250,10 +1248,9 @@ class CardEvent(Event, Targeting):
                 self.targets_to_coupon()  # 対象にシステムクーポンを付与(Wsn.2)
 
             cw.cwpy.event.set_inusecard(self.inusecard)
-            cw.cwpy.event.cardevent = self
+            cw.cwpy.event.effectevent = self
             cw.cwpy.event.set_selectedmember(self.user)
             Event.start(self)
-
 
     def run_exit(self):
         """イベント実行の最後に行う終了処理。

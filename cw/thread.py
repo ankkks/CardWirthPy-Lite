@@ -306,47 +306,8 @@ class CWPy(_Singleton, threading.Thread):
             cw.util.remove(path)
 
     def _init_resources(self):
-        """スキンが関わるリソースの初期化"""
-        """self.init_fullscreenparams()
-
-        # リソース(辞書)
-        if self.rsrc:
-            self.rsrc.dispose()
-        rsrc = self.rsrc
-        self.rsrc = None
-        self.rsrc = cw.setting.Resource(self.setting)
-        # システム効果音(辞書)
-        self.sounds = self.rsrc.sounds
-        # その他のスキン付属効果音(辞書)
-        self.skinsounds = self.rsrc.skinsounds
-        # システムメッセージ(辞書)
-        self.msgs = self.rsrc.msgs
-        # アクションカードのデータ(CardHeader)
-        # スケールのみの変更ではリセットしない
-        if rsrc:
-            self.rsrc.actioncards = rsrc.actioncards
-            self.rsrc.backpackcards = rsrc.backpackcards
-        else:
-            self.rsrc.actioncards = self.rsrc.get_actioncards()
-            self.rsrc.backpackcards = self.rsrc.get_backpackcards()
-        # 背景スプライト
-        if not self.background:
-            self.background = cw.sprite.background.BackGround()
-        self._update_clip()
-        # ステータスバースプライト
-        if not self.statusbar:
-            self.statusbar = cw.sprite.statusbar.StatusBar()
-            # ステータスバークリップ
-            self.sbargrp.set_clip(self.statusbar.rect)
-        # FPS描画用フォント
-        self.fpsfont = pygame.font.Font(self.rsrc.fontpaths["gothic"], cw.s(14))
-        self.fpsfont.set_bold(True)
-
-        self.update_fullscreenbackground()
-
-        return True"""
-        
         try:
+            """スキンが関わるリソースの初期化"""
             self.init_fullscreenparams()
 
             # リソース(辞書)
@@ -388,12 +349,11 @@ class CWPy(_Singleton, threading.Thread):
         except cw.setting.NoFontError:
             def func():
                 s = (u"CardWirthPyの実行に必要なフォントがありません。\n"
-                     u"Data/以下にIPAフォントをインストールしてください。")
+                     u"Data/Font以下にIPAフォントをインストールしてください。")
                 wx.MessageBox(s, u"メッセージ", wx.OK|wx.ICON_ERROR, cw.cwpy.frame)
                 cw.cwpy.frame.Destroy()
             cw.cwpy.frame.exec_func(func)
             return False
-
 
     def init_sounds(self):
         """スキン付属の効果音を再読込する。"""
@@ -1204,7 +1164,7 @@ class CWPy(_Singleton, threading.Thread):
                 fname = cw.util.find_resource(cw.util.join_paths(self.skindir, fname), self.rsrc.ext_img)
 
             if fname:
-                back = cw.util.load_image(fname)
+                back = cw.util.load_image(fname, can_loaded_scaledimage=True)
                 if back.get_width():
                     if self.setting.fullscreenbackgroundtype == 2:
                         back = cw.wins(back)
@@ -1970,7 +1930,6 @@ class CWPy(_Singleton, threading.Thread):
                                 pcard.set_fullrecovery()
                                 pcard.update_image()
 
-
                         if musicpaths:
                             for i, (musicpath, _subvolume, _loopcount, inusecard) in enumerate(musicpaths):
                                 music = self.music[i]
@@ -2610,6 +2569,8 @@ class CWPy(_Singleton, threading.Thread):
             if not mcard.is_initialized():
                 continue
             imgpaths = []
+            can_loaded_scaledimages = []
+            can_loaded_scaledimage = pcard.data.getbool(".", "scaledimage", False)
             update = False
             for i, info in enumerate(mcard.cardimg.paths):
                 # PC画像を更新
@@ -2617,14 +2578,18 @@ class CWPy(_Singleton, threading.Thread):
                     if pcard:
                         for base in pcard.imgpaths:
                             imgpaths.append(cw.image.ImageInfo(base.path, pcnumber, info.base, basecardtype="LargeCard"))
+                            can_loaded_scaledimages.append(can_loaded_scaledimage)
                     else:
                         imgpaths.append(cw.image.ImageInfo(pcnumber=pcnumber, base=info.base, basecardtype="LargeCard"))
+                        can_loaded_scaledimages.append(False)
                     update = True
                 else:
                     imgpaths.append(info)
+                    can_loaded_scaledimages.append(mcard.cardimg.can_loaded_scaledimage[i])
             if not update:
                 continue
             mcard.cardimg.paths = imgpaths
+            mcard.cardimg.can_loaded_scaledimage = can_loaded_scaledimages
             mcard.cardimg.clear_cache()
             updates.append(mcard)
         if deal:
@@ -3208,7 +3173,6 @@ class CWPy(_Singleton, threading.Thread):
                     pcard.index = i
                     pcard.layer = (cw.LAYER_PCARDS, cw.LTYPE_PCARDS, i, 0)
                     self.cardgrp.change_layer(pcard, pcard.layer)
-                
 
             # カード移動操作エリアを解除の場合
             if oldareaid in cw.AREAS_TRADE:
@@ -4333,7 +4297,7 @@ class CWPy(_Singleton, threading.Thread):
 
     def copy_materials(self, data, dstdir, from_scenario=True, scedir="",
                        yadodir=None, toyado=None, adventurer=False,
-                       imgpaths=None, importimage=False):
+                       imgpaths=None, importimage=False, can_loaded_scaledimage=False):
         """
         from_scenario: Trueの場合は開いているシナリオから、
                        Falseの場合は開いている宿からコピーする
@@ -4403,7 +4367,8 @@ class CWPy(_Singleton, threading.Thread):
                         path = cw.util.relpath(path, mdir)
                     def set_material(text):
                         e.text = text
-                    self._copy_material(data, dstdir, from_scenario, scedir, imgpaths, e, path, set_material, yadodir, toyado)
+                    self._copy_material(data, dstdir, from_scenario, scedir, imgpaths, e, path, set_material, yadodir, toyado,
+                                        can_loaded_scaledimage=can_loaded_scaledimage)
             elif e.tag in ("Play", "Talk"):
                 path = e.getattr(".", "path", "")
                 if path:
@@ -4411,14 +4376,16 @@ class CWPy(_Singleton, threading.Thread):
                         path = cw.util.relpath(path, mdir)
                     def set_material(text):
                         e.attrib["path"] = text
-                    self._copy_material(data, dstdir, from_scenario, scedir, imgpaths, e, path, set_material, yadodir, toyado)
+                    self._copy_material(data, dstdir, from_scenario, scedir, imgpaths, e, path, set_material, yadodir, toyado,
+                                        can_loaded_scaledimage=can_loaded_scaledimage)
             elif e.tag == "Text" and e.text:
                 for spchar in r_specialfont.findall(e.text):
                     c = "font_" + spchar[1:]
                     def set_material(text):
                         pass
                     for ext in cw.EXTS_IMG:
-                        self._copy_material(data, dstdir, from_scenario, scedir, imgpaths, e, c + ext, set_material, yadodir, toyado)
+                        self._copy_material(data, dstdir, from_scenario, scedir, imgpaths, e, c + ext, set_material, yadodir, toyado,
+                                            can_loaded_scaledimage=can_loaded_scaledimage)
 
             elif e.tag == "Effect":
                 path = e.getattr(".", "sound", "")
@@ -4427,12 +4394,14 @@ class CWPy(_Singleton, threading.Thread):
                         path = cw.util.relpath(path, mdir)
                     def set_material(text):
                         e.attrib["sound"] = text
-                    self._copy_material(data, dstdir, from_scenario, scedir, imgpaths, e, path, set_material, yadodir, toyado)
+                    self._copy_material(data, dstdir, from_scenario, scedir, imgpaths, e, path, set_material, yadodir, toyado,
+                                        can_loaded_scaledimage=can_loaded_scaledimage)
 
             elif e.tag == "BeastCard" and from_scenario:
                 self.sdata.copy_carddata(e, dstdir, from_scenario, scedir, imgpaths)
 
-    def _copy_material(self, data, dstdir, from_scenario, scedir, imgpaths, e, materialpath, set_material, yadodir, toyado):
+    def _copy_material(self, data, dstdir, from_scenario, scedir, imgpaths, e, materialpath, set_material, yadodir, toyado,
+                       can_loaded_scaledimage):
         pisc = not e is None and e.tag == "ImagePath" and cw.binary.image.path_is_code(materialpath)
         if pisc:
             imgpath = materialpath
@@ -4473,7 +4442,8 @@ class CWPy(_Singleton, threading.Thread):
                     innerfpath = innerfpath.replace(scedir + "/", "", 1)
                     def func(text):
                         pass
-                    self._copy_material(data, dstdir, from_scenario, scedir, imgpaths, None, innerfpath, func, yadodir, toyado)
+                    self._copy_material(data, dstdir, from_scenario, scedir, imgpaths, None, innerfpath, func, yadodir, toyado,
+                                        can_loaded_scaledimage=can_loaded_scaledimage)
 
             except Exception:
                 cw.util.print_ex()
@@ -4512,7 +4482,7 @@ class CWPy(_Singleton, threading.Thread):
                     f.flush()
                     f.close()
             else:
-                shutil.copy2(imgpath, imgdst)
+                cw.util.copy_scaledimagepaths(imgpath, imgdst, can_loaded_scaledimage)
                 if sli:
                     shutil.copy2(sli, imgdst + u".sli")
             # ElementTree編集

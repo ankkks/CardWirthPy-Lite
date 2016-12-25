@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+import math
 import os
 import re
 import pygame
@@ -12,7 +13,7 @@ import base
 
 class MessageWindow(base.CWPySprite):
     def __init__(self, text, names, imgpaths=[][:], talker=None,
-                 pos_noscale=None, size_noscale=None, talkerimage=[][:],
+                 pos_noscale=None, size_noscale=None,
                  nametable={}.copy(), namesubtable={}.copy(), flagtable={}.copy(), steptable={}.copy(),
                  backlog=False, result=None, showing_result=-1, versionhint="", specialchars=None, textimg=None,
                  trim_top_noscale=0, columns=1, spcharinfo=None):
@@ -60,7 +61,6 @@ class MessageWindow(base.CWPySprite):
         if not self.name_subtable:
             self.name_subtable = _create_nametable(False, self.talker)
 
-        self.talker_image_noscale = talkerimage
         self._init_image(size_noscale, pos_noscale)
 
         # 描画する文字画像のリスト作成
@@ -105,31 +105,38 @@ class MessageWindow(base.CWPySprite):
         # 外枠描画
         draw_frame(self.image, cw.s(size_noscale), cw.s((0, 0)), self.backlog)
         # 話者画像
-        if self.talker_image_noscale:
-            self.talker_image = []
-            for talker_image_noscale, info in self.talker_image_noscale:
-                self.talker_image.append((cw.s(talker_image_noscale), info))
-        elif self.imgpaths:
-            self.talker_image_noscale = []
-            self.talker_image = []
-            for info in self.imgpaths:
-                path = info.path
-                if not cw.binary.image.path_is_code(path):
-                    lpath = path.lower()
-                    if lpath.startswith(cw.cwpy.yadodir.lower()) or\
-                            lpath.startswith(cw.cwpy.tempdir.lower()):
-                        path = cw.util.get_yadofilepath(path)
-                talker_image_noscale = cw.util.load_image(path, True)
-                if talker_image_noscale and talker_image_noscale.get_width():
-                    self.talker_image_noscale.append((talker_image_noscale, info))
-                    self.talker_image.append((cw.s(talker_image_noscale), info))
-        else:
-            self.talker_image_noscale = []
-            self.talker_image = []
+        talkersize_noscale = []
+        self.talker_image = []
+        if self.imgpaths:
+            for info, can_loaded_scaledimage, basetalker, scaledimagedict in self.imgpaths:
+                if scaledimagedict:
+                    talker_image_noscale = scaledimagedict.get(1, None)
+                    scale = int(math.pow(2, int(math.log(cw.UP_SCR, 2))))
+                    while 2 <= scale:
+                        if scale in scaledimagedict:
+                            talker_image_noscale = scaledimagedict[scale]
+                            break
+                        scale /= 2
+                else:
+                    path = info.path
+                    if not cw.binary.image.path_is_code(path):
+                        lpath = path.lower()
+                        if lpath.startswith(cw.cwpy.yadodir.lower()) or \
+                                lpath.startswith(cw.cwpy.tempdir.lower()):
+                            path = cw.util.get_yadofilepath(path)
+                    talker_image_noscale = cw.util.load_image(path, True, can_loaded_scaledimage=can_loaded_scaledimage)
 
-        for talker_image, info in self.talker_image_noscale:
-            tih = talker_image.get_height()
-            baserect = info.calc_basecardposition(talker_image.get_size(), noscale=True)
+                if talker_image_noscale and talker_image_noscale.get_width():
+                    self.talker_image.append((cw.s(talker_image_noscale), info))
+                    w, h = talker_image_noscale.get_size()
+                    scr_scale = talker_image_noscale.scr_scale if hasattr(talker_image_noscale, "scr_scale") else 1
+                    w /= scr_scale
+                    h /= scr_scale
+                    talkersize_noscale.append(((w, h), info))
+
+        for size, info in talkersize_noscale:
+            tih = size[1]
+            baserect = info.calc_basecardposition(size, noscale=True)
             y = (180 - tih) // 2
             y -= self.trim_top_noscale
 
@@ -139,10 +146,14 @@ class MessageWindow(base.CWPySprite):
         xmove = cw.s(0)
         for talker_image, info in self.talker_image:
             baserect = info.calc_basecardposition(talker_image.get_size(), noscale=False)
+            if info.basecardtype == "LargeCard":
+                baserect.x -= cw.s(11) # LargeCardとNormalCardのサイズ差に合わせた調節
             xmove = max(-baserect.x, xmove)
 
         for talker_image, info in self.talker_image:
             baserect = info.calc_basecardposition(talker_image.get_size(), noscale=False)
+            if info.basecardtype == "LargeCard":
+                baserect.x -= cw.s(11) # LargeCardとNormalCardのサイズ差に合わせた調節
             y = (cw.s(180) - baserect.height) // 2
             y -= cw.s(self.trim_top_noscale)
             if info.basecardtype:
@@ -160,6 +171,8 @@ class MessageWindow(base.CWPySprite):
         self._back = self._fore.copy()
 
     def update_scale(self):
+        if self.specialchars:
+            self.specialchars.reset()
         self._init_image(self.rect_noscale.size, self.rect_noscale.topleft)
         self.charimgs = self.create_charimgs(init=False)
         self.selections = []
@@ -359,7 +372,6 @@ class MessageWindow(base.CWPySprite):
                         charimg, userfont = specialchars[chars]
 
                         if userfont:
-                            # TODO scaleinfo
                             cpos = (pos[0]+cw.s(1), pos[1]+cw.s(1))
                             put_topbottom(y_noscale+1, charimg.get_height())
                             images.append((cpos, None, cw.s(charimg), None))
@@ -374,7 +386,7 @@ class MessageWindow(base.CWPySprite):
                         image2.fill(colour)
                         image2.blit(charimg, (0, 0))
                         image2.set_colorkey(image2.get_at((0, 0)), pygame.locals.RLEACCEL)
-                        image2 = cw.s((image2, cw.setting.SIZE_SPFONT))
+                        image2 = cw.s(image2)
                         images.append((pos, None, decorate(image2, basecolour=colour), None))
                         pos = pos[0] + cw.s(20), pos[1]
                         skip = True
@@ -570,8 +582,6 @@ class SelectWindow(MessageWindow):
         self._back = self._fore.copy()
 
     def update_scale(self):
-        if self.specialchars:
-            self.specialchars.reset()
         self._init_image(self.rect_noscale.size, self.rect_noscale.topleft)
         self.charimgs = self.create_charimgs((14, 9), init=False)
         self.selections = []
@@ -759,16 +769,6 @@ class BacklogData(object):
         self.names_log = base.names_log
         self.imgpaths = base.imgpaths
         self.talker_name = base.talker_name
-        self.talker_image = []
-        for info in self.imgpaths:
-            # シナリオ内のイメージは静的だが、
-            # 宿に所属するイメージは変化する可能性が
-            # あるため、画像自体を取っておく
-            path = info.path
-            lpath = path.lower()
-            if lpath.startswith("yado") or lpath.startswith("data/temp"):
-                self.talker_image = base.talker_image_noscale[:]
-                break
         self.rect_noscale = base.rect_noscale
         self.top_noscale = base.top_noscale
         self.bottom_noscale = base.bottom_noscale
@@ -839,7 +839,6 @@ class BacklogData(object):
                 showing_result = self.showing_result
             base = MessageWindow(self.text, names, self.imgpaths, None,
                                  self.rect_noscale.topleft, size_noscale,
-                                 self.talker_image,
                                  self.name_table, self.name_subtable, self.flag_table, self.step_table,
                                  True, None, showing_result, self.versionhint, self.specialchars,
                                  self.textimg, trim_top_noscale=trim_top, columns=self.columns,
@@ -1218,9 +1217,9 @@ def get_messagelogtext(mwins, lastline=True):
         name = mwin.talker_name
         if name is None:
             seq = []
-            for path in mwin.imgpaths:
-                if path.path:
-                    seq.append(os.path.basename(path.path))
+            for info, _can_loaded_scaledimage2, _basetalker, _scaledimagedict in mwin.imgpaths:
+                if info.path:
+                    seq.append(os.path.basename(info.path))
             if seq:
                 name = u" ".join(seq)
 
@@ -1252,6 +1251,41 @@ def get_messagelogtext(mwins, lastline=True):
         lines.append("")
 
     return u"\n".join(lines)
+
+
+def store_messagelogimage(path, can_loaded_scaledimage):
+    """メッセージログ内でpathが使用されている箇所があれば
+    pathが上書きされた場合に備えて各スケールのイメージを読み込んでおく。
+    """
+    if path.startswith(cw.cwpy.tempdir):
+        path = path.replace(cw.cwpy.tempdir, cw.cwpy.yadodir, 1)
+    dict = None
+    for log in cw.cwpy.sdata.backlog:
+        for i, (info, can_loaded_scaledimage2, basetalker, scaledimagedict) in enumerate(log.imgpaths):
+            if os.path.normcase(info.path) == os.path.normcase(path):
+                scaledimagedict.clear()
+                if dict:
+                    for key, value in dict.iteritems():
+                        scaledimagedict[key] = value
+                else:
+                    dict = scaledimagedict
+                    fpath = info.path
+                    if not cw.binary.image.path_is_code(fpath):
+                        lpath = fpath.lower()
+                        if lpath.startswith(cw.cwpy.yadodir.lower()) or \
+                                lpath.startswith(cw.cwpy.tempdir.lower()):
+                            fpath = cw.util.get_yadofilepath(fpath)
+                    bmp = cw.util.load_image(fpath, True, noscale=True)
+                    scaledimagedict[1] = bmp
+                    if can_loaded_scaledimage2:
+                        spext = os.path.splitext(fpath)
+                        for scale in cw.SCALE_LIST:
+                            fname = u"%s.x%s%s" % (spext[0], scale, spext[1])
+                            if os.path.isfile(fname):
+                                bmp = cw.util.Depth1Surface(cw.util.load_image(fname, True, noscale=True), scale)
+                                scaledimagedict[scale] = bmp
+                log.imgpaths[i] = (info, can_loaded_scaledimage, basetalker, scaledimagedict)
+
 
 def main():
     pass

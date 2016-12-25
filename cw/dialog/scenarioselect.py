@@ -7,6 +7,7 @@ import sys
 import time
 import datetime
 import threading
+import shutil
 import subprocess
 import wx
 
@@ -69,7 +70,7 @@ class ScenarioSelect(select.Select):
 
         # 表示設定
         def create_btn(msg, bmp, value):
-            btn = wx.lib.buttons.ThemedGenBitmapToggleButton(self, -1, None, size=cw.wins((46, 24)))
+            btn = wx.lib.buttons.ThemedGenBitmapToggleButton(self, -1, None, size=cw.wins((32, 24)))
             dbmp = cw.imageretouch.to_disabledimage(bmp)
             btn.SetToggle(value)
             if value:
@@ -159,7 +160,7 @@ class ScenarioSelect(select.Select):
 
         # 選択リスト
         self.list = dpaths + headers
-        self.scetable[self.nowdir] = self.list
+        self.scetable[self._get_linktarget(self.nowdir)] = self.list
         self.list = self._narrow_scenario(self.list)
         self.index = 0
 
@@ -237,13 +238,11 @@ class ScenarioSelect(select.Select):
         self._do_layout()
         # bind
         self._bind()
-        
         self.toppanel.Bind(wx.EVT_LEFT_DCLICK, self.OnLeftDClick)
         self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
         self.Bind(wx.EVT_DROP_FILES, self.OnDropFiles)
         self.Bind(wx.EVT_BUTTON, self.OnClickYesBtn, self.yesbtn)
         self.Bind(wx.EVT_BUTTON, self.OnClickNoBtn, self.nobtn)
-
         if self.viewbtn:
             self.Bind(wx.EVT_BUTTON, self.OnClickViewBtn, self.viewbtn)
         self.Bind(wx.EVT_BUTTON, self.OnClickInfoBtn, self.infobtn)
@@ -310,8 +309,6 @@ class ScenarioSelect(select.Select):
             self.append_addctrlaccelerator(seq)
         cw.util.set_acceleratortable(self, seq)
 
-
-
     def update_additionals(self):
         self.addctrlbtn.SetDoubleBuffered(False)
         if self.addctrlbtn.GetToggle() or cw.cwpy.setting.show_scenariotree:
@@ -352,6 +349,11 @@ class ScenarioSelect(select.Select):
 
         select.Select.update_additionals(self)
         cw.cwpy.setting.show_additional_scenario = self.addctrlbtn.GetToggle()
+
+    def _get_linktarget(self, path):
+        if isinstance(path, FindResult):
+            return path
+        return cw.util.get_linktarget(path)
 
     def OnCopyDetail(self, event):
         s = self.get_detailtext()
@@ -472,7 +474,6 @@ class ScenarioSelect(select.Select):
             self.topsizer.Add(self._sizer_top(), 0, wx.EXPAND, 0)
             self.topsizer.Add(self.tree, 1, wx.EXPAND, 0)
 
-            #左表示にする場合入れ替える
             sizer_2.Add(self.toppanel, 0, 0, 0)
             sizer_2.Add(self.topsizer, 0, wx.EXPAND, 0)
 
@@ -556,14 +557,14 @@ class ScenarioSelect(select.Select):
             self.draw(True)
 
     def _set_findresult(self, headers, selfirstheader):
-        list = self.scetable[self.scedir]
+        list = self.scetable[self._get_linktarget(self.scedir)]
         if list and isinstance(list[0], FindResult):
             findresult = list[0]
         else:
             findresult = FindResult()
             list.insert(0, findresult)
             self.find_result = findresult
-            self.scetable[self.scedir] = list
+            self.scetable[self._get_linktarget(self.scedir)] = list
 
         self.scetable[findresult] = headers[:]
         cansort = 1 < len(headers) and isinstance(headers[0], cw.header.ScenarioHeader)
@@ -866,6 +867,7 @@ class ScenarioSelect(select.Select):
     def _get_nowlist(self, nowdir=None, update=True):
         if nowdir is None:
             nowdir = self.nowdir
+        nowdir = self._get_linktarget(nowdir)
         if not update and nowdir in self.scetable:
             return self.scetable[nowdir]
         if isinstance(nowdir, FindResult):
@@ -877,7 +879,7 @@ class ScenarioSelect(select.Select):
         seq.extend(self.get_dpaths(nowdir))
         return seq
 
-    def set_selected(self, spaths, fullpath, opendir=False):
+    def set_selected(self, spaths, fullpath, opendir=False, updatetree=False, findresults=[]):
         """
         シナリオを経路形式(ディレクトリ・ファイル名の配列)で
         設定する。
@@ -887,6 +889,7 @@ class ScenarioSelect(select.Select):
 
         exists_spaths = bool(spaths)
         spath = self.scedir
+        updatetreeitem = None
         for path in spaths:
             if path.startswith("/"):
                 exists_spaths = False
@@ -899,8 +902,17 @@ class ScenarioSelect(select.Select):
 
         selfullpath = False
         if not exists_spaths:
-            # 経路をたどれないがフルパスがある場合(検索結果として表示)
-            if self.is_scenario(fullpath):
+            headers = []
+            if findresults:
+                for fpath in findresults:
+                    header = self.db.search_path(fpath)
+                    if header:
+                        headers.append(header)
+
+            if headers:
+                self._set_findresult(headers, True)
+                selfullpath = True
+            elif self.is_scenario(fullpath):
                 header = self.db.search_path(fullpath)
                 if header and self.is_showing(header):
                     self._set_findresult([header], True)
@@ -919,7 +931,7 @@ class ScenarioSelect(select.Select):
             self.index = 0
             self.dirstack = []
             self.list = self._get_nowlist(update=True)
-            self.scetable[self.nowdir] = self.list
+            self.scetable[self._get_linktarget(self.nowdir)] = self.list
             self.list = self._narrow_scenario(self.list)
 
         elif not selfullpath:
@@ -951,21 +963,34 @@ class ScenarioSelect(select.Select):
                                         not self.tree.GetItemPyData(self.tree.GetFirstChild(item)[0]):
                                     self.tree.Expand(item)
                                     self.create_treeitems(item)
+                                    updatetree = False
+                                else:
+                                    updatetreeitem = item
                                 break
                             item, cookie = self.tree.GetNextChild(paritem, cookie)
                 else:
                     exists = False
                     break
+
             self.nowdir = parent
             self.list = self._get_nowlist(update=True)
-            self.scetable[self.nowdir] = self.list
+            self.scetable[self._get_linktarget(self.nowdir)] = self.list
             self.list = self._narrow_scenario(self.list)
             self.index = 0
+
+            if updatetree and self.tree.IsShown():
+                # 探索経路以外でリストを更新すべき箇所があれば更新しておく
+                if updatetreeitem:
+                    self.create_treeitems(updatetreeitem)
+                else:
+                    self.create_treeitems(self.tree.root)
 
             if exists:
                 fname = os.path.normcase(spaths[-1])
                 for index, sel in enumerate(self.list):
-                    if isinstance(sel, cw.header.ScenarioHeader):
+                    if isinstance(sel, FindResult):
+                        continue
+                    elif isinstance(sel, cw.header.ScenarioHeader):
                         name = sel.fname
                     else:
                         name = os.path.basename(sel)
@@ -998,25 +1023,73 @@ class ScenarioSelect(select.Select):
         self._saved_list = self.list[:]
         self._saved_index = self.index
 
-    def index_changed(self):        
+    def index_changed(self):
         self._update_saveddirstack()
         self._paperslide = True
 
     def OnDropFiles(self, event):
         paths = event.GetFiles()
-
-        headers = []
-        for path in paths:
-            header = self.db.search_path(path)
-            if header:
-                headers.append(header)
-            elif os.path.isdir(path):
-                headers.extend(self.db.search_dpath(path))
+        headers = self._to_headers(paths)
 
         if not headers:
             cw.cwpy.play_sound("error")
             return
 
+        if cw.cwpy.setting.can_installscenariofromdrop:
+            self._install_scenario(headers)
+        else:
+            self._show_selectedscenario(headers)
+
+    def OnInstallBtn(self, event):
+        wildcard = u"シナリオファイル (*.wsn; *.wsm; *.zip; *.lzh; *.cab; Summary.xml)|*.wsn;*.wsm;*.zip;*.cab;Summary.xml"
+        dlg = wx.FileDialog(self, u"インストールするシナリオを選択", wildcard=wildcard, style=wx.FD_OPEN|wx.FD_MULTIPLE)
+        if dlg.ShowModal() == wx.ID_OK:
+            paths = dlg.GetPaths()
+            headers = self._to_headers(paths)
+            if headers:
+                self._install_scenario(headers)
+
+    def OnCreateDirBtn(self, event):
+        cw.cwpy.play_sound("signal")
+        dpath = self.nowdir
+        if isinstance(dpath, FindResult):
+            dpath = self.scedir
+        s = u"%sに作成する新しいフォルダの名前を入力してください。" % (os.path.basename(dpath))
+        dname = cw.util.join_paths(dpath, u"新規フォルダ")
+        dname = cw.util.dupcheck_plus(dname, yado=False)
+        dname = os.path.basename(dname)
+        dlg = cw.dialog.edit.InputTextDialog(self, u"新規フォルダ",
+                                             msg=s,
+                                             text=dname)
+        self.Parent.move_dlg(dlg)
+        if dlg.ShowModal() == wx.ID_OK:
+            cw.cwpy.play_sound("harvest")
+            dpath = cw.util.join_paths(dpath, dlg.text)
+            dpath = cw.util.dupcheck_plus(dpath, yado=False)
+            os.makedirs(dpath)
+
+            self._update_saveddirstack()
+            lastscenario, lastscenariopath = self.get_selected()
+            if lastscenario:
+                lastscenario[-1] = os.path.basename(dpath)
+            else:
+                lastscenario = [os.path.basename(dpath)]
+            lastscenariopath = os.path.abspath(dpath)
+            self.set_selected(lastscenario, lastscenariopath, updatetree=True)
+
+    def _to_headers(self, paths):
+        headers = []
+        for path in paths:
+            if os.path.isfile(path) and not os.path.splitext(path)[1].lower() in (".wsn", ".zip", ".lzh", ".cab"):
+                path = os.path.dirname(path)
+            header = self.db.search_path(path)
+            if header:
+                headers.append(header)
+            elif os.path.isdir(path):
+                headers.extend(self.db.search_dpath(path))
+        return headers
+
+    def _show_selectedscenario(self, headers):
         self._processing = True
         cw.cwpy.play_sound("equipment")
         self.narrow.SetValue("")
@@ -1028,9 +1101,227 @@ class ScenarioSelect(select.Select):
             self.draw(True)
         self.enable_btn()
 
-        ##for path in paths:
-        ##    self.conv_scenario(path)
-        ##    time.sleep(0.3)
+    def _install_scenario(self, headers):
+        """
+        headersを選択中のディレクトリにインストールする。
+        シナリオDB内に同じ名前・作者のシナリオがあった場合は
+        プレイヤーへの問い合わせの上で置換する。
+        """
+        if not headers:
+            return
+
+        # シナリオのインストール
+        dpath = self.nowdir
+        if isinstance(dpath, FindResult):
+            dpath = self.scedir
+            seldname = u""
+        if self.list:
+            sel = self.list[self.index]
+            if isinstance(sel, (FindResult, cw.header.ScenarioHeader)):
+                seldname = u""
+            else:
+                dpath = sel
+                seldname = os.path.basename(sel)
+        else:
+            seldname = u""
+
+        cw.cwpy.play_sound("signal")
+        if sys.platform == "win32" and os.path.isfile(dpath) and os.path.splitext(dpath)[1].lower() == ".lnk":
+            dname = os.path.splitext(os.path.basename(dpath))[0]
+        else:
+            dname = os.path.basename(dpath)
+        if 1 < len(headers):
+            s = u"%s本のシナリオを%sにインストールしますか？" % (len(headers), dname)
+        else:
+            s = u"「%s」を%sにインストールしますか？" % (headers[0].name, dname)
+
+        dpath = cw.util.get_linktarget(dpath)
+
+        choices = (
+            (u"インストール", wx.ID_YES, cw.wins(105)),
+            (u"表示のみ", wx.ID_NO, cw.wins(105)),
+            (u"キャンセル", wx.ID_CANCEL, cw.wins(105)),
+        )
+        dlg = message.Message(self, cw.cwpy.msgs["message"], s, mode=3, choices=choices)
+        self.Parent.move_dlg(dlg)
+        ret = dlg.ShowModal()
+        dlg.Destroy()
+
+        if ret == wx.ID_CANCEL:
+            return
+
+        elif ret == wx.ID_YES:
+
+            # インストール済みの情報が見つかったシナリオ
+            db_exists = {}
+
+            for header in headers:
+                header2 = self.db.find_scenario(header.name, header.author, skintype=cw.cwpy.setting.skintype,
+                                                ignore_dpath=header.dpath, ignore_fname=header.fname)
+                if header2:
+                    db_exists[header.get_fpath()] = header2
+
+            if db_exists:
+                if 1 < len(db_exists):
+                    s = u"%s本のシナリオがすでにインストール済みです。\n以前インストールしたシナリオを置換しますか？" % (len(db_exists))
+                else:
+                    header2 = list(db_exists.itervalues())[0]
+                    sname = header2.name if header2.name else u"(無名のシナリオ)"
+                    if header2.author:
+                        sname += u"(%s)" % header2.author
+                    s = u"インストール済みの「%s」がシナリオデータベース上に見つかりました。\n以前インストールしたシナリオを置換しますか？" % (sname)
+                dlg = message.YesNoCancelMessage(self, cw.cwpy.msgs["message"], s)
+                cw.cwpy.frame.move_dlg(dlg)
+                ret = dlg.ShowModal()
+                dlg.Destroy()
+                if ret == wx.ID_CANCEL:
+                    return
+                elif ret <> wx.ID_YES:
+                    db_exists.clear()
+
+            # プログレスダイアログ表示
+            dlg = cw.dialog.progress.ProgressDialog(self, u"シナリオのインストール",
+                                                    "", maximum=len(headers), cancelable=True)
+
+            class InstallThread(threading.Thread):
+                def __init__(self, outer, headers, dstpath, db_exists):
+                    threading.Thread.__init__(self)
+                    self.outer = outer
+                    self.headers = headers
+                    self.dstpath = dstpath
+                    self.db_exists = db_exists
+                    self.num = 0
+                    self.msg = u""
+                    self.firstpath = u""
+                    self.failed = None
+                    self.updates = set()
+                    self.paths = []
+
+                def run(self):
+                    dstpath = os.path.normcase(os.path.normpath(os.path.abspath(self.dstpath)))
+                    allret = [None]
+                    for header in self.headers:
+                        if dlg.cancel:
+                            break
+                        try:
+                            self.msg = u"「%s」をコピーしています..." % (header.name)
+                            fpath = header.get_fpath()
+                            header2 = self.db_exists.get(fpath, None)
+                            rmpath = u""
+                            if header2:
+                                # DBに登録されている既存のシナリオを置換
+                                dst = cw.util.join_paths(header2.dpath, os.path.basename(fpath))
+                                rmpath = header2.get_fpath()
+                            else:
+                                # 指定箇所にインストール
+                                dst = cw.util.join_paths(self.dstpath, os.path.basename(fpath))
+                                if dstpath <> os.path.normcase(os.path.normpath(os.path.abspath(header.dpath))):
+                                    if os.path.exists(dst):
+                                        s = u"%sはすでに存在します。置換しますか？" % (os.path.basename(dst))
+                                        def func(self):
+                                            choices = (
+                                                (u"置換", wx.ID_YES, cw.wins(80)),
+                                                (u"名前変更", wx.ID_DUPLICATE, cw.wins(80)),
+                                                (u"スキップ", wx.ID_NO, cw.wins(80)),
+                                                (u"中止", wx.ID_CANCEL, cw.wins(80)),
+                                            )
+                                            dlg2 = message.Message(dlg, cw.cwpy.msgs["message"], s, mode=3, choices=choices)
+                                            cw.cwpy.frame.move_dlg(dlg2)
+                                            ret = dlg2.ShowModal()
+                                            dlg2.Destroy()
+                                            if wx.GetKeyState(wx.WXK_SHIFT):
+                                                allret[0] = ret
+
+                                            return ret
+
+                                        if allret[0] is None:
+                                            ret = cw.cwpy.frame.sync_exec(func, self.outer)
+                                        else:
+                                            ret = allret[0]
+
+                                        if ret == wx.ID_YES:
+                                            rmpath = dst
+                                        elif ret == wx.ID_NO:
+                                            self.num += 1
+                                            continue
+                                        elif ret == wx.ID_CANCEL:
+                                            break
+                                        else:
+                                            dst = cw.util.dupcheck_plus(dst, yado=False)
+
+                            if os.path.normcase(os.path.normpath(os.path.abspath(fpath))) <>\
+                                    os.path.normcase(os.path.normpath(os.path.abspath(dst))):
+                                if rmpath:
+                                    cw.util.remove(rmpath, trashbox=True)
+                                if cw.cwpy.setting.delete_sourceafterinstalled:
+                                    shutil.move(fpath, dst)
+                                elif os.path.isfile(fpath):
+                                    shutil.copy2(fpath, dst)
+                                else:
+                                    shutil.copytree(fpath, dst)
+
+                            self.updates.add(os.path.dirname(dst))
+
+                            if not self.firstpath:
+                                self.firstpath = dst
+                            self.paths.append(dst)
+                            self.num += 1
+                        except:
+                            cw.util.print_ex(file=sys.stderr)
+                            self.failed = header
+                            break
+
+            thread = InstallThread(self, headers, dpath, db_exists)
+            thread.start()
+
+            def progress():
+                while thread.is_alive():
+                    wx.CallAfter(dlg.Update, thread.num, thread.msg)
+                    time.sleep(0.001)
+                wx.CallAfter(dlg.Destroy)
+
+            thread2 = threading.Thread(target=progress)
+            thread2.start()
+            cw.cwpy.frame.move_dlg(dlg)
+            dlg.ShowModal()
+
+            if thread.failed:
+                s = u"「%s」のインストールに失敗しました。" % (thread.failed.name)
+                dlg = cw.dialog.message.ErrorMessage(self, s)
+                cw.cwpy.frame.move_dlg(dlg)
+                dlg.ShowModal()
+                dlg.Destroy()
+
+            elif thread.firstpath:
+                cw.cwpy.play_sound("harvest")
+
+                for dpath in thread.updates:
+                    self.db.update(dpath, skintype=cw.cwpy.setting.skintype)
+
+                self._update_saveddirstack()
+                lastscenario, lastscenariopath = self.get_selected()
+                if lastscenario:
+                    dpath = cw.util.get_linktarget(self.nowdir)
+                    if seldname:
+                        lastscenario[-1] = seldname
+                        lastscenario.append(os.path.basename(thread.firstpath))
+                    else:
+                        lastscenario[-1] = os.path.basename(thread.firstpath)
+                else:
+                    dpath = cw.util.get_linktarget(self.scedir)
+                    if seldname:
+                        lastscenario = [seldname, os.path.basename(thread.firstpath)]
+                    else:
+                        lastscenario = [os.path.basename(thread.firstpath)]
+                lastscenariopath = os.path.abspath(thread.firstpath)
+                self._processing = True
+                self.narrow.SetValue(u"")
+                self.set_selected(lastscenario, lastscenariopath, updatetree=True, findresults=thread.paths)
+                self._processing = False
+
+            return
+
+        self._show_selectedscenario(headers)
 
     def OnClickInfoBtn(self, event):
         cw.cwpy.play_sound("click")
@@ -1061,7 +1352,7 @@ class ScenarioSelect(select.Select):
                     self.dirstack.append((self.nowdir, os.path.basename(self.list[self.index])))
                     self.nowdir = cw.util.get_linktarget(self.list[self.index])
                 self.list = self._get_nowlist(update=True)
-                self.scetable[self.nowdir] = self.list
+                self.scetable[self._get_linktarget(self.nowdir)] = self.list
                 self.list = self._narrow_scenario(self.list)
                 self.index = 0
                 self.enable_btn()
@@ -1077,7 +1368,7 @@ class ScenarioSelect(select.Select):
         cw.cwpy.play_sound("equipment")
         self.nowdir, selname = self.dirstack.pop()
         self.list = self._get_nowlist(update=True)
-        self.scetable[self.nowdir] = self.list
+        self.scetable[self._get_linktarget(self.nowdir)] = self.list
         self.list = self._narrow_scenario(self.list)
         self.index = 0
         if not selname.startswith("/"):
@@ -1256,6 +1547,17 @@ class ScenarioSelect(select.Select):
             dlg.ShowModal()
             dlg.Destroy()
 
+    def convert_scenario(self):
+        if not self.list:
+            return
+        header = self.list[self.index]
+        if not isinstance(header, cw.header.ScenarioHeader) or header.type <> 1:
+            return
+
+        fpath = header.get_fpath()
+        fpath = cw.util.get_linktarget(fpath)
+        self.conv_scenario(fpath)
+
     def OnSelect(self, event):
         #貼り紙バグ
         if not self.list or not self.yesbtn.Enabled:
@@ -1291,12 +1593,23 @@ class ScenarioSelect(select.Select):
     def draw(self, update=False):
         self._draw_impl(update)
 
+    def _update_pagelabel(self):
+        if self.list:
+            self.pagelabel.SetLabel("%s/%s" % (self.index+1, len(self.list)))
+        else:
+            self.pagelabel.SetLabel("1/1")
+        dc = wx.ClientDC(self.pagelabel)
+        w, h, _lh = dc.GetMultiLineTextExtent(self.pagelabel.GetLabel())
+        self.pagelabel.SetSize((w, h))
+        self.pagelabel.SetMinSize((w, h))
+        self.Layout()
+
     def _get_bg(self):
         if self._bg:
             return self._bg
         path = "Table/Bill"
         path = cw.util.find_resource(cw.util.join_paths(cw.cwpy.skindir, path), cw.cwpy.rsrc.ext_img)
-        self._bg = cw.util.load_wxbmp(path)
+        self._bg = cw.util.load_wxbmp(path, can_loaded_scaledimage=True)
         return self._bg
 
     def get_detailtext(self):
@@ -1443,6 +1756,7 @@ class ScenarioSelect(select.Select):
 
     def _draw_impl(self, update=False, dc=None):
         if update:
+            self._update_pagelabel()
             self.enable_btn()
 
             if cw.cwpy.setting.show_paperandtree:
@@ -1468,7 +1782,7 @@ class ScenarioSelect(select.Select):
         dc.SetPen(wx.Pen(colour))
         dc.SetBrush(wx.Brush(colour))
         dc.DrawRectangle(0, 0, csize[0], csize[1])
-        bmp = cw.wins((self._get_bg(), cw.SIZE_BILL))
+        bmp = cw.wins(self._get_bg())
         bmpw, bmph = bmp.GetSize()
         dc.DrawBitmap(bmp, 0, yp, False)
 
@@ -1499,7 +1813,7 @@ class ScenarioSelect(select.Select):
                 scan_folder_bmp = os.path.join(cw.util.get_linktarget(dpath), u"Folder.bmp")
             if scan_folder_bmp and os.path.isfile(scan_folder_bmp):
                 # Folder.bmp表示
-                folder_bmp = cw.util.load_wxbmp(scan_folder_bmp, True)
+                folder_bmp = cw.util.load_wxbmp(scan_folder_bmp, True, can_loaded_scaledimage=True)
                 bmp2 = cw.wins(folder_bmp)
                 size = bmp2.GetSize()
                 pos = (cw.wins(200), cw.wins(60)+yp)
@@ -1725,6 +2039,7 @@ class ScenarioSelect(select.Select):
             paritem = self.tree.GetItemParent(selitem)
             def recurse(parent):
                 index, nowdir = self.tree.GetItemPyData(parent)
+                nowdir = self._get_linktarget(nowdir)
                 if not nowdir in self.scetable:
                     return
 
@@ -1761,7 +2076,7 @@ class ScenarioSelect(select.Select):
             #    self.tree.ScrollTo(item)
 
         if self.toppanel.IsShown():
-            self.list = self.scetable[self.nowdir]
+            self.list = self.scetable[self._get_linktarget(self.nowdir)]
             self.list = self._narrow_scenario(self.list)
 
         self._processing = False
@@ -1782,6 +2097,7 @@ class ScenarioSelect(select.Select):
                 self.draw(True)
 
         self._update_saveddirstack()
+        self._update_pagelabel()
 
     def create_treeitems(self, treeitem):
         # 再描画を抑止して軽くする
@@ -1792,6 +2108,7 @@ class ScenarioSelect(select.Select):
 
         self.tree.DeleteChildren(treeitem)
         index, nowdir = self.tree.GetItemPyData(treeitem)
+        nowdir = self._get_linktarget(nowdir)
         itemlist = []
         dpaths = []
 
@@ -1850,7 +2167,7 @@ class ScenarioSelect(select.Select):
     def create_treeitem(self, index, treeitem, header):
         name = header.name
         image = self.tree.imgidx_summary
-        
+
         if self.is_playing(header):
             image = self.tree.imgidx_playing
         elif self.is_complete(header):
@@ -1989,10 +2306,11 @@ class ScenarioSelect(select.Select):
         if data and isinstance(data[1], FindResult):
             # 検索結果はクリアしない
             return
-        if not data[1] in self.scetable:
+        nowdir = self._get_linktarget(data[1])
+        if not nowdir in self.scetable:
             self.tree.Collapse(item)
             return
-        del self.scetable[data[1]]
+        del self.scetable[nowdir]
         self.tree.DeleteChildren(item)
         child = self.tree.AppendItem(item, u"読込中...")
         self.tree.SetItemPyData(child, None)
@@ -2029,11 +2347,12 @@ class ScenarioSelect(select.Select):
         self.index, _pathorheader = self.tree.GetItemPyData(selitem)
 
         self.list = self._get_nowlist(update=False)
-        self.scetable[self.nowdir] = self.list
+        self.scetable[self._get_linktarget(self.nowdir)] = self.list
         self.list = self._narrow_scenario(self.list)
 
         self.dirstack = self.get_dirstack(paritem)
         self._update_saveddirstack()
+        self._update_pagelabel()
 
         self.enable_btn()
 
@@ -2265,6 +2584,8 @@ class ScenarioSelect(select.Select):
         if self._processing:
             return
 
+        self.installbtn.Enable(True)
+        self.createdirbtn.Enable(True)
         self.opendirbtn.Enable(self._can_opendir())
         if self.editorbtn:
             self.editorbtn.Enable(self._can_editor())
@@ -2570,7 +2891,7 @@ class ScenarioSelect(select.Select):
         # 更新処理
         self.db.insert_scenario(zpath, skintype=cw.cwpy.setting.skintype)
         self.list = self._get_nowlist(update=True)
-        self.scetable[self.nowdir] = self.list
+        self.scetable[self._get_linktarget(self.nowdir)] = self.list
         self.list = self._narrow_scenario(self.list)
         self.index = 0
 

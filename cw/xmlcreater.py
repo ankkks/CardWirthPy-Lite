@@ -550,6 +550,16 @@ def create_settings(setting, writeplayingdata=True, fpath="Settings_Lite.xml"):
         e = cw.data.make_element("WritePlayLog", str(setting.write_playlog))
         element.append(e)
 
+    # ドロップによるシナリオのインストールを可能にする
+    if setting.can_installscenariofromdrop <> setting.can_installscenariofromdrop_init:
+        e = cw.data.make_element("CanInstallScenarioFromDrop", str(setting.can_installscenariofromdrop))
+        element.append(e)
+
+    #  シナリオのインストールに成功したら元ファイルを削除する
+    if setting.delete_sourceafterinstalled <> setting.delete_sourceafterinstalled_init:
+        e = cw.data.make_element("DeleteSourceAfterInstalled", str(setting.delete_sourceafterinstalled))
+        element.append(e)
+
     if writeplayingdata:
         # 一覧表示
         attrs = {}
@@ -723,6 +733,7 @@ def create_albumpage(path, lost=False, nocoupon=False):
     sets = set(["Name", "ImagePath", "ImagePaths", "Description", "Level",
                 "Ability", "Coupons"])
 
+    can_loaded_scaledimage = etree.getbool(".", "scaledimage", False)
     for e in etree.getfind("Property"):
         if e.tag in sets:
             pelement.append(e)
@@ -744,7 +755,10 @@ def create_albumpage(path, lost=False, nocoupon=False):
     name = name if name else "noname"
     fname = cw.util.repl_dischar(name)
     dstdir = cw.util.join_paths(cw.cwpy.yadodir, "Material/Album")
-    cw.cwpy.copy_materials(element, dstdir, from_scenario=False)
+    cw.cwpy.copy_materials(element, dstdir, from_scenario=False,
+                           can_loaded_scaledimage=can_loaded_scaledimage)
+    if can_loaded_scaledimage:
+        etree.edit(".", str(can_loaded_scaledimage), "scaledimage")
     # ファイル書き込み
     path = cw.util.join_paths(cw.cwpy.tempdir, "Album", fname + ".xml")
     path = cw.util.dupcheck_plus(path)
@@ -765,10 +779,11 @@ def create_adventurer(data):
     # 画像パス
     paths = data.imgpaths
     advname = cw.util.repl_dischar(d["name"])
-    infos = write_castimagepath(advname, paths)
+    infos = write_castimagepath(advname, paths, True)
     imgpaths = map(lambda info: cw.binary.xmltemplate.get_xmltext("ImagePath",
                     {"path":cw.binary.util.repl_escapechar(info.path), "indent": "   "}), infos)
     d["imgpaths"] = "\n" + "\n".join(imgpaths)
+    d["scaledimage"] = str(True)
 
     # クーポン
     def get_coupon(name, value):
@@ -784,14 +799,13 @@ def create_adventurer(data):
     _create_xml("Adventurer", path, d)
     return path
 
-def write_castimagepath(name, paths):
+def write_castimagepath(name, paths, can_loaded_scaledimage):
     """
     キャストの新しい画像を記憶し、記憶後のパスを返す。
     """
     seq = []
     if not name:
         name = "noname"
-        
     for info in paths:
         path = info.path
         if os.path.isfile(path):
@@ -803,7 +817,7 @@ def write_castimagepath(name, paths):
             if not os.path.isdir(dpath):
                 os.makedirs(dpath)
 
-            shutil.copy2(path, dstpath)
+            cw.util.copy_scaledimagepaths(path, dstpath, can_loaded_scaledimage)
             seq.append(cw.image.ImageInfo(dstpath.replace(cw.cwpy.tempdir + "/", ""), base=info))
     return seq
 
@@ -872,14 +886,17 @@ def create_scenariolog(sdata, path, recording, logfilepath):
 
     for bgtype, d in cw.cwpy.background.bgs:
         if bgtype == cw.sprite.background.BG_IMAGE:
-            fpath, inusecard, mask, size, pos, flag, visible, layer, cellname = d
+            fpath, inusecard, scaledimage, mask, smoothing, size, pos, flag, visible, layer, cellname = d
             attrs = {"mask": str(mask), "visible": str(visible)}
             if cellname:
                 attrs["cellname"] = cellname
+            if smoothing <> "Default":
+                attrs["smoothing"] = smoothing
             e_bgimg = cw.data.make_element("BgImage", attrs=attrs)
 
             if inusecard:
-                e = cw.data.make_element("ImagePath", fpath, attrs={"inusecard":str(inusecard)})
+                e = cw.data.make_element("ImagePath", fpath, attrs={"inusecard":str(inusecard),
+                                                                     "scaledimage": str(scaledimage)})
             else:
                 e = cw.data.make_element("ImagePath", fpath)
             e_bgimg.append(e)
@@ -944,11 +961,13 @@ def create_scenariolog(sdata, path, recording, logfilepath):
                 e_bgimg.append(e)
 
         elif bgtype == cw.sprite.background.BG_PC:
-            pcnumber, expand, size, pos, flag, visible, layer, cellname = d
+            pcnumber, expand, smoothing, size, pos, flag, visible, layer, cellname = d
             attrs = {"visible": str(visible),
                      "expand": str(expand)}
             if cellname:
                 attrs["cellname"] = cellname
+            if smoothing <> "Default":
+                attrs["smoothing"] = smoothing
             e_bgimg = cw.data.make_element("PCCell", attrs=attrs)
 
             e = cw.data.make_element("PCNumber", str(pcnumber))

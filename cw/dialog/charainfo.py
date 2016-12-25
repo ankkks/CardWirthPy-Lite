@@ -515,6 +515,7 @@ class TopPanel(wx.Panel):
         x = (dc.GetSize()[0] - cw.wins(74)) / 2
 
         infos = cw.image.get_imageinfos(self.ccard.data.find("Property"))
+        can_loaded_scaledimage = self.ccard.data.getbool(".", "scaledimage", False)
         setpos = any(map(lambda info: not info.postype in (None, "Default"), infos))
 
         for info in infos:
@@ -525,8 +526,8 @@ class TopPanel(wx.Panel):
             elif not cw.binary.image.path_is_code(path):
                 path = cw.util.join_yadodir(path)
 
-            bmp = cw.util.load_wxbmp(path, True)
-            bmp2 = cw.wins((bmp, cw.SIZE_CARDIMAGE))
+            bmp = cw.util.load_wxbmp(path, True, can_loaded_scaledimage=can_loaded_scaledimage)
+            bmp2 = cw.wins(bmp)
 
             if setpos:
                 baserect = info.calc_basecardposition_wx(bmp2.GetSize(), noscale=False,
@@ -677,7 +678,6 @@ class TopPanel(wx.Panel):
         return u"\n".join(lines)
 
 
-
 class TitlePanel(wx.Panel):
     """
     タイトルバーを描画するパネルを作る。
@@ -735,9 +735,9 @@ class DescPanel(wx.ScrolledWindow):
     def __init__(self, parent, ccard, editable):
         wx.ScrolledWindow.__init__(self, parent, -1, size=(parent.Parent.width-cw.wins(8), cw.wins(173)), style=wx.SUNKEN_BORDER)
         self.SetDoubleBuffered(True)
+        self.csize = self.GetClientSize()
         self.SetBackgroundColour(wx.Colour(0, 0, 128))
         self.SetScrollRate(cw.wins(10), cw.wins(10))
-        self.csize = self.GetClientSize()
 
         # エレメントオブジェクト
         self.ccard = ccard

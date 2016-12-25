@@ -510,7 +510,7 @@ class BranchContent(EventContentBase):
 class BranchSkillContent(BranchContent):
     def __init__(self, data):
         BranchContent.__init__(self, data)
-        
+
     def action(self):
         """スキル所持分岐コンテント。"""
         return self.branch_cards("SkillCard")
@@ -1365,7 +1365,7 @@ class BranchAbilityContent(BranchContent):
                 # CWでは称号所持分岐と能力判定分岐で
                 #      「パーティ全員」判定が成功すると選択メンバがいなくなる
                 selectedmember = None
-            
+
             if selectedmember:
                 cw.cwpy.event.set_selectedmember(selectedmember)
             else:
@@ -2015,7 +2015,6 @@ class EffectContent(EventContentBase):
         else:
             # イベントが発火しない場合の効果適用処理
             for member in targets:
-
                 apply(member)
                 if not cw.cwpy.is_playingscenario() or cw.cwpy.sdata.in_f9:
                     break
@@ -2330,7 +2329,8 @@ def get_card(etree, target, notscenariocard=False, toindex=-1, insertorder=-1, p
         dstdir = cw.util.join_paths(cw.cwpy.ydata.yadodir,
                                     "Material", header.type, name if name else "noname")
         dstdir = cw.util.dupcheck_plus(dstdir)
-        cw.cwpy.copy_materials(etree, dstdir, True, copymaterialfrom, importimage=from_scenario)
+        cw.cwpy.copy_materials(etree, dstdir, True, copymaterialfrom, importimage=from_scenario,
+                               can_loaded_scaledimage=etree.getbool(".", "scaledimage", False))
         header.imgpaths = cw.image.get_imageinfos(etree.find("Property"))
 
     cw.cwpy.trade(targettype, target, header=header, from_event=True, toindex=toindex, insertorder=insertorder, sort=False, party=party, from_getcontent=from_getcontent)
@@ -3374,6 +3374,11 @@ class TalkMessageContent(TalkContent):
                 talker = None
 
             if talker:
+                if talkeriscard:
+                    can_loaded_scaledimage = talker.carddata.getbool(".", "scaledimage", False)
+                else:
+                    assert isinstance(talker, cw.character.Character)
+                    can_loaded_scaledimage = talker.data.getbool(".", "scaledimage", False)
                 for base in talker.imgpaths:
                     imgpath = base.path
                     if talkeriscard:
@@ -3390,15 +3395,25 @@ class TalkMessageContent(TalkContent):
                         basecardtype = "LargeCard"
                     else:
                         basecardtype = "NormalCard"
-                    talkers.append(cw.image.ImageInfo(imgpath, base=base, basecardtype=basecardtype))
+                    talkers.append((cw.image.ImageInfo(imgpath, base=base, basecardtype=basecardtype),
+                                    can_loaded_scaledimage, talker, {}))
             elif imgpath:
                 inusepath = cw.util.get_inusecardmaterialpath(imgpath, cw.M_IMG)
                 if os.path.isfile(inusepath):
                     imgpath = inusepath
+                    inusecard = cw.cwpy.event.get_inusecard()
+                    assert inusecard
+                    can_loaded_scaledimage = inusecard.carddata.getbool(".", "scaledimage", False)
                 else:
                     imgpath = cw.util.get_materialpath(imgpath, cw.M_IMG,
                                                        system=cw.cwpy.areaid < 0)
-                talkers.append(cw.image.ImageInfo(imgpath, base=info))
+                    if cw.cwpy.areaid < 0:
+                        can_loaded_scaledimage = True
+                    elif cw.cwpy.event.in_inusecardevent:
+                        can_loaded_scaledimage = cw.cwpy.event.get_inusecard().carddata.getbool(".", "scaledimage", False)
+                    else:
+                        can_loaded_scaledimage = cw.cwpy.sdata.can_loaded_scaledimage
+                talkers.append((cw.image.ImageInfo(imgpath, base=info), can_loaded_scaledimage, None, {}))
 
             if not firsttalker:
                 firsttalker = talker
@@ -3500,9 +3515,11 @@ class TalkDialogContent(TalkContent):
 
         # 画像パス
         imgpaths = []
+        can_loaded_scaledimage = talker.data.getbool(".", "scaledimage", False)
         for base in talker.imgpaths:
             basecardtype = "LargeCard"
-            imgpaths.append(cw.image.ImageInfo(base.path, base=base, basecardtype=basecardtype))
+            imgpaths.append((cw.image.ImageInfo(base.path, base=base, basecardtype=basecardtype), can_loaded_scaledimage,
+                             talker, {}))
         # 対象メンバの所持クーポンの集合
         coupons = talker.get_coupons()
         # ダイアログリスト

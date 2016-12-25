@@ -486,7 +486,21 @@ class Content(base.CWBinaryBase):
                 if e.tag == "Text":
                     text= e.text
                     break
-            f.write_string(base.CWBinaryBase.materialpath(data.get("path")))
+
+            e_imgpaths = data.find("ImagePaths")
+            if not e_imgpaths is None:
+                if 1 < len(e_imgpaths):
+                    f.check_wsnversion("1")
+                base.CWBinaryBase.check_imgpath(f, e_imgpaths.find("ImagePath"), "TopLeft")
+                imgpath2 = prop.gettext("ImagePath", "")
+                if imgpath2:
+                    imgpath = base.CWBinaryBase.materialpath(imgpath2)
+                else:
+                    imgpath = u""
+            else:
+                base.CWBinaryBase.check_imgpath(f, data, "TopLeft")
+                imgpath = data.get("path")
+            f.write_string(base.CWBinaryBase.materialpath(imgpath))
             f.write_string(text, True)
         elif tag == "Play" and ctype == "Bgm":
             f.write_string(base.CWBinaryBase.materialpath(data.get("path")))
@@ -508,6 +522,8 @@ class Content(base.CWBinaryBase):
         elif tag == "Wait" and ctype == "":
             f.write_dword(int(data.get("value")))
         elif tag == "Effect" and ctype == "":
+            if data.getbool(".", "ignite", False):
+                f.check_wsnversion("2")
             f.write_dword(int(data.get("level")))
             f.write_byte(base.CWBinaryBase.unconv_target_member(data.get("targetm")))
             f.write_byte(base.CWBinaryBase.unconv_card_effecttype(data.get("effecttype")))
@@ -569,10 +585,13 @@ class Content(base.CWBinaryBase):
         elif tag == "Branch" and ctype == "Money":
             f.write_dword(int(data.get("value")))
         elif tag == "Branch" and ctype == "Coupon":
+            base.CWBinaryBase.check_coupon(f, data.get("coupon"))
             f.write_string(data.get("coupon"))
             f.write_dword(0)
             f.write_byte(base.CWBinaryBase.unconv_target_scope_coupon(data.get("targets"), f))
         elif tag == "Get" and ctype == "Cast":
+            if data.getattr(".", "startaction", "NextRound") <> "NextRound":
+                f.check_wsnversion("2")
             f.write_dword(int(data.get("id")))
         elif tag == "Get" and ctype == "Item":
             f.write_dword(int(data.get("id")))
@@ -591,6 +610,7 @@ class Content(base.CWBinaryBase):
         elif tag == "Get" and ctype == "Money":
             f.write_dword(int(data.get("value")))
         elif tag == "Get" and ctype == "Coupon":
+            base.CWBinaryBase.check_coupon(f, data.get("coupon"))
             f.write_string(data.get("coupon"))
             f.write_dword(int(data.get("value")))
             f.write_byte(base.CWBinaryBase.unconv_target_scope(data.get("targets")))
@@ -613,6 +633,7 @@ class Content(base.CWBinaryBase):
         elif tag == "Lose" and ctype == "Money":
             f.write_dword(int(data.get("value")))
         elif tag == "Lose" and ctype == "Coupon":
+            base.CWBinaryBase.check_coupon(f, data.get("coupon"))
             f.write_string(data.get("coupon"))
             f.write_dword(0)
             f.write_byte(base.CWBinaryBase.unconv_target_scope(data.get("targets")))
