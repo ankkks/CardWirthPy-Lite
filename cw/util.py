@@ -24,6 +24,7 @@ import array
 import unicodedata
 import functools
 import webbrowser
+import math
 
 if sys.platform == "win32":
     import win32api
@@ -31,6 +32,7 @@ if sys.platform == "win32":
     import importlib
     pythoncom = importlib.import_module("pythoncom")
     win32shell = importlib.import_module("win32com.shell.shell")
+    import win32com.shell.shellcon
 
 import wx
 import wx.lib.agw.aui.tabart
@@ -538,7 +540,71 @@ def convert_maskpos(maskpos, width, height):
             raise Exception("Invalid maskpos: %s" % (maskpos))
     return maskpos
 
-def load_image(path, mask=False, maskpos=(0, 0), f=None, retry=True, isback=False):
+
+def get_scaledimagepaths(path, can_loaded_scaledimage):
+    """(スケーリングされたファイル名, スケール)のlistを返す。
+    listには1倍スケールを示す(path, 1)が必ず含まれる。
+    """
+    seq = [(path, 1)]
+    if can_loaded_scaledimage:
+        spext = os.path.splitext(path)
+        for scale in cw.SCALE_LIST:
+            fname = u"%s.x%d%s" % (spext[0], scale, spext[1])
+            seq.append((fname, scale))
+    return seq
+
+def copy_scaledimagepaths(frompath, topath, can_loaded_scaledimage):
+    """frompathをtopathへコピーする。
+    その後、ファイル名に".xN"をつけたイメージを探し、
+    実際に存在するファイルであればコピーする。
+    """
+    shutil.copy2(frompath, topath)
+    fromspext = os.path.splitext(frompath)
+    if can_loaded_scaledimage and fromspext[1].lower() in cw.EXTS_IMG:
+        tospext = os.path.splitext(topath)
+        for scale in cw.SCALE_LIST:
+            fname = u"%s.x%d%s" % (fromspext[0], scale, fromspext[1])
+            fname = cw.cwpy.rsrc.get_filepath(fname)
+            if os.path.isfile(fname):
+                fname2 = u"%s.x%d%s" % (tospext[0], scale, tospext[1])
+                shutil.copy2(fname, fname2)
+
+def find_scaledimagepath(path, up_scr, can_loaded_scaledimage, noscale):
+    """ファイル名に".xN"をつけたイメージを探して(ファイル名, スケール値)を返す。
+    例えば"file.bmp"に対する"file.x2.bmp"を探す。
+    """
+    scale = 1
+    path = cw.util.join_paths(path)
+    if not noscale and (can_loaded_scaledimage or path.startswith(cw.util.join_paths(cw.tempdir, u"ScenarioLog/TempFile/"))):
+        scale =  int(math.pow(2, int(math.log(up_scr, 2))))
+        spext = os.path.splitext(path)
+        while 2 <= scale:
+            fname = u"%s.x%d%s" % (spext[0], scale, spext[1])
+            fname = cw.cwpy.rsrc.get_filepath(fname)
+            if os.path.isfile(fname):
+                path = fname
+                break
+            scale /= 2
+    return path, scale
+
+
+def find_noscalepath(path):
+    """pathが"file.x2.bmp"のようなスケール付きイメージのものであれば
+    ".xN"の部分を取り除いて返す。
+    ただし取り除いた後のファイルが実在しない場合はそのまま返す。
+    """
+    scales = u"|".join(map(lambda s: str(s), cw.SCALE_LIST))
+    exts = u"|".join(map(lambda s: s.replace(".", "\\."), cw.EXTS_IMG))
+    result = re.match(u"\\A(.+)\.x(%s)(%s)\\Z" % (scales, exts), path, re.IGNORECASE)
+    if result:
+        fpath = result.group(1) + result.group(3)
+        if os.path.isfile(fpath):
+            path = fpath
+    return path
+
+
+def load_image(path, mask=False, maskpos=(0, 0), f=None, retry=True, isback=False, can_loaded_scaledimage=True,
+               noscale=False):
     """pygame.Surface(読み込めなかった場合はNone)を返す。
     path: 画像ファイルのパス。
     mask: True時、(0,0)のカラーを透過色に設定する。透過画像の場合は無視される。
@@ -546,6 +612,9 @@ def load_image(path, mask=False, maskpos=(0, 0), f=None, retry=True, isback=Fals
     #assert threading.currentThread() == cw.cwpy
     if cw.cwpy.rsrc:
         path = cw.cwpy.rsrc.get_filepath(path)
+
+    path, up_scr = find_scaledimagepath(path, cw.UP_SCR, can_loaded_scaledimage, noscale)
+
     bmpdepth = 0
     try:
         if f:
@@ -607,7 +676,8 @@ def load_image(path, mask=False, maskpos=(0, 0), f=None, retry=True, isback=Fals
                 bmpdepth = cw.image.get_bmpdepth(data)
                 data, _ok = cw.image.fix_cwnext16bitbitmap(data)
                 with io.BytesIO(data) as f2:
-                    r = load_image(path, mask, maskpos, f2, False, isback=isback)
+                    r = load_image(path, mask, maskpos, f2, False, isback=isback, can_loaded_scaledimage=can_loaded_scaledimage,
+                                   noscale=noscale)
                     f2.close()
                 return r
             except:
@@ -649,16 +719,18 @@ def load_image(path, mask=False, maskpos=(0, 0), f=None, retry=True, isback=Fals
             maskpos = convert_maskpos(maskpos, image.get_width(), image.get_height())
             image.set_colorkey(image.get_at(maskpos), pygame.locals.RLEACCEL)
 
-    if bmpdepth == 1 and mask and not isback:
-        image = Depth1Surface(image)
+    if bmpdepth == 1 and mask and not isback or up_scr <> 1:
+        image = Depth1Surface(image, up_scr, bmpdepth)
     return image
 
 class Depth1Surface(pygame.Surface):
-    def __init__(self, surface):
-        pygame.Surface.__init__(self, surface.get_size())
+    def __init__(self, surface, scr_scale, bmpdepth=24):
+        pygame.Surface.__init__(self, surface.get_size(), surface.get_flags(), surface.get_bitsize(), surface.get_masks())
         self.blit(surface, (0, 0), special_flags=pygame.locals.BLEND_RGBA_ADD)
-        self.set_colorkey(surface.get_colorkey())
-        self.bmpdepthis1 = True
+        colorkey = surface.get_colorkey()
+        self.set_colorkey(colorkey, pygame.locals.RLEACCEL)
+        self.bmpdepthis1 = surface.bmpdepthis1 if hasattr(surface, "bmpdepthis1") else (bmpdepth == 1)
+        self.scr_scale = scr_scale
 
 def put_number(image, num):
     """アイコンサイズの画像imageの上に
@@ -788,12 +860,15 @@ def _get_facepaths(facedir, imgpaths, dpaths, passed):
 
         dpaths2 = [][:]
         seq = []
+        scales = u"|".join(map(lambda s: str(s), cw.SCALE_LIST))
+        re_xn = re.compile(u"\\A.+\.x(%s)\\Z" % (scales), re.IGNORECASE)
         for fname in os.listdir(dpath):
             path1 = join_paths(dpath, fname)
             path = get_linktarget(path1)
             if os.path.isfile(path):
-                ext = os.path.splitext(path)[1].lower()
-                if ext in cw.EXTS_IMG:
+                spext = os.path.splitext(path)
+                ext = spext[1].lower()
+                if ext in cw.EXTS_IMG and not re_xn.match(spext[0]):
                     seq.append(path)
             elif os.path.isdir(path):
                 showpath = join_paths(showdpath, fname)
@@ -1569,7 +1644,6 @@ def get_materialpath(path, mtype, scedir="", system=False, findskin=True):
     return get_materialpathfromskin(path, mtype, findskin=findskin)
 
 def get_materialpathfromskin(path, mtype, findskin=True):
-    #読み込むフォルダ table/bgm/soundは固定
     if not os.path.isfile(path):
         if not findskin:
             path = ""
@@ -1633,35 +1707,46 @@ def remove_temp():
     except:
         pass
 
-def remove(path):
+def remove(path, trashbox=False):
     if os.path.isfile(path):
-        remove_file(path)
+        remove_file(path, trashbox=trashbox)
     elif os.path.isdir(path):
         if join_paths(path).lower().startswith("data/temp/"):
             # Tempフォルダは、フォルダの内容さえ消えていれば
             # 空フォルダが残っていてもほとんど無害
             try:
-                remove_treefiles(path)
-                remove_tree(path, noretry=True)
+                remove_treefiles(path, trashbox=trashbox)
+                remove_tree(path, noretry=True, trashbox=trashbox)
             except:
                 # まれにフォルダ削除に失敗する環境がある
                 #print_ex(file=sys.stderr)
                 print_ex()
-                remove_treefiles(path)
+                remove_treefiles(path, trashbox=trashbox)
         else:
-            remove_treefiles(path)
-            remove_tree(path)
+            if trashbox:
+                try:
+                    remove_tree(path, trashbox=trashbox)
+                except:
+                    print_ex()
+                    remove_treefiles(path, trashbox=trashbox)
+                    remove_tree(path, trashbox=trashbox)
+            else:
+                remove_treefiles(path, trashbox=trashbox)
+                remove_tree(path, trashbox=trashbox)
 
-def remove_file(path, retry=0):
+def remove_file(path, retry=0, trashbox=False):
     try:
-        os.remove(path)
+        if trashbox:
+            send_trashbox(path)
+        else:
+            os.remove(path)
     except WindowsError, err:
         if err.errno == 13 and retry < 5:
             os.chmod(path, stat.S_IWRITE|stat.S_IREAD)
-            remove_file(path, retry + 1)
+            remove_file(path, retry + 1, trashbox=trashbox)
         elif retry < 5:
             time.sleep(1)
-            remove_tree(path, retry + 1)
+            remove_tree(path, retry + 1, trashbox=trashbox)
         else:
             raise err
 
@@ -1669,9 +1754,12 @@ def add_winauth(file):
     if os.path.isfile(file) and sys.platform == "win32":
         os.chmod(file, stat.S_IWRITE|stat.S_IREAD)
 
-def remove_tree(treepath, retry=0, noretry=False):
+def remove_tree(treepath, retry=0, noretry=False, trashbox=False):
     try:
-        shutil.rmtree(treepath)
+        if trashbox:
+            send_trashbox(treepath)
+        else:
+            shutil.rmtree(treepath)
     except WindowsError, err:
         if err.errno == 13 and retry < 5 and not noretry:
             for dpath, dnames, fnames in os.walk(treepath):
@@ -1682,7 +1770,7 @@ def remove_tree(treepath, retry=0, noretry=False):
                             os.chmod(path, stat.S_IWRITE|stat.S_IREAD)
                         except WindowsError, err:
                             time.sleep(1)
-                            remove_tree2(treepath)
+                            remove_tree2(treepath, trashbox=trashbox)
                             return
 
                 for fname in fnames:
@@ -1692,17 +1780,17 @@ def remove_tree(treepath, retry=0, noretry=False):
                             os.chmod(path, stat.S_IWRITE|stat.S_IREAD)
                         except WindowsError, err:
                             time.sleep(1)
-                            remove_tree2(treepath)
+                            remove_tree2(treepath, trashbox=trashbox)
                             return
 
-            remove_tree(treepath, retry + 1)
+            remove_tree(treepath, retry + 1, trashbox=trashbox)
         elif retry < 5 and not noretry:
             time.sleep(1)
-            remove_tree(treepath, retry + 1)
+            remove_tree(treepath, retry + 1, trashbox=trashbox)
         else:
-            remove_tree2(treepath)
+            remove_tree2(treepath, trashbox=trashbox)
 
-def remove_tree2(treepath):
+def remove_tree2(treepath, trashbox=False):
     # shutil.rmtree()で権限付与時にエラーになる事があるので
     # 削除方法を変えてみる
     for dpath, dnames, fnames in os.walk(treepath, topdown=False):
@@ -1713,10 +1801,13 @@ def remove_tree2(treepath):
         for fname in fnames:
             path = join_paths(dpath, fname)
             if os.path.isfile(path):
-                os.remove(path)
+                if trashbox:
+                    send_trashbox(path)
+                else:
+                    os.remove(path)
     os.rmdir(treepath)
 
-def remove_treefiles(treepath):
+def remove_treefiles(treepath, trashbox=False):
     # remove_tree2()でもたまにエラーになる環境があるらしいので、
     # せめてディレクトリだけでなくファイルだけでも削除を試みる
     for dpath, dnames, fnames in os.walk(treepath, topdown=False):
@@ -1724,16 +1815,19 @@ def remove_treefiles(treepath):
             path = join_paths(dpath, fname)
             if os.path.isfile(path):
                 add_winauth(path)
-                os.remove(path)
+                if trashbox:
+                    send_trashbox(path)
+                else:
+                    os.remove(path)
 
-def rename_file(path, dstpath):
+def rename_file(path, dstpath, trashbox=False):
     """pathをdstpathへ移動する。
     すでにdstpathがある場合は上書きされる。
     """
     if not os.path.isdir(os.path.dirname(dstpath)):
         os.makedirs(os.path.dirname(dstpath))
     if os.path.isfile(dstpath):
-        remove_file(dstpath)
+        remove_file(dstpath, trashbox=trashbox)
     try:
         shutil.move(path, dstpath)
     except OSError:
@@ -1746,7 +1840,24 @@ def rename_file(path, dstpath):
                 f2.flush()
                 f2.close()
             f1.close()
-        remove_file(path)
+        remove_file(path, trashbox=trashbox)
+
+def send_trashbox(path):
+    """
+    可能であればpathをゴミ箱へ送る。
+    """
+    if sys.platform == "win32":
+        path = os.path.normpath(os.path.abspath(path))
+        ope = win32com.shell.shellcon.FO_DELETE
+        flags = win32com.shell.shellcon.FOF_NOCONFIRMATION |\
+                win32com.shell.shellcon.FOF_ALLOWUNDO |\
+                win32com.shell.shellcon.FOF_SILENT
+        win32com.shell.shell.SHFileOperation((None, ope, path + '\0\0', None, flags, None, None))
+    elif os.path.isfile(path):
+        os.remove(path)
+    elif os.path.isdir(path):
+        shutil.rmtree(path)
+
 
 #-------------------------------------------------------------------------------
 #　ZIPファイル関連
@@ -2562,7 +2673,8 @@ def format_title(fmt, d):
 # wx汎用関数
 #-------------------------------------------------------------------------------
 
-def load_wxbmp(name="", mask=False, image=None, maskpos=(0, 0), f=None, retry=True):
+def load_wxbmp(name="", mask=False, image=None, maskpos=(0, 0), f=None, retry=True, can_loaded_scaledimage=True,
+               noscale=False, up_win=None):
     """pos(0,0)にある色でマスクしたwxBitmapを返す。"""
     if sys.platform <> "win32":
         assert threading.currentThread() <> cw.cwpy
@@ -2571,6 +2683,11 @@ def load_wxbmp(name="", mask=False, image=None, maskpos=(0, 0), f=None, retry=Tr
 
     if cw.cwpy and cw.cwpy.rsrc:
         name = cw.cwpy.rsrc.get_filepath(name)
+
+    if up_win is None:
+        up_win = cw.UP_SCR # ゲーム画面と合わせるため、ダイアログなどでも描画サイズのイメージを使用する
+    name, up_scr = find_scaledimagepath(name, up_win, can_loaded_scaledimage, noscale)
+
     bmpdepth = 0
     maskcolour = None
     if mask:
@@ -2646,6 +2763,9 @@ def load_wxbmp(name="", mask=False, image=None, maskpos=(0, 0), f=None, retry=Tr
         wxbmp.bmpdepthis1 = True
     if maskcolour:
         wxbmp.maskcolour = maskcolour
+
+    wxbmp.scr_scale = up_scr
+
     return wxbmp
 
 def copy_wxbmp(bmp):
@@ -2929,7 +3049,11 @@ class CWPyStaticBitmap(wx.Panel):
         for i, (bmp, bmpdepthkey) in enumerate(zip(self.bmps, self.bmps_bmpdepthkey)):
             if self.infos:
                 info = self.infos[i]
-                baserect = info.calc_basecardposition_wx(bmpdepthkey.GetSize(), noscale=True,
+                w, h = bmpdepthkey.GetSize()
+                scr_scale = bmpdepthkey.scr_scale if hasattr(bmpdepthkey, "scr_scale") else 1
+                w /= scr_scale
+                h /= scr_scale
+                baserect = info.calc_basecardposition_wx((w, h), noscale=True,
                                                          basecardtype="LargeCard",
                                                          cardpostype="NotCard")
                 baserect = self.ss(baserect)
