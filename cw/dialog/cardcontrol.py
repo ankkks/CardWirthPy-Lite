@@ -50,7 +50,7 @@ class CardControl(wx.Dialog):
             s = cw.cwpy.msgs["entry_cancel"]
         else:
             s = cw.cwpy.msgs["close"]
-        self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, (-1,-1), s)
+        self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, cw.wins((90, 23)), s)
         # left
         bmp = cw.cwpy.rsrc.buttons["LMOVE"]
         self.leftbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((30, 30)), bmp=bmp, chain=True)
@@ -398,10 +398,11 @@ class CardControl(wx.Dialog):
             self.rightbtn2.SetSize(cw.wins((20, 20)))
             x -= cw.wins(140)
             self.combo.SetSize(cw.wins((140, 22)))
-            if sys.platform == "win32":
-                import win32api
-                CB_SETITEMHEIGHT = 0x153
-                win32api.SendMessage(self.combo.Handle, CB_SETITEMHEIGHT, -1, cw.wins(22))
+            #切り替え時に一瞬はみ出る
+            #if sys.platform == "win32":
+            #    import win32api
+            #    CB_SETITEMHEIGHT = 0x153
+            #    win32api.SendMessage(self.combo.Handle, CB_SETITEMHEIGHT, -1, cw.wins(22))
             yc = y + (cw.wins(22)-self.combo.GetSize()[1]) / 2
             self.combo.SetPosition((x, yc))
 
