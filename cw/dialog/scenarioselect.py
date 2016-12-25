@@ -272,7 +272,6 @@ class ScenarioSelect(select.Select):
             self.draw(True)
 
         self.bookmarkmenu = None
-        self.directorymenu = None
 
         seq = self.accels
         upkey = wx.NewId()
