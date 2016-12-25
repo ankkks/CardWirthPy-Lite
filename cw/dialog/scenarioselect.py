@@ -272,6 +272,7 @@ class ScenarioSelect(select.Select):
             self.draw(True)
 
         self.bookmarkmenu = None
+        self.directorymenu = None
 
         seq = self.accels
         upkey = wx.NewId()
@@ -293,6 +294,14 @@ class ScenarioSelect(select.Select):
         copyid = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnCopyDetail, id=copyid)
         seq.append((wx.ACCEL_CTRL, ord('C'), copyid))
+
+        newfolderid = wx.NewId()
+        self.Bind(wx.EVT_MENU, self.OnCreateDirBtn, id=newfolderid)
+        seq.append((wx.ACCEL_CTRL, ord('N'), newfolderid))
+
+        installid = wx.NewId()
+        self.Bind(wx.EVT_MENU, self.OnInstallBtn, id=installid)
+        seq.append((wx.ACCEL_CTRL, ord('I'), installid))
 
         self.narrowkeydown = []
         self.sortkeydown = []
@@ -1035,10 +1044,7 @@ class ScenarioSelect(select.Select):
             cw.cwpy.play_sound("error")
             return
 
-        if cw.cwpy.setting.can_installscenariofromdrop:
-            self._install_scenario(headers)
-        else:
-            self._show_selectedscenario(headers)
+        self._install_scenario(headers)
 
     def OnInstallBtn(self, event):
         wildcard = u"シナリオファイル (*.wsn; *.wsm; *.zip; *.lzh; *.cab; Summary.xml)|*.wsn;*.wsm;*.zip;*.cab;Summary.xml"
@@ -1253,12 +1259,7 @@ class ScenarioSelect(select.Select):
                                     os.path.normcase(os.path.normpath(os.path.abspath(dst))):
                                 if rmpath:
                                     cw.util.remove(rmpath, trashbox=True)
-                                if cw.cwpy.setting.delete_sourceafterinstalled:
-                                    shutil.move(fpath, dst)
-                                elif os.path.isfile(fpath):
-                                    shutil.copy2(fpath, dst)
-                                else:
-                                    shutil.copytree(fpath, dst)
+                                shutil.move(fpath, dst)
 
                             self.updates.add(os.path.dirname(dst))
 
@@ -1316,8 +1317,8 @@ class ScenarioSelect(select.Select):
                 lastscenariopath = os.path.abspath(thread.firstpath)
                 self._processing = True
                 self.narrow.SetValue(u"")
-                self.set_selected(lastscenario, lastscenariopath, updatetree=True, findresults=thread.paths)
                 self._processing = False
+                self.set_selected(lastscenario, lastscenariopath, updatetree=True, findresults=thread.paths)
 
             return
 
@@ -1593,17 +1594,6 @@ class ScenarioSelect(select.Select):
     def draw(self, update=False):
         self._draw_impl(update)
 
-    def _update_pagelabel(self):
-        if self.list:
-            self.pagelabel.SetLabel("%s/%s" % (self.index+1, len(self.list)))
-        else:
-            self.pagelabel.SetLabel("1/1")
-        dc = wx.ClientDC(self.pagelabel)
-        w, h, _lh = dc.GetMultiLineTextExtent(self.pagelabel.GetLabel())
-        self.pagelabel.SetSize((w, h))
-        self.pagelabel.SetMinSize((w, h))
-        self.Layout()
-
     def _get_bg(self):
         if self._bg:
             return self._bg
@@ -1756,7 +1746,6 @@ class ScenarioSelect(select.Select):
 
     def _draw_impl(self, update=False, dc=None):
         if update:
-            self._update_pagelabel()
             self.enable_btn()
 
             if cw.cwpy.setting.show_paperandtree:
@@ -2097,7 +2086,6 @@ class ScenarioSelect(select.Select):
                 self.draw(True)
 
         self._update_saveddirstack()
-        self._update_pagelabel()
 
     def create_treeitems(self, treeitem):
         # 再描画を抑止して軽くする
@@ -2352,8 +2340,6 @@ class ScenarioSelect(select.Select):
 
         self.dirstack = self.get_dirstack(paritem)
         self._update_saveddirstack()
-        self._update_pagelabel()
-
         self.enable_btn()
 
     def get_dirstack(self, paritem):
@@ -2584,8 +2570,6 @@ class ScenarioSelect(select.Select):
         if self._processing:
             return
 
-        self.installbtn.Enable(True)
-        self.createdirbtn.Enable(True)
         self.opendirbtn.Enable(self._can_opendir())
         if self.editorbtn:
             self.editorbtn.Enable(self._can_editor())
