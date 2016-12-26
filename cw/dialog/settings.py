@@ -2697,7 +2697,7 @@ class FontSettingPanel(wx.Panel):
                           "tab"          : u"タブ",
                           "menu"         : u"メニュー",
                           "scenario"     : u"貼紙タイトル",
-                          "targetlevel"  : u"対象レベル",
+                          "targetlevel"  : u"貼紙の対象レベル",
                           "paneltitle"   : u"パネルタイトル1",
                           "paneltitle2"  : u"パネルタイトル2",
                           "dlgmsg"       : u"ダイアログテキスト1",

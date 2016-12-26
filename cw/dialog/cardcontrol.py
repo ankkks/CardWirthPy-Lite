@@ -85,18 +85,18 @@ class CardControl(wx.Dialog):
         self.sortwithstar = wx.lib.buttons.ThemedGenBitmapToggleButton(self.toppanel, -1, None, size=cw.wins((24, 24)))
         self.sortwithstar.SetToolTipString(cw.cwpy.msgs["sort_with_star"])
         self._update_sortwithstar()
-        self.editstar = wx.lib.buttons.ThemedGenBitmapToggleButton(self.toppanel, -1, None, size=cw.wins((24, 24)))
+        self.editstar = wx.lib.buttons.ThemedGenBitmapToggleButton(self.toppanel, -1, None, size=cw.wins((24, 24)), style=wx.NO_BORDER)
         self.editstar.SetToolTipString(cw.cwpy.msgs["edit_star"])
         self.editstar.SetToggle(cw.cwpy.setting.edit_star)
         self._update_editstar()
         if not sort or not cw.cwpy.setting.show_additional_card:
-            self.sort.Hide()
             self.sortwithstar.Hide()
         if not sort:
+            self.sort.Hide()
             self.editstar.Hide()
         def can_sort():
             return self.callname in ("STOREHOUSE", "BACKPACK", "CARDPOCKETB")
-        self.additionals.append((self.sort, can_sort))
+        #self.additionals.append((self.sort, can_sort))
         self.additionals.append((self.sortwithstar, can_sort))
         self.change_bgs.append(self.sortwithstar)
         self.change_bgs.append(self.editstar)
@@ -344,7 +344,7 @@ class CardControl(wx.Dialog):
             self.downbtn.SetSize(cw.wins((68, 38)))
 
             # ページ番号入力欄
-            psize = (cw.wins(34), self.page.GetSize()[1])
+            psize = (cw.wins(32), self.page.GetSize()[1])
             dc = wx.ClientDC(self)
             dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(13)))
             rect = self.upbtn.GetRect()
@@ -356,7 +356,7 @@ class CardControl(wx.Dialog):
             te = dc.GetTextExtent("/")
             sx = cw.wins(40)-te[0]/2+cw.wins(2)
             y += te[1] / 2
-            y -= psize[1]/2 +cw.wins(2)
+            y -= psize[1]/2 +cw.wins(4)
             self.page.SetPosition((sx-psize[0], y))
             self.page.SetSize(psize)
 
@@ -414,8 +414,8 @@ class CardControl(wx.Dialog):
 
         if self.editstar.IsShown():
             x -= cw.wins(24)
-            self.editstar.SetPosition((x, y))
-            self.editstar.SetSize(cw.wins((22, 23)))
+            self.editstar.SetPosition((x, -1))
+            self.editstar.SetSize(cw.wins((22, 22)))
         if self.sort.IsShown():
             x -= cw.wins(77)
             self.sort.SetSize(cw.wins((75, 22)))
@@ -425,7 +425,7 @@ class CardControl(wx.Dialog):
         # 追加的コントロールの表示
         if self.addctrlbtn:
             w, h = self.addctrlbtn.GetSize()
-            self.addctrlbtn.SetPosition((cw.wins(55), cheight-h-cw.wins(167)))
+            self.addctrlbtn.SetPosition((cw.wins(53), cheight-h-cw.wins(167)))
 
         # ボタンバー
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
@@ -1401,8 +1401,8 @@ class CardHolder(CardControl):
         bmp = cw.cwpy.rsrc.buttons["UP"]
         self.upbtn = cw.cwpy.rsrc.create_wxbutton(self.toppanel, wx.ID_UP, cw.wins((60, 35)), bmp=bmp, chain=True)
         # ページ指定
-        self.page = wx.lib.intctrl.IntCtrl(self.toppanel, -1, style=wx.TE_RIGHT|wx.SIMPLE_BORDER, size=(-1, -1))
-        font = cw.cwpy.rsrc.get_wxfont("paneltitle", pixelsize=cw.wins(17))
+        self.page = wx.lib.intctrl.IntCtrl(self.toppanel, -1, style=wx.TE_RIGHT, size=cw.wins((10, 20)))
+        font = cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(16))
         self.page.SetFont(font)
         self.page.SetValue(1)
         self.page.SetMin(1)
@@ -1806,11 +1806,12 @@ class CardHolder(CardControl):
 
         # ソート条件
         if self.callname in ("STOREHOUSE", "BACKPACK", "CARDPOCKETB"):
-            if not self.sort.IsShown() and cw.cwpy.setting.show_additional_card:
+            if not self.sort.IsShown():
                 self.sort.Show()
-                self.sortwithstar.Show()
-                self.narrow.Show()
-                self.narrow_type.Show()
+                if cw.cwpy.setting.show_additional_card:
+                    self.sortwithstar.Show()
+                    self.narrow.Show()
+                    self.narrow_type.Show()
             self._update_sortwithstar()
         else:
             if self.sort.IsShown():
