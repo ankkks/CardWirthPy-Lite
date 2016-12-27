@@ -50,7 +50,7 @@ tempdir = tempdir_init
 
 # アプリケーション情報
 APP_VERSION = (1, "1")
-APP_NAME = "CardWirthPy"
+APP_NAME = "CardWirthPyLite"
 
 # CardWirthの標準文字コード
 if sys.platform == "win32":
