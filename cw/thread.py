@@ -2076,19 +2076,15 @@ class CWPy(_Singleton, threading.Thread):
 
                 shutil.copy2(path, dstpath)
 
-        # ゴシップ復元を無効にするモード(互換動作)でなければ
-        # 追加されたゴシップを削除し、削除されたゴシップを追加し直す
-        if not cw.cwpy.sct.disable_gossiprestration(self.sdata.get_versionhint(cw.HINT_SCENARIO)):
+        # 復元を無効にする互換オプションが有効でなければ
+        # 追加されたゴシップ/終了印を削除し、削除されたゴシップ/終了印を追加し直す
+        if not cw.cwpy.setting.enable_oldf9:
             # gossips
             for key, value in self.sdata.gossips.iteritems():
                 if value:
                     self.ydata.remove_gossip(key)
                 else:
                     self.ydata.set_gossip(key)
-
-        # 終了印復元を無効にするモード(互換動作)でなければ
-        # 追加された終了印を削除し、削除された終了印を追加し直す
-        if not cw.cwpy.sct.disable_compstamprestration(self.sdata.get_versionhint(cw.HINT_SCENARIO)):
             # completestamps
             for key, value in self.sdata.compstamps.iteritems():
                 if value:

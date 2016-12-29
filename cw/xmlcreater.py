@@ -550,6 +550,11 @@ def create_settings(setting, writeplayingdata=True, fpath="Settings_Lite.xml"):
         e = cw.data.make_element("WritePlayLog", str(setting.write_playlog))
         element.append(e)
 
+    # F9互換オプション
+    if setting.enable_oldf9 <> setting.enable_oldf9_init:
+        e = cw.data.make_element("EnableOldF9", str(setting.enable_oldf9))
+        element.append(e)
+
     if writeplayingdata:
         # 一覧表示
         attrs = {}

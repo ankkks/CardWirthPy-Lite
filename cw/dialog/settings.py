@@ -638,6 +638,8 @@ class SettingsPanel(wx.Panel):
         setting.show_debuglogdialog = value
         value = self.pane_scenario.cb_nolevelup.GetValue()
         setting.no_levelup_in_debugmode = value
+        value = self.pane_scenario.cb_oldf9.GetValue()
+        setting.enable_oldf9 = value
 
         # 詳細
         value = self.pane_ui.cb_can_skipwait.GetValue()
@@ -2127,6 +2129,9 @@ class ScenarioSettingPanel(wx.Panel):
             self, -1, u"シナリオの終了時にデバッグ情報を表示する")
         self.cb_nolevelup = wx.CheckBox(
             self, -1, u"デバッグ中はレベル上昇を抑止する")
+        self.cb_oldf9 = wx.CheckBox(
+            self, -1, u"CardWirth1.28由来のF9仕様を使用する")
+        self.cb_oldf9.SetToolTipString( u"有効化非推奨\nシナリオによって変更された終了印・ゴシップがF9でリセットされなくなります")
 
         # スキンタイプ毎の初期フォルダ
         self.box_folderoftype = wx.StaticBox(self, -1, u"シナリオフォルダ(スキンタイプ別)")
@@ -2189,6 +2194,7 @@ class ScenarioSettingPanel(wx.Panel):
         self.cb_write_playlog.SetValue(setting.write_playlog)
         self.cb_show_debuglogdialog.SetValue(setting.show_debuglogdialog)
         self.cb_nolevelup.SetValue(setting.no_levelup_in_debugmode)
+        self.cb_oldf9.SetValue(setting.enable_oldf9)
 
         if 0 < self.grid_folderoftype.GetNumberRows():
             self.grid_folderoftype.DeleteRows(0, self.grid_folderoftype.GetNumberRows())
@@ -2212,6 +2218,7 @@ class ScenarioSettingPanel(wx.Panel):
         self.cb_write_playlog.SetValue(setting.write_playlog)
         self.cb_show_debuglogdialog.SetValue(setting.show_debuglogdialog_init)
         self.cb_nolevelup.SetValue(setting.no_levelup_in_debugmode_init)
+        self.cb_oldf9.SetValue(setting.enable_oldf9_init)
 
         self.tx_filer_dir.SetValue(setting.filer_dir_init)
         self.tx_filer_file.SetValue(setting.filer_file_init)
@@ -2258,6 +2265,7 @@ class ScenarioSettingPanel(wx.Panel):
 
         bsizer_debug.Add(self.cb_show_debuglogdialog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_debug.Add(self.cb_nolevelup, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_debug.Add(self.cb_oldf9, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
 
         sizer_v2.Add(bsizer_gene, 1, wx.RIGHT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
         sizer_v2.Add(bsizer_debug, 1, wx.LEFT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
@@ -2387,9 +2395,6 @@ class ScenarioSettingPanel(wx.Panel):
 class UISettingPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
-        #self.SetScrollbars(1, 10, 1, 1)
-        #self.SetScrollRate(1, cw.ppis(15))
-        #self.SetScrollPageSize(1, cw.ppis(250))
 
         # マウスオプション
         self.box_wait = wx.StaticBox(self, -1, u"マウス操作とスキップ")

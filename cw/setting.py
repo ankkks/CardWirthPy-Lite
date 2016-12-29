@@ -390,6 +390,7 @@ class Setting(object):
         self.volume_increment = 5 # ホイールによる全体音量調節での増減量
         self.show_debuglogdialog = False
         self.write_playlog = False
+        self.enable_oldf9 = False
         self.move_repeat = 250 #移動ボタン押しっぱなしの速度
 
         # 絞り込み・整列などのコントロールの表示有無
@@ -718,6 +719,9 @@ class Setting(object):
             self.init_skin(basedata=basedata)
 
         # 設定バージョンの更新 設定ファイルを独立させているためカット
+
+        # F9互換オプション
+        self.enable_oldf9 = data.getbool("EnableOldF9", self.enable_oldf9)
 
     def init_skin(self, basedata=None):
         self.skindir = cw.util.join_paths(u"Data/Skin", self.skindirname)
@@ -2612,13 +2616,8 @@ class ScenarioCompatibilityTable(object):
                 key = e.get("md5", "")
                 zindexmode = e.getattr(".", "zIndexMode", "")
                 vanishmembercancellation = e.getbool(".", "enableVanishMemberCancellation", False)
-                # F9でもゴシップや終了印が復元されない挙動の再現の封印解除
-                gossiprestoration = e.getbool(".", "disableGossipRestoration", False)
-                compstamprestoration = e.getbool(".", "disableCompleteStampRestoration", False)
-                ##gossiprestoration = False
-                ##compstamprestoration = False
-                if key and (e.text or zindexmode or vanishmembercancellation or gossiprestoration or compstamprestoration):
-                    self.table[key] = (e.text, zindexmode, vanishmembercancellation, gossiprestoration, compstamprestoration)
+                if key and (e.text or zindexmode or vanishmembercancellation):
+                    self.table[key] = (e.text, zindexmode, vanishmembercancellation)
 
     def get_versionhint(self, fpath=None, filedata=None):
         """fpathのファイル内容またはfiledataから、
@@ -2749,19 +2748,6 @@ class ScenarioCompatibilityTable(object):
                 vanishmembercancellation = cw.util.str2bool(vanishmembercancellation)
             except:
                 vanishmembercancellation = False
-
-            # F9でもゴシップや終了印が復元されない挙動の再現の封印解除
-            try:
-                gossiprestration = conf.get("Compatibility", "disableGossipRestoration")
-                gossiprestration = cw.util.str2bool(gossiprestration)
-            except:
-                gossiprestration = False
-
-            try:
-                compstamprestration = conf.get("Compatibility", "disableCompleteStampRestoration")
-                compstamprestration = cw.util.str2bool(compstamprestration)
-            except:
-                compstamprestration = False
 
             if engine or zindexmode or vanishmembercancellation or gossiprestration or compstamprestration:
                 return (engine, zindexmode, vanishmembercancellation, gossiprestration, compstamprestration)
