@@ -1,5 +1,5 @@
 ﻿●ライセンス情報
-CardWirthPy Rebootのライセンス
+CardWirthPy Rebootソースコードのライセンス
 >"src.zip"に同梱しているプログラミングコードの著作権は作者が保持し、以下のライセンスが適用されます。
 >[The MIT License](http://www.opensource.org/licenses/mit-license.php)
 改変元のソースはlogの中の人さん、Reboot制作者各位が著作権を保有しています。
@@ -8,6 +8,9 @@ Data/Debugger にあるPy独自機能の画像ファイル
 > : [CWXEditor](https://bitbucket.org/k4nagatsuki/cwxeditor/)
 > : License: Public Domain
 それ以外はgroupASKの著作物です。(後述)
+
+Data/Skin にあるスキン
+別途Readmeを参照して下さい。
 
 Data/SkinBase 以下にあるすべての画像及び音声ファイル
 SUMMARY、DIRECTORY、SUMMARY_INVISIBLEのみgroupASKの著作物です。(後述)

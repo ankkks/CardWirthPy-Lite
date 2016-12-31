@@ -69,7 +69,7 @@ class BuildExe(object):
         self.srcfile_name = "src.zip"
 
         #Extra files/dirs copied to game
-        self.extra_datas = ["Data/SoundFont", "Data/SkinBase", "Data/Debugger", "Data/Font",
+        self.extra_datas = ["Data/SoundFont", "Data/Skin/Classic", "Data/SkinBase", "Data/Debugger", "Data/Font",
             "Data/Compatibility.xml", "Data/SystemCoupons.xml", "Data/SearchEngines.xml", 
             "License.txt", "msvcr90.dll", "msvcp90.dll", "gdiplus.dll",
             "bass.dll", "bass_fx.dll", "bassmidi.dll", 
@@ -89,7 +89,7 @@ class BuildExe(object):
         self.dist_dir ='CardWirthPyLite'
 
         #Extra new dirs
-        self.extra_dirs = ["Scenario", "Yado", "Data/Temp", "Data/Skin",
+        self.extra_dirs = ["Scenario", "Yado", "Data/Temp",
             "Data/Face/Common", "Data/Face/Female", "Data/Face/Female-ADT", "Data/Face/Female-CHD", "Data/Face/Female-OLD", "Data/Face/Female-YNG",
             "Data/Face/Male", "Data/Face/Male-ADT", "Data/Face/Male-CHD", "Data/Face/Male-OLD", "Data/Face/Male-YNG"]
 
