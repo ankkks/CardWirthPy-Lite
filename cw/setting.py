@@ -1885,13 +1885,15 @@ class Resource(object):
                 return load_image(fpath, mask=True, maskpos="right", can_loaded_scaledimage=can_loaded_scaledimage)
             elif key == "LIFEGUAGE":
                 return load_image(fpath, mask=True, maskpos=(5, 5), can_loaded_scaledimage=can_loaded_scaledimage)
+            elif key == "LIFEGUAGE2":
+                return load_image(fpath, mask=True, can_loaded_scaledimage=can_loaded_scaledimage)
             elif key == "LIFEBAR":
                 return load_image(fpath, mask=False, can_loaded_scaledimage=can_loaded_scaledimage)
             else:
                 return load_image(fpath, mask=False, can_loaded_scaledimage=can_loaded_scaledimage)
 
         dpath = cw.util.join_paths(self.skindir, "Resource/Image/Status")
-        return self.get_resources(load_image2, "Data/SkinBase/Resource/Image/Status", dpath, self.ext_img, False, ss, ("LIFEGUAGE", "LIFEBAR"), emptyfunc=emptyfunc)
+        return self.get_resources(load_image2, "Data/SkinBase/Resource/Image/Status", dpath, self.ext_img, False, ss, emptyfunc=emptyfunc)
 
     def get_dialogs(self, load_image):
         """
@@ -2063,8 +2065,7 @@ class Resource(object):
         d = ResourceTable("Resource/Image/Font", {}.copy(), empty_image)
         def load(key, name):
             fpath = cw.util.find_resource(cw.util.join_paths(dpath, key), self.ext_img)
-            image = cw.util.load_image(fpath, can_loaded_scaledimage=True)
-            image.set_colorkey((255, 255, 255))
+            image = cw.util.load_image(fpath, mask=True, can_loaded_scaledimage=True)
             return image, False
 
         for key, name in ndict.iteritems():
