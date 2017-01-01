@@ -1532,11 +1532,58 @@ class Resource(object):
         bmp.blit(topright, (x+w-6-o, y+o), special_flags=pygame.locals.BLEND_RGBA_SUB)
         bmp.blit(bottomleft, (x+o, y+h-6-o), special_flags=pygame.locals.BLEND_RGBA_SUB)
         bmp.blit(bottomright, (x+w-6-o, y+h-6-o), special_flags=pygame.locals.BLEND_RGBA_SUB)
-
+    
     def _create_statusbtnbmp(self, w, h, flags=0):
-        """ボタン風の画像を生成する。"""
-        topleft, topright, bottomleft, bottomright = Resource.create_cornerimg((208, 208, 208))
+        """OSネイティブなボタン風の画像を生成する。"""
+        try:
+            if sys.platform == "win32":
+                wxbmp = wx.EmptyBitmapRGBA(w, h)
+                dc = wx.MemoryDC(wxbmp)
+                render = wx.RendererNative.Get()
+                #下地のみ常に選択中カラーにする
+                if w > 600:
+                    flags = wx.CONTROL_PRESSED
+                render.DrawPushButton(cw.cwpy.frame, dc, (cw.s(0), cw.s(0), w, h), flags)
+                dc.EndDrawing()
+                wximg = wxbmp.ConvertToImage()
+                pixel_num = w * h
+                
+                if wximg.GetAlphaData() == "\x00" * pixel_num:
+                    wximg.SetAlphaData("\xFF" * pixel_num)
+                wxbmp = wximg.ConvertToBitmap()
+                def conv2surface(wxbmp):
+                    """wx.Bitmapをpygame.Surfaceに変換する。
+                    wxbmp: wx.Bitmap
+                    """
+                    w, h = wxbmp.GetSize()
+                    wximg = wxbmp.ConvertToImage()
 
+                    if wxbmp.HasAlpha():
+                        data = wximg.GetData()
+                        r_data = data[2::3]
+                        g_data = data[2::3]
+                        b_data = data[2::3]
+                        a_data = wximg.GetAlphaData()
+                        seq = []
+
+                        for cnt in xrange(w * h):
+                            seq.append((r_data[cnt] + g_data[cnt] + b_data[cnt] + a_data[cnt]))
+
+                        buf = "".join(seq)
+                        image = pygame.image.frombuffer(buf, (w, h), "RGBA").convert_alpha()
+                    else:
+                        wximg = wxbmp.ConvertToImage()
+                        buf = wximg.GetData()
+                        image = pygame.image.frombuffer(buf, (w, h), "RGB").convert()
+                    if wximg.HasMask():
+                        image.set_colorkey(wximg.GetOrFindMaskColour(), RLEACCEL)
+                    return image
+        
+                return conv2surface(wxbmp)
+        except:
+            pass
+
+        topleft, topright, bottomleft, bottomright = Resource.create_cornerimg((208, 208, 208))
         def subtract_corner(value):
             # 角部分の線の色を濃くする
             color = (value, value, value, 0)
@@ -1545,34 +1592,14 @@ class Resource(object):
             bottomleft.fill(color, special_flags=pygame.locals.BLEND_RGBA_SUB)
             bottomright.fill(color, special_flags=pygame.locals.BLEND_RGBA_SUB)
 
-        bmp = pygame.Surface((w, h)).convert_alpha()
-        """グラデーション解除
+        #bmp = pygame.Surface((w, h)).convert_alpha()
+
         if flags & SB_DISABLE:
             r1 = g1 = b1 = 240
             bmp.fill((r1, g1, b1))
-        else:
-            # グラデーションとなるよう、全面に線を引く
-            # (フラグによって明るさを変える)
-            if (flags & SB_CURRENT) and (flags & SB_PRESSED):
-                r1 = g1 = b1 = 234
-                r2 = g2 = b2 = 222
-            elif flags & SB_PRESSED:
-                r1 = g1 = b1 = 220
-                r2 = g2 = b2 = 208
-            elif flags & SB_CURRENT:
-                r1 = g1 = b1 = 255
-                r2 = g2 = b2 = 250
-            else:
-                r1 = g1 = b1 = 255
-                r2 = g2 = b2 = 232
-            mid = h / 2
-            for y in xrange(0, mid+1, 1):
-                bmp.fill((r1-y/4, g1-y/4, b1-y/4), pygame.Rect(0, mid-y, w, 1))
-                bmp.fill((r2-y, g2-y, b2-y), pygame.Rect(0, mid+y, w, 1))
-            """
+
         r1 = g1 = b1 = 250
         bmp.fill((r1, g1, b1))
-
         # 枠の部分。四隅には角丸の画像を描写する
         if flags & SB_PRESSED:
             # 押下済みの画像であれば上と左の縁を暗くする
@@ -1698,13 +1725,13 @@ class Resource(object):
             if flags in self._statusbtnbmp1:
                 btn = self._statusbtnbmp1[flags]
             else:
-                btn = self._create_statusbtnbmp(cw.s(27), cw.s(27), flags)
+                btn = self._create_statusbtnbmp(cw.s(27), cw.s(29), flags)
                 self._statusbtnbmp1[flags] = btn
         elif sizetype == 2:
             if flags in self._statusbtnbmp2:
                 btn = self._statusbtnbmp2[flags]
             else:
-                btn = self._create_statusbtnbmp(cw.s(632), cw.s(33), flags)
+                btn = self._create_statusbtnbmp(cw.s(633)+1, cw.s(34), flags)
                 self._statusbtnbmp2[flags] = btn
 
         return btn.copy() if btn else None
@@ -2668,24 +2695,6 @@ class ScenarioCompatibilityTable(object):
             return False
 
         return currentversion[2]
-
-    def disable_gossiprestration(self, currentversion):
-        """F9でのゴシップ復元を無効にする問題を
-        再現するモードであればTrueを返す。
-        """
-        if not currentversion:
-            return False
-
-        return currentversion[3]
-
-    def disable_compstamprestration(self, currentversion):
-        """F9での終了印復元を無効にする問題を
-        再現するモードであればTrueを返す。
-        """
-        if not currentversion:
-            return False
-
-        return currentversion[4]
 
     def merge_versionhints(self, hint1, hint2):
         """hint1を高優先度としてhint2とマージする。"""

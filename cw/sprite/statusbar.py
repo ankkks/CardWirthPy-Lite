@@ -41,20 +41,16 @@ class StatusBar(base.CWPySprite):
         cw.cwpy.sbargrp.add(self, layer=LAYER_BASE)
 
     def _init_image(self):
-        self.image = pygame.Surface(cw.s((632, 33))).convert()
+        self.image = pygame.Surface(cw.s((633, 33))).convert()
         #ステータスバー スケーリング時
         subimg = cw.cwpy.rsrc.get_statusbtnbmp(2, 0)
-        #bmp = pygame.Surface((2, 0)).convert_alpha()
-        #r1 = g1 = b1 = 240
-        #bmp.fill((r1, g1, b1))
-        #subimg = bmp
         
         if not self.showbuttons and self._statusbarmask:
             subimg.fill((64, 64, 64), special_flags=pygame.locals.BLEND_RGB_SUB)
         self.image.fill((240, 240, 240))
         self.image.blit(subimg, cw.s((0, 0)))
         self.rect = self.image.get_rect()
-        self.rect.topleft = cw.s((0, 420))
+        self.rect.topleft = -1,cw.s(420)
 
     def update_scale(self):
         self._init_image()
@@ -85,17 +81,17 @@ class StatusBar(base.CWPySprite):
 
         left = cw.s(602)
         rmargin = cw.s(0)
-        self._create_settings((left, cw.s(3)))
+        self._create_settings((left, cw.s(2)))
 
         if cw.cwpy.setting.backlogmax:
             left -= cw.s(28)
             rmargin += cw.s(27)
-            self._create_backlog((left, cw.s(3)))
+            self._create_backlog((left, cw.s(2)))
 
         if cw.cwpy.is_debugmode():
             left -= cw.s(28)
             rmargin += cw.s(27)
-            self._create_debugger((left, cw.s(3)))
+            self._create_debugger((left, cw.s(2)))
 
         if encounter:
             EncounterPanel(self, (cw.s(474) - rmargin, cw.s(6)))
@@ -128,10 +124,10 @@ class StatusBar(base.CWPySprite):
             self._create_partymoney((cw.s(474) - rmargin, cw.s(6)))
             rmargin += cw.s(34)
             if showbuttons and cw.cwpy.is_playingscenario() and cw.cwpy.sdata.has_infocards():
-                self._create_infocards((cw.s(474) - rmargin, cw.s(3)))
+                self._create_infocards((cw.s(474) - rmargin, cw.s(2)))
         elif cw.cwpy.is_battlestatus():
             if cw.cwpy.setting.show_roundautostartbutton:
-                self._create_autostart(cw.s((5, 3)))
+                self._create_autostart(cw.s((5, 2)))
                 left = cw.s(36)
             else:
                 left = cw.s(10)
