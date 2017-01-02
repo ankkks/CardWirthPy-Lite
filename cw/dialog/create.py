@@ -2005,10 +2005,10 @@ class AdventurerDesignDialog(wx.Dialog):
 
         # btn
         self.okbtn = cw.cwpy.rsrc.create_wxbutton(self, -1,
-                                                        cw.wins((100, 30)), cw.cwpy.msgs["entry_decide"])
+                                                        cw.wins((74, 20)), cw.cwpy.msgs["decide"])
         self.buttonlist.append(self.okbtn)
         self.cnclbtn = cw.cwpy.rsrc.create_wxbutton(self, wx.ID_CANCEL,
-                                                        cw.wins((100, 30)), cw.cwpy.msgs["entry_cancel"])
+                                                        cw.wins((74, 20)), cw.cwpy.msgs["entry_cancel"])
         self.buttonlist.append(self.cnclbtn)
 
         # layout
@@ -2033,8 +2033,9 @@ class AdventurerDesignDialog(wx.Dialog):
         # sizer_panelにbuttonを設定
         for button in self.buttonlist:
             sizer_btn.Add((margin, 0), 0, 0, 0)
-            sizer_btn.Add(button, 0, wx.TOP|wx.BOTTOM, cw.wins(3))
+            sizer_btn.Add(button, 0, wx.CENTER, cw.wins(3))
         sizer_btn.Add((margin2, 0), 0, 0, 0)
+        sizer_btn.SetMinSize(wx.Size(-1, cw.wins(29)))
 
         sizer_1.Add(self.toppanel, 1, wx.EXPAND, 0)
         sizer_1.Add(sizer_btn, 0, wx.EXPAND, 0)
@@ -2078,7 +2079,7 @@ class DesignPanel(AdventurerCreaterPage):
 
         self.ccard = ccard
 
-        self.namectrl = wx.TextCtrl(self, size=cw.wins((125, 18)), style=wx.NO_BORDER)
+        self.namectrl = wx.TextCtrl(self, size=cw.wins((125, 20)), style=wx.SIMPLE_BORDER)
         self.namectrl.SetMaxLength(14)
         self.namectrl.SetFocus()
         font = cw.cwpy.rsrc.get_wxfont("inputname", pixelsize=cw.wins(16))
@@ -2088,13 +2089,13 @@ class DesignPanel(AdventurerCreaterPage):
         font = cw.cwpy.rsrc.get_wxfont("combo", pixelsize=cw.wins(14))
         self.ch_imgdpath.SetFont(font)
 
-        font = cw.cwpy.rsrc.get_wxfont("datadesc", pixelsize=cw.wins(14))
-        self.descctrl = wx.TextCtrl(self, style=wx.NO_BORDER|wx.TE_MULTILINE)
+        font = cw.cwpy.rsrc.get_wxfont("datadesc", pixelsize=cw.wins(13))
+        self.descctrl = wx.TextCtrl(self, style=wx.TE_MULTILINE|wx.SIMPLE_BORDER)
         self.descctrl.SetFont(font)
 
         dc = wx.ClientDC(self)
         dc.SetFont(self.descctrl.GetFont())
-        w = dc.GetTextExtent("#")[0] * 39
+        w = dc.GetTextExtent(u"―"*20)[0]
         dc.Destroy()
         self.descctrl.SetClientSize((w, cw.wins(107)))
         self.descctrl.SetInitialSize(self.descctrl.GetSize())
@@ -2205,7 +2206,7 @@ class DesignPanel(AdventurerCreaterPage):
 
         if self.ch_imgdpath.IsShown():
             sizer_1.Add(self.namectrl, 0, wx.TOP|wx.CENTER, cw.wins(55))
-            sizer_1.Add(self.ch_imgdpath, 0, wx.TOP|wx.CENTER, cw.wins(133))
+            sizer_1.Add(self.ch_imgdpath, 0, wx.TOP|wx.CENTER, cw.wins(130))
             h = self.ch_imgdpath.GetSize()[1]
             sizer_1.Add(self.descctrl, 0, wx.TOP|wx.CENTER, cw.wins(45)-h)
         else:

@@ -1920,7 +1920,7 @@ class Resource(object):
             elif key == "STATUS8":
                 return load_image(fpath, mask=True, maskpos="right", can_loaded_scaledimage=can_loaded_scaledimage, up_scr=up_scr)
             elif key in ("CAUTION", "INVISIBLE"):
-                return load_image(fpath, can_loaded_scaledimage=can_loaded_scaledimag, up_scr=up_scr)
+                return load_image(fpath, can_loaded_scaledimage=can_loaded_scaledimage, up_scr=up_scr)
             else:
                 return load_image(fpath, mask=mask, can_loaded_scaledimage=can_loaded_scaledimage, up_scr=up_scr)
 
