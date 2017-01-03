@@ -1006,9 +1006,9 @@ class LevelEditDialog(wx.Dialog):
 
         # btn
         self.okbtn = cw.cwpy.rsrc.create_wxbutton(self, -1,
-                                                      cw.wins((100, 30)), cw.cwpy.msgs["decide"])
+                                                      cw.wins((80, 24)), cw.cwpy.msgs["decide"])
         self.cnclbtn = cw.cwpy.rsrc.create_wxbutton(self, wx.ID_CANCEL,
-                                                      cw.wins((100, 30)), cw.cwpy.msgs["entry_cancel"])
+                                                      cw.wins((80, 24)), cw.cwpy.msgs["entry_cancel"])
 
         self._select_target()
 
@@ -1070,14 +1070,14 @@ class LevelEditDialog(wx.Dialog):
 
         sizer_btn = wx.BoxSizer(wx.HORIZONTAL)
         sizer_btn.Add(self.okbtn, 0, 0, cw.wins(0))
-        sizer_btn.Add(self.cnclbtn, 0, wx.LEFT, cw.wins(30))
+        sizer_btn.Add(self.cnclbtn, 0, wx.LEFT, cw.wins(25))
 
         sizer_v1 = wx.BoxSizer(wx.VERTICAL)
         sizer_v1.Add(self.panel, 0, wx.CENTER|wx.TOP, cw.wins(5))
         sizer_v1.Add(sizer_btn, 0, wx.CENTER|wx.TOP, cw.wins(10))
 
         sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer.Add(sizer_v1, 0, wx.ALL, cw.wins(15))
+        sizer.Add(sizer_v1, 0, wx.ALL, cw.wins(5))
         self.SetSizer(sizer)
         sizer.Fit(self)
         self.Layout()
