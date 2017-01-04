@@ -1725,7 +1725,7 @@ class Resource(object):
             if flags in self._statusbtnbmp1:
                 btn = self._statusbtnbmp1[flags]
             else:
-                btn = self._create_statusbtnbmp(cw.s(27), cw.s(29), flags)
+                btn = self._create_statusbtnbmp(cw.s(26), cw.s(29), flags)
                 self._statusbtnbmp1[flags] = btn
         elif sizetype == 2:
             if flags in self._statusbtnbmp2:
