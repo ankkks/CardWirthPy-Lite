@@ -79,17 +79,17 @@ class StatusBar(base.CWPySprite):
 
         showbuttons &= not cw.cwpy.is_showingbacklog()
 
-        left = cw.s(602)
+        left = cw.s(604)
         rmargin = cw.s(0)
         self._create_settings((left, cw.s(2)))
 
         if cw.cwpy.setting.backlogmax:
-            left -= cw.s(28)
+            left -= cw.s(27)
             rmargin += cw.s(27)
             self._create_backlog((left, cw.s(2)))
 
         if cw.cwpy.is_debugmode():
-            left -= cw.s(28)
+            left -= cw.s(27)
             rmargin += cw.s(27)
             self._create_debugger((left, cw.s(2)))
 
