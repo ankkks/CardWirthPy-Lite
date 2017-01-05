@@ -2764,8 +2764,8 @@ class ScenarioCompatibilityTable(object):
             except:
                 vanishmembercancellation = False
 
-            if engine or zindexmode or vanishmembercancellation or gossiprestration or compstamprestration:
-                return (engine, zindexmode, vanishmembercancellation, gossiprestration, compstamprestration)
+            if engine or zindexmode or vanishmembercancellation:
+                return (engine, zindexmode, vanishmembercancellation)
         except Exception:
             cw.util.print_ex()
         return None
