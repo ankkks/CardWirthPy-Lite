@@ -683,8 +683,13 @@ def blend_1_50(dest, pos, source, flag):
     flag: BLEND_ADDまたはBLEND_SUBまたはBLEND_MULT
     """
     w, h = source.get_size()
+
+    clip = dest.get_clip()
+    if not clip:
+        clip = dest.get_rect()
+
     rect = pygame.Rect(pos, (w, h))
-    rect = pygame.Rect((0, 0), dest.get_size()).clip(rect)
+    rect = pygame.Rect(clip.topleft, clip.size).clip(rect)
     if rect.w <= 0 or rect.h <= 0:
         return
 
@@ -1001,6 +1006,18 @@ def _create_mfont(name, pixels, bold, italic, sys):
 class Font(object):
     def __init__(self, face, pixels, bold=False, italic=False):
         self._cache = {}
+
+        d = {(u"IPAゴシック", u"IPAGothic"):"gothic.ttf",
+             (u"IPA UIゴシック", u"IPAUIGothic"):"uigothic.ttf",
+             (u"IPA明朝", u"IPAMincho"):"mincho.ttf",
+             (u"IPA P明朝", u"IPAPMincho"):"pmincho.ttf",
+             (u"IPA Pゴシック", u"IPAPGothic"):"pgothic.ttf"}
+        for names, ttf in d.iteritems():
+            if face in names:
+                path = cw.util.join_paths(u"Data/Font", ttf)
+                if os.path.isfile(path):
+                    self.font, self.font2x, self.font_notitalic = _create_mfont(path, pixels, bold, italic, sys=False)
+                    return
 
         face = get_fontface(face)
         if sys.platform == "win32":
