@@ -1126,7 +1126,7 @@ class Resource(object):
             #        取得に失敗する事があるので、すべて小文字のパスをキーにして
             #        真のファイル名へのマッピングをしておく。
             #        主にこの問題は手書きされる'*.jpy1'内で発生する。
-            for res in ("Table", "Bgm", "Sound", "Resource/Image"):
+            for res in ("Table", "Bgm", "Sound", "BgmAndSound", "Resource/Image"):
                 resdir = cw.util.join_paths(self.skindir, res)
                 for dpath, dnames, fnames in os.walk(resdir):
                     for fname in fnames:
@@ -1807,8 +1807,13 @@ class Resource(object):
         pygameのsoundインスタンスの辞書で返す。
         """
         dpath = cw.util.join_paths(self.skindir, "Sound")
-        return self.get_resources(cw.util.load_sound, "Data/SkinBase/Sound", dpath, self.ext_snd, emptyfunc=empty_sound)
+        d = self.get_resources(cw.util.load_sound, "Data/SkinBase/Sound", dpath, self.ext_snd, emptyfunc=empty_sound)
+        dpath = cw.util.join_paths(self.skindir, "BgmAndSound")
+        d2 = self.get_resources(cw.util.load_sound, "Data/SkinBase/BgmAndSound", dpath, self.ext_snd, emptyfunc=empty_sound)
+        d.merge(d2)
 
+        return d
+        
     def get_msgs(self, setting):
         """
         システムメッセージを辞書で返す。
@@ -2381,6 +2386,11 @@ class ResourceTable(object):
     def reset(self):
         for lazy in self.dic.itervalues():
             lazy.clear()
+
+    def merge(self, d):
+        for key, value in self.dic.iteritems():
+            if not key in self.dic:
+                self.dic[key] = value
 
     def __getitem__(self, key):
         self._put_nokeyvalue(key)
