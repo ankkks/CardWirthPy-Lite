@@ -417,6 +417,9 @@ class Setting(object):
         self.show_multipleplayers = False
         self.show_scenariotree = False
 
+        # シナリオのインストール先(キー=ルートディレクトリ毎)
+        self.installed_dir = {}
+
         for t in inspect.getmembers(self, lambda t: not inspect.isroutine(t)):
             if not t[0].startswith("__"):
                 if isinstance(t[1], list):
@@ -712,6 +715,19 @@ class Setting(object):
         self.write_playlog = data.getbool("WritePlayLog", self.write_playlog)
         # プレイログのフォーマット
         self.playlogformat = data.gettext("PlayLogFormat", self.playlogformat)
+
+        # シナリオのインストール先(キー=ルートディレクトリ)
+        e = data.find("InstalledPaths")
+        if not e is None:
+            for e_paths in e:
+                rootdir = e_paths.getattr(".", "root", "")
+                if not rootdir:
+                    continue
+                dirstack = []
+                for e_path in e_paths:
+                    if e_path.text:
+                        dirstack.append(e_path.text)
+                self.installed_dir[rootdir] = dirstack
 
         # スキン
         self.skindirname = data.gettext("Skin", self.skindirname)
@@ -1056,12 +1072,15 @@ class Setting(object):
         a = cw.util.numwrap(a, 0, 255)
         return (r, g, b, a)
 
-    def get_scedir(self):
+    def get_scedir(self, skintype=None):
+        if skintype is None:
+            skintype = self.skintype
+
         scedir = u"Scenario"
         # 設定に応じて初期位置を変更する
         if self.selectscenariofromtype:
-            for skintype, folder in self.folderoftype:
-                if skintype == self.skintype:
+            for skintype2, folder in self.folderoftype:
+                if skintype2 == skintype:
                     folder = cw.util.get_linktarget(folder)
                     if os.path.isdir(folder):
                         scedir = folder
