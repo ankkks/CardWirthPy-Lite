@@ -1285,9 +1285,9 @@ class CWPy(_Singleton, threading.Thread):
                   "                        ",)
 
             if self.setting.cursor_type == cw.setting.CURSOR_WHITE:
-                cursor = pygame.cursors.compile(s, ".", "#", "o")
-            else:
                 cursor = pygame.cursors.compile(s, "#", ".", "o")
+            else:
+                cursor = pygame.cursors.compile(s, ".", "#", "o")
             pygame.mouse.set_cursor((len(s[0]), len(s)), (0, 0), *cursor)
             #pygame.mouse.set_cursor(*pygame.cursors.arrow)
         elif name == "diamond":
@@ -1381,9 +1381,9 @@ class CWPy(_Singleton, threading.Thread):
                 point = (7, 7)
 
             if self.setting.cursor_type == cw.setting.CURSOR_WHITE:
-                cursor = pygame.cursors.compile(s, ".", "#", "o")
-            else:
                 cursor = pygame.cursors.compile(s, "#", ".", "o")
+            else:
+                cursor = pygame.cursors.compile(s, ".", "#", "o")
             pygame.mouse.set_cursor((len(s[0]), len(s)), point, *cursor)
 
         if not force:
@@ -1784,6 +1784,7 @@ class CWPy(_Singleton, threading.Thread):
         try:
             fpath = cw.util.join_paths(self.skindir, u"Resource/Xml/Animation/Opening.xml")
             anime = cw.sprite.animationcell.AnimationCell(fpath, cw.SIZE_AREA, (0, 0), self.topgrp, "title")
+            self.draw()
             cw.animation.animate_sprite(anime, "animation", clearevent=False)
 
             # スプライトを解除する
@@ -2577,7 +2578,7 @@ class CWPy(_Singleton, threading.Thread):
                 continue
             imgpaths = []
             can_loaded_scaledimages = []
-            can_loaded_scaledimage = pcard.data.getbool(".", "scaledimage", False)
+            can_loaded_scaledimage = pcard.data.getbool(".", "scaledimage", False) if pcard else True
             update = False
             for i, info in enumerate(mcard.cardimg.paths):
                 # PC画像を更新
@@ -2592,7 +2593,11 @@ class CWPy(_Singleton, threading.Thread):
                     update = True
                 else:
                     imgpaths.append(info)
-                    can_loaded_scaledimages.append(mcard.cardimg.can_loaded_scaledimage[i])
+                    if isinstance(mcard.cardimg.can_loaded_scaledimage, (list, tuple)):
+                        can_loaded_scaledimages.append(mcard.cardimg.can_loaded_scaledimage[i])
+                    else:
+                        assert isinstance(mcard.cardimg.can_loaded_scaledimage, bool)
+                        can_loaded_scaledimages.append(mcard.cardimg.can_loaded_scaledimage)
             if not update:
                 continue
             mcard.cardimg.paths = imgpaths
