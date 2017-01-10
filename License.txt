@@ -1,4 +1,27 @@
 ﻿●ライセンス情報
+CardWirthPyはプログラミング言語Pythonで書かれました。実行ファイルの作成にはpy2exeを使用しています。
+[Python ver2.7.13 (32bit版)](http://www.python.org/)
+  : License: Python Software Foundation License
+[py2exe ver0.6.9](http://www.py2exe.org/)
+[pygame ver1.9.2](http://www.pygame.org/)
+  : License: GNU Lesser General Public License
+[wxPython ver3.0.2.0](http://www.wxpython.org/)
+ : License: wxWindows Library License
+[Python for Windows extensions Build 220](http://sourceforge.net/projects/pywin32/)
+ : License: Python Software Foundation License
+[lhafile 0.1](http://trac.neotitans.net/wiki/lhafile)
+ : License: 修正BSDライセンス
+
+CardWirthPyは以下のMicrosoftのライブラリを同梱しています。
+msvcp90.dll, msvcr90.dll
+ : [Download](http://www.microsoft.com/japan/msdn/vstudio/)
+ : License: Visual Studio 2008 Redistributable Code
+
+CardWirthPyは音声再生用に以下のライブラリを同梱しています。これらはソフトウェアを無償配布する限りは自由に使用できますが、商用利用する場合は商用ライセンスを購入する必要があるのでご注意ください。
+bass.dll, bassmidi.dll, bass32.so, bassmidi32.so, bass64.so, bassmidi64.so
+ : [Web Site](http://www.un4seen.com/)
+ : License: BASS Audioのライセンス
+
 CardWirthPy Rebootソースコードのライセンス
 >"src.zip"に同梱しているプログラミングコードの著作権は作者が保持し、以下のライセンスが適用されます。
 >[The MIT License](http://www.opensource.org/licenses/mit-license.php)

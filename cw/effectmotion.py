@@ -43,11 +43,11 @@ def is_noeffect(element, target):
     else:
         return False
 
-def check_noeffect(effecttype, target):
+def check_noeffect(effecttype, target, ignore_antimagic=False):
     noeffect_wpn = target.noeffect.get("weapon")
     noeffect_mgc = target.noeffect.get("magic")
+    antimagic = target.is_antimagic() if not ignore_antimagic else False
     #Py1.1ではPCは魔法無効化状態の対象に魔法を選択しない
-    #antimagic = target.is_antimagic() if not ignore_antimagic else False
 
     # 物理属性
     if effecttype == "Physic":
@@ -56,7 +56,7 @@ def check_noeffect(effecttype, target):
 
     # 魔法属性
     elif effecttype == "Magic":
-        if noeffect_mgc:
+        if noeffect_mgc or antimagic:
             return True
 
     # 魔法的物理属性
@@ -66,7 +66,7 @@ def check_noeffect(effecttype, target):
 
     # 物理的魔法属性
     elif effecttype == "PhysicalMagic":
-        if noeffect_wpn or noeffect_mgc:
+        if noeffect_wpn or noeffect_mgc or antimagic:
             return True
 
     return False
@@ -1257,7 +1257,7 @@ def get_effectivetargets(header, targets):
     sets = set()
 
     for t in targets:
-        if check_noeffect(effecttype, t):
+        if check_noeffect(effecttype, t, ignore_antimagic=True):
             continue
         # カード効果を上から順に見ていき、対象の存在する効果があれば
         # その効果の対象群を返す
