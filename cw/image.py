@@ -514,7 +514,7 @@ class CardImage(Image):
 
         pixelsize = cw.cwpy.setting.fonttypes["cardname"][2] #カードサイズ
         ##効果型カードだけ1ピクセル大きくなっている
-        #if wx.VERSION[0] <= 3:
+        #if wx.VERSION[0] < 3:
         #    pixelsize += 1
         if cw.cwpy.setting.fontsmoothing_cardname:
             font = cw.cwpy.rsrc.get_wxfont("cardname", pixelsize=cw.wins(pixelsize)*2, adjustsizewx3=False)
