@@ -58,6 +58,7 @@ class SystemData(object):
 
         self.is_playing = True
         self.events = None
+        self.playerevents = None # プレイヤーカードのキーコード・死亡時イベント(Wsn.2)
         self.deletedpaths = set()
         self.lostadventurers = set()
         self.gossips = {}
@@ -487,6 +488,8 @@ class SystemData(object):
             self.set_versionhint(cw.HINT_AREA, cw.cwpy.sct.from_basehint(self.data.getattr("Property", "versionHint", "")))
         cw.cwpy.event.refresh_areaname()
         self.events = cw.event.EventEngine(self.data.getfind("Events"))
+        # プレイヤーカードのキーコード・死亡時イベント(Wsn.2)
+        self.playerevents = cw.event.EventEngine(self.data.getfind("PlayerCardEvents/Events", False))
         return True
 
     def start_event(self, keynum=None, keycodes=[][:]):
@@ -706,6 +709,8 @@ class ScenarioData(SystemData):
         # エリアデータ初期化
         self.data = None
         self.events = None
+        # プレイヤーカードのキーコード・死亡時イベント(Wsn.2)
+        self.playerevents = None
         # シナリオプレイ中に削除されたファイルパスの集合
         self.deletedpaths = set()
         # ロストした冒険者のXMLファイルパスの集合
@@ -1703,6 +1708,7 @@ class YadoData(object):
                     s = u"「%s」は対応していないバージョンのスキンです。%sをアップデートしてください。" % (skinname, cw.APP_NAME)
                 cw.cwpy.call_modaldlg("ERROR", text=s)
                 supported_skin = False
+
         if not supported_skin:
             self.skindirname = cw.cwpy.setting.skindirname
             e = self.environment.find("Property/Skin")
@@ -3405,6 +3411,9 @@ class CWPyElement(_ElementInterface, _CWPyElementInterface):
                 pass
             elif e.tag in ("Adventurer", "CastCards", "System"):
                 break
+            elif e.tag == "PlayerCardEvents":
+                # プレイヤーカードのキーコード・死亡時イベント(Wsn.2)
+                cwxpath.append("playercard:%s" % (e.cwxparent.index(e)))
             else:
                 # Content
                 assert not e.cwxparent is None, e.tag
