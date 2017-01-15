@@ -929,7 +929,7 @@ def load_bgm(path):
         assert threading.currentThread() == cw.cwpy
         # ファイルパスを渡して読込
         encoding = sys.getfilesystemencoding()
-        pygame.mixer.music.load(path.encode(encoding))
+        pygame.mixer.music.load(path.encode("utf-8"))
         return 0
     except Exception:
         cw.util.print_ex()
@@ -1334,7 +1334,8 @@ def screenshot():
         else:
             os.makedirs(dpath)
         bmp, y = create_screenshot(titledic)
-        pygame.image.save(bmp, filename.encode("utf-8"))
+        encoding = sys.getfilesystemencoding()
+        pygame.image.save(bmp, filename.encode(encoding))
     except:
         s = u"スクリーンショットの保存に失敗しました。\n%s" % (filename)
         cw.cwpy.call_modaldlg("ERROR", text=s)
@@ -1385,7 +1386,8 @@ def card_screenshot():
                 else:
                     os.makedirs(dpath)
                 bmp = create_cardscreenshot(titledic)
-                pygame.image.save(bmp, filename.encode("utf-8"))
+                encoding = sys.getfilesystemencoding()
+                pygame.image.save(bmp, filename.encode(encoding))
             except:
                 s = u"スクリーンショットの保存に失敗しました。\n%s" % (filename)
                 cw.cwpy.call_modaldlg("ERROR", text=s)

@@ -170,8 +170,9 @@ class SystemData(object):
             for mcard in mcards:
                 mcard.update_scale()
         #Attributeエラーが出るので更新しない
-        #for log in self.backlog:
-        #    log.specialchars.reset()
+        for log in self.backlog:
+            if log.specialchars:
+                log.specialchars.reset()
 
     def start(self):
         pass
