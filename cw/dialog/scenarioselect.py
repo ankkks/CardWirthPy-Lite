@@ -1046,7 +1046,8 @@ class ScenarioSelect(select.Select):
             cw.cwpy.play_sound("error")
             return
 
-        self._install_scenario(headers)
+        #Lite インストールオプションをオミット
+        self._show_selectedscenario(headers)
 
     def OnInstallBtn(self, event):
         wildcard = u"シナリオファイル (*.wsn; *.wsm; *.zip; *.lzh; *.cab; Summary.xml)|*.wsn;*.wsm;*.zip;*.cab;Summary.xml"
