@@ -569,11 +569,13 @@ class ScenarioSelect(select.Select):
         list = self.scetable[self._get_linktarget(self.scedir)]
         if list and isinstance(list[0], FindResult):
             findresult = list[0]
+            updateindex = False
         else:
             findresult = FindResult()
             list.insert(0, findresult)
             self.find_result = findresult
             self.scetable[self._get_linktarget(self.scedir)] = list
+            updateindex = True
 
         self.scetable[findresult] = headers[:]
         cansort = 1 < len(headers) and isinstance(headers[0], cw.header.ScenarioHeader)
@@ -595,7 +597,7 @@ class ScenarioSelect(select.Select):
             item = self.tree.GetNextSibling(item)
             while item and item.IsOk():
                 data = self.tree.GetItemPyData(item)
-                if data:
+                if data and updateindex:
                     index, header = data
                     self.tree.SetItemPyData(item, (index+1, header))
                 item = self.tree.GetNextSibling(item)
@@ -2573,8 +2575,8 @@ class ScenarioSelect(select.Select):
 
                         for name in names:
                             data = z.read(name)
-                            name = os.path.basename(name)
                             name = cw.util.decode_zipname(name)
+                            name = os.path.basename(name)
                             seq.append(text.ReadmeData(name, data))
                         z.close()
 
