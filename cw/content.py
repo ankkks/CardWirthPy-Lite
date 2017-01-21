@@ -1861,6 +1861,11 @@ class EffectContent(EventContentBase):
         d["fadein"] = self.data.getint(".", "fadein", 0)
         d["channel"] = self.data.getint(".", "channel", 0)
 
+        # 選択メンバの能力参照(Wsn.2)
+        d["refability"] = self.data.getbool(".", "refability", False)
+        d["physical"] = self.data.getattr(".", "physical", "Dex")
+        d["mental"] = self.data.getattr(".", "mental", "Aggressive")
+
         # Effectインスタンス作成
         motions = self.data.getfind("Motions").getchildren()
         self.eff = cw.effectmotion.Effect(motions, d, battlespeed=False)
