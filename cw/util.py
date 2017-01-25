@@ -1686,6 +1686,7 @@ def get_materialpathfromskin(path, mtype, findskin=True):
                     path = cw.util.find_resource(cw.util.join_paths(dpath, "Sound", fname), cw.cwpy.rsrc.ext_snd)
                     if not path:
                         path = cw.util.find_resource(cw.util.join_paths(dpath, "BgmAndSound", fname), cw.cwpy.rsrc.ext_snd)
+
                 if path:
                     break
 
@@ -2429,7 +2430,27 @@ def is_hw(unichr):
     return not unicodedata.east_asian_width(unichr) in ('F', 'W', 'A')
 
 def get_strlen(s):
-    return reduce(lambda a, b: a + b, map(lambda c: 1 if cw.util.is_hw(c) else 2, s))
+    return reduce(lambda a, b: a + b, map(lambda c: 1 if is_hw(c) else 2, s))
+
+def slice_str(s, width, get_width=None):
+    """
+    sをwidthの位置でスライスし、2つの文字列にして返す。
+    """
+    s = unicode(s)
+    if not get_width:
+        get_width = get_strlen
+    left = []
+    leftlen = 0
+    for c in s:
+        clen = get_width(c)
+        if width < leftlen+clen:
+            break
+        left.append(c)
+        leftlen += clen
+    return u"".join(left), s[len(left):]
+
+assert slice_str(u"ABC", 2) == (u"AB", u"C")
+assert slice_str(u"ABCあ", 4) == (u"ABC", u"あ")
 
 def rjustify(s, length, c):
     slen = cw.util.get_strlen(s)
@@ -2610,36 +2631,206 @@ def txtwrap(s, mode, width=30, wrapschars="", encodedtext=True, spcharinfo=None)
 
     return "".join(seq).rstrip()
 
-def wordwrap(s, width, get_width, wrapschars=WRAPS_CHARS):
+def _wordwrap_impl(s, width, get_width, open_chars, close_chars, startindex, resultindex, spcharinfo, spcharinfo2):
     """
     sをwidthの幅で折り返す。
     テキストの長さをは計る時にget_width(s)を使用する。
     """
-    r_wchar = re.compile(wrapschars)
-    lines = []
-    text = u""
-    for i, c in enumerate(s):
-        text2 = text + c
-        if width < get_width(text2):
-            if r_wchar.match(c.lower()):
-                if text:
-                    lines.append(text[:-1])
-                    text = text[-1] + c
-                else:
-                    lines.append(text2)
-                    text = u""
-            else:
-                lines.append(text)
-                text = c
-        else:
-            text = text2
+    s = unicode(s)
+    if not get_width:
+        get_width = get_strlen
 
-    lines.append(text)
+    iter = re.findall(u"[a-z0-9_]+|[ａ-ｚＡ-Ｚ０-９＿]+|.", s, re.I)
+    if spcharinfo:
+        # 特殊文字と単語を分離しておく
+        iter2 = []
+        index = startindex
+        spc = None
+        for word in iter:
+            if spc:
+                iter2.append(spc + word[0])
+                if 1 < len(word):
+                    iter2.append(word[1:])
+                spc = None
+            elif index in spcharinfo:
+                spc = word
+            else:
+                iter2.append(word)
+            index += len(word)
+        assert spc is None
+        iter = iter2
+
+    lines = []
+    buf = []
+    buflen = 0
+    hw = get_width(u"#")
+    index = startindex
+    for word in iter:
+        # 特殊文字か？
+        is_spchar = spcharinfo and index in spcharinfo
+
+        wordlen = get_width(word)
+        if width < buflen+wordlen:
+            def match_op(buf):
+                return not buf[1] and open_chars.find(buf[0]) <> -1
+
+            def match_cl(buf):
+                return not buf[1] and close_chars.find(buf[0]) <> -1
+
+            def match_last(bufs, matcher):
+                for i in xrange(len(bufs)):
+                    buf = bufs[-(1+i)]
+                    if buf[1] and buf[0][0] == '&':
+                        continue
+                    return matcher(buf)
+
+            def match_op_last(bufs):
+                # bufsの末尾部分がopen_charsに該当する文字ならTrue
+                # ただし色変更の特殊文字は無視する
+                return match_last(bufs, match_op)
+
+            def match_cl_last(bufs):
+                # bufsの末尾部分がclose_charsに該当する文字ならTrue
+                # ただし色変更の特殊文字は無視する
+                return match_last(bufs, match_cl)
+
+            assert match_op_last([("[", False), ("&R", True), ("&R", True)])
+            assert match_op_last([("[", False)])
+            assert not match_op_last([("[", False), ("&R", False), ("&R", True)])
+
+            def append_word_wrap(buf, buflen, word):
+                # wordを強制的に折り返しながら行に加える
+                if is_spchar:
+                    return buf, buflen, word
+                while width < buflen+get_width(word):
+                    word2, word3 = slice_str(word, width-buflen, get_width)
+                    if word2:
+                        word2 += u"-"
+                    buf.append((word2, False))
+                    word = word3
+                    lines.append(buf)
+                    buf = []
+                    buflen = 0
+                return [], 0, word
+
+            def break_before_openchar(buf2, buf, buflen, word):
+                # 行末禁止文字の位置まで遡って折り返す
+                while buf2 and match_op_last(buf2):
+                    buf2 = buf2[:-1]
+                if buf2:
+                    i = len(buf2)
+                    lines.append(buf[:i])
+                    buf = buf[i:]
+                    buflen = sum(map(lambda s: get_width(s[0]), buf))
+                    return buf, buflen, word
+                else:
+                    return append_word_wrap(buf, buflen, word)
+
+            if 1 <= len(buf) and match_op_last(buf) and not match_cl_last(buf):
+                # 末尾に行末禁止文字があるので折り返し可能な位置まで遡って折り返す
+                buf, buflen, word = break_before_openchar(buf, buf, buflen, word)
+                wordlen = get_width(word)
+            elif not unicode.isspace(word):
+                # 空白文字は行末にいくつでも連ねるのでそれ以外の文字を処理
+                if match_cl((word, is_spchar)):
+                    if width < buflen or (width == buflen and hw < wordlen):
+                        # 行頭禁止文字は1文字まではぶら下げるが、それ以上ある場合は
+                        # 折り返し可能な位置まで遡って折り返す
+                        buf2 = buf
+                        while buf2 and match_cl_last(buf2):
+                            buf2 = buf2[:-1]
+                        if not buf2 or (len(buf2) == 1 and not match_op_last(buf2)):
+                            # 折り返し可能な位置が無かった
+                            lines.append(buf)
+                            buf = []
+                            buflen = 0
+                        elif 2 <= len(buf2) and not match_op_last(buf2[:-1]):
+                            # 折り返し可能な位置が見つかった(折り返した箇所に行末禁止文字が無い)
+                            i = len(buf2)-1
+                            lines.append(buf[:i])
+                            buf = buf[i:]
+                            buflen = sum(map(lambda s: get_width(s[0]), buf))
+                        else:
+                            # 折り返し可能な位置は行末禁止文字だった
+                            buf, buflen, word = break_before_openchar(buf2, buf, buflen, word)
+                            wordlen = get_width(word)
+                else:
+                    # 普通に折り返す
+                    if buf:
+                        lines.append(buf)
+                        buf = []
+                        buflen = 0
+                    buf, buflen, word = append_word_wrap(buf, buflen, word)
+                    wordlen = get_width(word)
+        if word:
+            buf.append((word, is_spchar))
+            if not is_spchar or word[0] <> '&':
+                buflen += wordlen
+        index += len(word)
+
+    if buf:
+        lines.append(buf)
+
+    if spcharinfo2 is None:
+        return u"\n".join(map(lambda buf: u"".join(map(lambda w: w[0], buf)), lines))
+    else:
+        seq = []
+        for buf in lines:
+            line = []
+            for word, is_spchar in buf:
+                if is_spchar:
+                    spcharinfo2.append(resultindex)
+                line.append(word)
+                resultindex += len(word)
+            seq.append(u"".join(line))
+            resultindex += len(u"\n")
+        return u"\n".join(seq)
+
+def wordwrap(s, width, get_width=None, open_chars=u"\"'(<[`{‘“〈《≪「『【〔（＜［｛｢",
+                                       close_chars=u"!\"'),.:;>?]`}゜’”′″、。々＞》≫」』】〕゛°ゝゞヽヾ！），．：；＞？］｝｡｣､ﾞﾟ",
+                                       spcharinfo=None):
+    if spcharinfo:
+        spcharinfo2 = []
+    else:
+        spcharinfo2 = None
+    lines = []
+    index = 0
+    resultindex = 0
+    for line in s.splitlines():
+        wrapped = _wordwrap_impl(line, width, get_width, open_chars, close_chars, index, resultindex, spcharinfo, spcharinfo2)
+        lines.append(wrapped)
+        index += len(line)+len(u"\n")
+        resultindex += len(wrapped)+len(u"\n")
+
+    if spcharinfo:
+        spcharinfo.clear()
+        spcharinfo.update(spcharinfo2)
+
     return u"\n".join(lines)
 
-assert wordwrap("ABC.DEFG.H,IKLM?", 3, lambda s: len(s), "\\.|,|\\?") == "AB\nC.D\nEF\nG.\nH,I\nKL\nM?"
+assert wordwrap("ABC.DEFG.H,IKLM?", 3) == "ABC.\nDEF-\nG.H,\nIKL-\nM?"
+assert wordwrap("[abc..]\ndefg", 3) == "[ab-\nc..]\ndef-\ng"
+assert wordwrap("abc..\ndefghij", 3) == "abc.\n.\ndef-\nghi-\nj"
+assert wordwrap("a bc..", 4) == "a \nbc.."
+assert wordwrap("a bc....],.\ndef", 4) == "a \nbc...\n.],.\ndef"
+assert wordwrap("[def]", 4) == "[def]"
+assert wordwrap("def[ghi]]", 4) == "def\n[ghi\n]]"
+assert wordwrap(u"あいうえお。かきくけこ", 11) == u"あいうえお。\nかきくけこ"
+assert wordwrap(u"あいうえAA。かきくけこ", 9) == u"あいうえ\nAA。かき\nくけこ"
+assert wordwrap("[[[[a", 4) == "[[[[\na"
+assert wordwrap("\"Let's it go!!\"", 4) == "\"Let'\ns it \ngo!!\""
+assert wordwrap(u"あいうえおA.かきくけこ", 11) == u"あいうえおA.\nかきくけこ"
+assert wordwrap(u"あいうえおA。かきくけこ", 11) == u"あいうえお\nA。かきくけ\nこ"
+assert wordwrap(u"ｐｑｒ pqr ＰＱＲ", 6) == u"ｐｑｒ \npqr \nＰＱＲ"
 
+def _test_wordwrap(s, width, spcharinfo):
+    return wordwrap(s, width, spcharinfo=spcharinfo), spcharinfo
 
+assert _test_wordwrap(u"CARD #WIRTH SPECIA&L\nCHA&RACTER #TEST!", 8, spcharinfo=set([5, 18, 24, 32])) ==\
+       (u"CARD #W\nIRTH \nSPECIA&L\nCHA&RACTER \n#TEST!", set([5, 20, 26, 35]))
+assert wordwrap(u"[&Rabc..]", 3, spcharinfo=set([1])) == u"[&Rab-\nc..]"
+assert wordwrap(u"ab...", 3) == u"ab..\n."
+assert _test_wordwrap(u"ab..&R.", 3, spcharinfo=set([4])) == (u"ab..\n&R.", set([5]))
 
 def get_char(s, index):
     try:
@@ -2751,9 +2942,10 @@ def load_wxbmp(name="", mask=False, image=None, maskpos=(0, 0), f=None, retry=Tr
                     with open(name, "rb") as f2:
                         data = f2.read()
                         f2.close()
+
                 if not data:
                     return wx.EmptyBitmap(0, 0)
-                
+
                 bmpdepth = cw.image.get_bmpdepth(data)
                 data, ok = cw.image.fix_cwnext16bitbitmap(data)
                 if name and ok and not cw.binary.image.path_is_code(name):
