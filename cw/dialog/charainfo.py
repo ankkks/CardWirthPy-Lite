@@ -120,6 +120,7 @@ class CharaInfo(wx.Dialog):
         self.enter = wx.NewId()
         self.openinfo = wx.NewId()
         copyid = wx.NewId()
+        esckeyid = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnClickLeftBtn, id=self.leftpagekeyid)
         self.Bind(wx.EVT_MENU, self.OnClickRightBtn, id=self.rightpagekeyid)
         self.Bind(wx.EVT_MENU, self.OnUp, id=self.upkeyid)
@@ -131,6 +132,7 @@ class CharaInfo(wx.Dialog):
         self.Bind(wx.EVT_MENU, self.OnEnter, id=self.enter)
         self.Bind(wx.EVT_MENU, self.OnOpenInfo, id=self.openinfo)
         self.Bind(wx.EVT_MENU, self.OnCopyDetail, id=copyid)
+        self.Bind(wx.EVT_MENU, self.OnCancel, id=esckeyid)
         seq = [
             (wx.ACCEL_CTRL, wx.WXK_LEFT, self.leftpagekeyid),
             (wx.ACCEL_CTRL, wx.WXK_RIGHT, self.rightpagekeyid),
@@ -141,6 +143,8 @@ class CharaInfo(wx.Dialog):
             (wx.ACCEL_NORMAL, wx.WXK_HOME, self.homekeyid),
             (wx.ACCEL_NORMAL, wx.WXK_END, self.endkeyid),
             (wx.ACCEL_NORMAL, wx.WXK_RETURN, self.enter),
+            (wx.ACCEL_NORMAL, wx.WXK_BACK, esckeyid),
+            (wx.ACCEL_NORMAL, ord('_'), esckeyid),
             (wx.ACCEL_CTRL, wx.WXK_RETURN, self.openinfo),
             (wx.ACCEL_CTRL, ord('C'), copyid),
         ]
