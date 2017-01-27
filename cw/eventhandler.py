@@ -92,7 +92,7 @@ class EventHandler(object):
 
             elif event.type == MOUSEBUTTONUP:
                 # 左クリックイベント
-                if event.button == 1:
+                if event.button == 1 or event.button == 2:
                     self.lclick_event()
 
                 # 右クリックイベント
@@ -728,9 +728,10 @@ class EventHandlerForMessageWindow(EventHandler):
                 # 左クリック
                 elif event.button == 1:
                     self.lclick_event()
-                # ミドルクリック
+                # ミドルクリック　左と同じ扱いにする
                 elif event.button == 2:
-                    self.mclick_event()
+                    self.lclick_event()
+                    #self.mclick_event()
                 # 右クリック
                 elif event.button == 3:
                     self.rclick_event()
