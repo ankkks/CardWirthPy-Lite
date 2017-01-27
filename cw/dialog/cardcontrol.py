@@ -563,11 +563,7 @@ class CardControl(wx.Dialog):
                 if header.negaflag:
                     cw.cwpy.play_sound("click")
                     def func():
-                        dlg = cardinfo.YadoCardInfo(self, self.get_headers(), header)
-                        self.Parent.move_dlg(dlg)
-                        dlg.ShowModal()
-                        dlg.Destroy()
-                        self.toppanel.SetFocusIgnoringChildren()
+                        self.rclick_event(header)
                     self.animate_click(header, func)
         elif eid == self.leftkeyid:
             seq = self.get_headers()[:]
@@ -692,11 +688,7 @@ class CardControl(wx.Dialog):
         for header in self.get_headers():
             if header.wxrect.collidepoint(event.GetPosition()):
                 def func():
-                    dlg = cardinfo.YadoCardInfo(self, self.get_headers(), header)
-                    self.Parent.move_dlg(dlg)
-                    dlg.ShowModal()
-                    dlg.Destroy()
-                    self.toppanel.SetFocusIgnoringChildren()
+                    self.rclick_event(header)
                 self.animate_click(header, func)
                 return
 
@@ -1093,11 +1085,7 @@ class CardControl(wx.Dialog):
         self.toppanel.SetFocusIgnoringChildren()
 
         if self.callname == "INFOVIEW":
-            dlg = cardinfo.YadoCardInfo(self, self.get_headers(), header)
-            self.Parent.move_dlg(dlg)
-            dlg.ShowModal()
-            dlg.Destroy()
-            self.toppanel.SetFocusIgnoringChildren()
+            self.rclick_event(header)
             return
         else:
             owner = header.get_owner()
@@ -1153,11 +1141,7 @@ class CardControl(wx.Dialog):
         # カード所持者がPlayerCardじゃない場合はカード情報を表示
         if (isinstance(self.selection, cw.character.Friend) and not cw.cwpy.is_battlestatus()) or\
                 (not cw.cwpy.debug and isinstance(owner, (cw.character.Enemy, cw.character.Friend))):
-            dlg = cardinfo.YadoCardInfo(self, self.get_headers(), header)
-            self.Parent.move_dlg(dlg)
-            dlg.ShowModal()
-            dlg.Destroy()
-            self.toppanel.SetFocusIgnoringChildren()
+            self.rclick_event(header)
             return
 
         # 開いていたダイアログの情報
@@ -1180,6 +1164,13 @@ class CardControl(wx.Dialog):
         # OKボタンイベント
         btnevent = wx.PyCommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, wx.ID_OK)
         self.ProcessEvent(btnevent)
+
+    def rclick_event(self, header):
+        dlg = cardinfo.YadoCardInfo(self, self.get_headers(), header)
+        self.Parent.move_dlg(dlg)
+        dlg.ShowModal()
+        dlg.Destroy()
+        self.toppanel.SetFocusIgnoringChildren()
 
     def after_message(self):
         self.toppanel.SetFocusIgnoringChildren()

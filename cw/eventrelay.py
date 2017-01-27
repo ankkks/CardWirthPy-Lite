@@ -19,7 +19,6 @@ class KeyEventRelay(object):
             wx.WXK_RETURN : K_RETURN,
             wx.WXK_ESCAPE : K_ESCAPE,
             wx.WXK_BACK : K_BACKSPACE,
-            92 : K_BACKSLASH,
             wx.WXK_SPACE : K_SPACE,
             wx.WXK_F1 : K_F1,
             wx.WXK_F2 : K_F2,
@@ -44,6 +43,7 @@ class KeyEventRelay(object):
             wx.WXK_PAGEDOWN : K_PAGEDOWN,
             wx.WXK_HOME : K_HOME,
             wx.WXK_END : K_END,
+            ord('\\') : K_BACKSLASH,
             ord('D') : ord('D'), # デバッグモード切り替え
             ord('P') : ord('P'), # スクリーンショット
             ord('C') : ord('C')} # メッセージのコピー
