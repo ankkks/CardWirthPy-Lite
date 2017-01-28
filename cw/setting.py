@@ -392,6 +392,8 @@ class Setting(object):
         self.write_playlog = False
         self.enable_oldf9 = False
         self.move_repeat = 250 #移動ボタン押しっぱなしの速度
+        # アップデートに伴うファイルの自動移動・削除を行う
+        self.auto_update_files = True
 
         # 絞り込み・整列などのコントロールの表示有無
         self.show_additional_player = False
@@ -703,9 +705,6 @@ class Setting(object):
 
         # タイトルバーの表示内容
         self.titleformat = data.gettext("TitleFormat", self.titleformat)
-
-        # アップデートに伴うファイルの自動移動・削除を行う
-        self.auto_update_files = True
 
         # 絞り込み・整列などのコントロールの表示有無
         self.show_additional_player = data.getbool("ShowAdditionalControls", "player", self.show_additional_player)
