@@ -342,7 +342,27 @@ class Content(base.CWBinaryBase):
                 self.properties["status"] = self.conv_statustype(f.byte())
         elif self.tag == "Branch" and self.type == "KeyCode": # 1.50
             self.properties["targetkc"] = self.conv_keycoderange(f.byte())
-            self.properties["effectCardType"] = self.conv_effectcardtype(f.byte())
+            ect = self.conv_effectcardtype(f.byte())
+            if ect == "All":
+                self.properties["skill"] = True
+                self.properties["item"] = True
+                self.properties["beast"] = True
+                self.properties["hand"] = False # Liteでは手札側をWSN独自仕様として対応
+            elif ect == "Skill":
+                self.properties["skill"] = True
+                self.properties["item"] = False
+                self.properties["beast"] = False
+                self.properties["hand"] = False
+            elif ect == "Item":
+                self.properties["skill"] = False
+                self.properties["item"] = True
+                self.properties["beast"] = False
+                self.properties["hand"] = False # Liteでは手札側をWSN独自仕様として対応
+            elif ect == "Beast":
+                self.properties["skill"] = False
+                self.properties["item"] = False
+                self.properties["beast"] = True
+                self.properties["hand"] = False
             self.properties["keyCode"] = f.string()
         elif self.tag == "Check" and self.type == "Step": # 1.50
             self.properties["step"] = f.string()
@@ -753,7 +773,43 @@ class Content(base.CWBinaryBase):
         elif tag == "Branch" and ctype == "KeyCode": # 1.50
             f.check_version(1.50)
             f.write_byte(base.CWBinaryBase.unconv_keycoderange(data.get("targetkc")))
-            f.write_byte(base.CWBinaryBase.unconv_effectcardtype(data.get("effectCardType")))
+            # Wsn.1方式
+            etype = data.get("effectCardType", "All")
+            skill = False
+            item = False
+            beast = False
+            hand = False
+            if etype == "All":
+                skill = True
+                item = True
+                beast = True
+            elif etype == "Skill":
+                skill = True
+            elif etype == "Item":
+                item = True
+            elif etype == "Beast":
+                beast = True
+            # Wsn.2方式(任意の組み合わせ)
+            if "skill" in data.attrib:
+                skill = data.getbool(".", "skill")
+            if "item" in data.attrib:
+                item = data.getbool(".", "item")
+            if "beast" in data.attrib:
+                beast = data.getbool(".", "beast")
+            if "hand" in data.attrib:
+                hand = data.getbool(".", "hand")
+
+            if skill and item and beast and hand:
+                etype = "All"
+            elif skill and not item and not beast and not hand:
+                etype = "Skill"
+            elif not skill and item and not beast and hand:
+                etype = "Item"
+            elif not skill and not item and beast and not hand:
+                etype = "Beast"
+            else:
+                f.check_wsnversion("2")
+            f.write_byte(base.CWBinaryBase.unconv_effectcardtype(etype))
             f.write_string(data.get("keyCode"))
         elif tag == "Check" and ctype == "Step": # 1.50
             f.check_version(1.50)
