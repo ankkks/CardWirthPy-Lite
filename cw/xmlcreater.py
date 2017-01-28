@@ -555,6 +555,10 @@ def create_settings(setting, writeplayingdata=True, fpath="Settings_Lite.xml"):
         e = cw.data.make_element("EnableOldF9", str(setting.enable_oldf9))
         element.append(e)
 
+    # アップデートに伴うファイルの自動移動・削除を行う
+    if setting.auto_update_files <> setting.auto_update_files_init:
+        e = cw.data.make_element("AutoUpdateFiles", str(setting.auto_update_files))
+
     if writeplayingdata:
         # シナリオのインストール先(スキンタイプ毎)
         if setting.installed_dir:

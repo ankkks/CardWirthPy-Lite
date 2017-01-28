@@ -704,6 +704,9 @@ class Setting(object):
         # タイトルバーの表示内容
         self.titleformat = data.gettext("TitleFormat", self.titleformat)
 
+        # アップデートに伴うファイルの自動移動・削除を行う
+        self.auto_update_files = True
+
         # 絞り込み・整列などのコントロールの表示有無
         self.show_additional_player = data.getbool("ShowAdditionalControls", "player", self.show_additional_player)
         self.show_additional_scenario = data.getbool("ShowAdditionalControls", "scenario", self.show_additional_scenario)
@@ -715,6 +718,9 @@ class Setting(object):
         self.write_playlog = data.getbool("WritePlayLog", self.write_playlog)
         # プレイログのフォーマット
         self.playlogformat = data.gettext("PlayLogFormat", self.playlogformat)
+
+        # アップデートに伴うファイルの自動移動・削除を行う
+        self.auto_update_files = data.getbool("AutoUpdateFiles", self.auto_update_files_init)
 
         # シナリオのインストール先(キー=ルートディレクトリ)
         e = data.find("InstalledPaths")
@@ -741,10 +747,11 @@ class Setting(object):
 
     def init_skin(self, basedata=None):
         self.skindir = cw.util.join_paths(u"Data/Skin", self.skindirname)
+        if self.auto_update_files:
+            cw.update.update_files(self.skindir, self.skindirname)
         if not os.path.isdir(self.skindir):
             self.skindirname = "Classic"
             self.skindir = cw.util.join_paths(u"Data/Skin", self.skindirname)
-
             if not os.path.isdir(self.skindir):
                 # Classicが無いので手当たり次第にスキンを探す
                 for path in os.listdir(u"Data/Skin"):
@@ -830,7 +837,8 @@ class Setting(object):
     def _update_skin(self, path):
         """旧バージョンのデータの誤りを訂正する。
         """
-        while not cw.util.create_mutex(path):
+        dpath = os.path.dirname(path)
+        while not cw.util.create_mutex(dpath):
             pass
 
         try:
