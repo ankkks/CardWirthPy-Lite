@@ -459,7 +459,9 @@ def install_scenario(parentdialog, headers, scedir, dstpath, db, skintype):
                                     cw.util.remove(fpath, trashbox=True)
                             else:
                                 raise
-
+                    elif repls:
+                        for rmpath in repls:
+                            cw.util.remove(rmpath, trashbox=True)
                     self.updates.add(os.path.dirname(dst))
 
                     self.paths.append(dst)
