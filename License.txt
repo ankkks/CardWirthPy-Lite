@@ -26,6 +26,7 @@ CardWirthPy Rebootソースコードのライセンス
 >"src.zip"に同梱しているプログラミングコードの著作権は作者が保持し、以下のライセンスが適用されます。
 >[The MIT License](http://www.opensource.org/licenses/mit-license.php)
 改変元のソースはlogの中の人さん、Reboot制作者各位が著作権を保有しています。
+コーディング貢献者(敬称略)：logの中の人,k4nagatsuki,takuto_cw,TachiGigas,暗黒騎士,Iraka.T,name.req
 
 Data/Debugger にあるPy独自機能の画像ファイル
 > : [CWXEditor](https://bitbucket.org/k4nagatsuki/cwxeditor/)
@@ -41,6 +42,10 @@ SUMMARY、DIRECTORY、SUMMARY_INVISIBLEのみgroupASKの著作物です。(後�
 > : CWXEditorからの流用か、CardWirthPy用に作成されたものです。
 > : "Sound/System_ScreenShot.wav"は、CardWirth 1.50のパッケージに含まれるPublic Domainのファイル"システム・スクリーンショット.wav"を流用したものです。
 > : License: Public Domain
+
+Data/Materials/Wsn.2にあるWsn.2標準効果音
+ハルキゲニアさんが作成されたものです。
+> : License: CC0
 
 Data/font以下にあるフォントファイル
 >gothic.ttf
