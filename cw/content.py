@@ -3489,8 +3489,10 @@ class TalkMessageContent(TalkContent):
         names = self.get_selections_and_indexes()
         # 画像パス取得
         imgpaths = cw.image.get_imageinfos(self.data)
-        # 選択肢列数
+        # 選択肢列数(Wsn.1)
         columns = max(1, self.data.getint(".", "columns", 1))
+        # 縦方向の中央寄せ(Wsn.2)
+        centering_y = self.data.getbool(".", "centeringy", False)
 
         talkers = []
         firsttalker = None
@@ -3588,7 +3590,7 @@ class TalkMessageContent(TalkContent):
         # MessageWindow表示
         if text:
             mwin = cw.sprite.message.MessageWindow(text, names, talkers, firsttalker, columns=columns,
-                                                   versionhint=versionhint)
+                                                   versionhint=versionhint, centering_y=centering_y)
             index = cw.cwpy.show_message(mwin)
         # テキストが存在せず、選択肢が複数存在する場合はSelectWindowを表示する
         elif len(names) > 1:
@@ -3680,8 +3682,10 @@ class TalkDialogContent(TalkContent):
         coupons = talker.get_coupons()
         # ダイアログリスト
         dialogs = self.get_dialogs()
-        # 選択肢列数
+        # 選択肢列数(Wsn.1)
         columns = max(1, self.data.getint(".", "columns", 1))
+        # 縦方向の中央寄せ(Wsn.2)
+        centering_y = self.data.getbool(".", "centeringy", False)
 
         # 対象メンバが必須クーポンを所持していたら、
         # その必須クーポンに対応するテキストを優先して表示させる
@@ -3691,7 +3695,7 @@ class TalkDialogContent(TalkContent):
         versionhint = talker.versionhint
         if dialogtext:
             mwin = cw.sprite.message.MessageWindow(dialogtext, names, imgpaths, talker, columns=columns,
-                                                   versionhint=versionhint)
+                                                   versionhint=versionhint, centering_y=centering_y)
             index = cw.cwpy.show_message(mwin)
         elif not dialogtext is None and len(names) > 1:
             # 選択されたDialogに空文字列が設定されており、
