@@ -229,6 +229,7 @@ class MessageWindow(base.CWPySprite):
                 h = self.blockbottom_noscale-self.blocktop_noscale
             else:
                 h = self.rect_noscale[3]
+                h += 50
             self._fore = pygame.Surface(cw.s((470, h))).convert_alpha()
             self._fore.fill((0, 0, 0, 0))
             self._back = self._fore.copy()
