@@ -1457,6 +1457,7 @@ class BranchKeyCodeContent(BranchContent):
             self.item = True
         elif etype == "Beast":
             self.beast = True
+
         # Wsn.2方式(任意の組み合わせ)
         if "skill" in self.data.attrib:
             self.skill = self.data.getbool(".", "skill")
@@ -1555,6 +1556,7 @@ class BranchRoundContent(BranchContent):
         else:
             return u"%s %s 現在のバトルラウンドでない" % (round1, comparison)
 
+
 def _get_couponscope(scope):
     if scope == "Random":
         scope = "Party"
@@ -1600,6 +1602,7 @@ def _has_coupon(targets, coupon, scope, someone, multi):
             cw.cwpy.event.clear_selectedmember()
 
     return flag
+
 
 class BranchMultiCouponContent(BranchContent):
     def __init__(self, data):
@@ -1654,12 +1657,13 @@ class BranchMultiCouponContent(BranchContent):
         else:
             return u"%sが全ての称号を所有していない" % (s2)
 
+
 class BranchMultiRandomContent(BranchContent):
     def __init__(self, data):
         BranchContent.__init__(self, data)
 
     def action(self):
-        """ランダム多肢分岐コンテント(Wsn.2)。"""
+        """ランダム多岐分岐コンテント(Wsn.2)。"""
         
         index = 0
         targets = []
@@ -1681,7 +1685,7 @@ class BranchMultiRandomContent(BranchContent):
         return cw.cwpy.dice.choice(targets)
 
     def get_status(self):
-        return u"ランダム多肢分岐コンテント"
+        return u"ランダム多岐分岐コンテント"
 
 
 #-------------------------------------------------------------------------------
@@ -2019,6 +2023,7 @@ class EffectContent(EventContentBase):
             event = cw.cwpy.event.get_event()
             if cw.cwpy.event.in_inusecardevent:
                 cardversion = cw.cwpy.event.get_inusecard().wsnversion
+
             else:
                 cardversion = None
 
@@ -2043,6 +2048,7 @@ class EffectContent(EventContentBase):
                             if not cw.cwpy.is_playingscenario() or cw.cwpy.sdata.in_f9:
                                 target.remove_coupon(u"＠効果対象")
                                 return
+
                             tevent.update_targets()
 
                             if not target.has_coupon(u"＠効果対象"):
@@ -3495,6 +3501,8 @@ class TalkMessageContent(TalkContent):
         columns = max(1, self.data.getint(".", "columns", 1))
         # 縦方向の中央寄せ(Wsn.2)
         centering_y = self.data.getbool(".", "centeringy", False)
+        # 禁則処理(Wsn.2)
+        boundarycheck = self.data.getbool(".", "boundarycheck", False)
 
         talkers = []
         firsttalker = None
@@ -3592,7 +3600,8 @@ class TalkMessageContent(TalkContent):
         # MessageWindow表示
         if text:
             mwin = cw.sprite.message.MessageWindow(text, names, talkers, firsttalker, columns=columns,
-                                                   versionhint=versionhint, centering_y=centering_y)
+                                                   versionhint=versionhint, centering_y=centering_y,
+                                                   boundarycheck=boundarycheck)
             index = cw.cwpy.show_message(mwin)
         # テキストが存在せず、選択肢が複数存在する場合はSelectWindowを表示する
         elif len(names) > 1:
@@ -3688,6 +3697,8 @@ class TalkDialogContent(TalkContent):
         columns = max(1, self.data.getint(".", "columns", 1))
         # 縦方向の中央寄せ(Wsn.2)
         centering_y = self.data.getbool(".", "centeringy", False)
+        # 禁則処理(Wsn.2)
+        boundarycheck = self.data.getbool(".", "boundarycheck", False)
 
         # 対象メンバが必須クーポンを所持していたら、
         # その必須クーポンに対応するテキストを優先して表示させる
@@ -3697,7 +3708,8 @@ class TalkDialogContent(TalkContent):
         versionhint = talker.versionhint
         if dialogtext:
             mwin = cw.sprite.message.MessageWindow(dialogtext, names, imgpaths, talker, columns=columns,
-                                                   versionhint=versionhint, centering_y=centering_y)
+                                                   versionhint=versionhint, centering_y=centering_y,
+                                                   boundarycheck=boundarycheck)
             index = cw.cwpy.show_message(mwin)
         elif not dialogtext is None and len(names) > 1:
             # 選択されたDialogに空文字列が設定されており、

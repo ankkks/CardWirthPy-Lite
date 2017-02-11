@@ -2686,6 +2686,7 @@ def _wordwrap_impl(s, width, get_width, open_chars, close_chars, startindex, res
                     if buf[1] and buf[0][0] == '&':
                         continue
                     return matcher(buf)
+                return False
 
             def match_op_last(bufs):
                 # bufsの末尾部分がopen_charsに該当する文字ならTrue
@@ -2790,7 +2791,7 @@ def _wordwrap_impl(s, width, get_width, open_chars, close_chars, startindex, res
         return u"\n".join(seq)
 
 def wordwrap(s, width, get_width=None, open_chars=u"\"'(<[`{‘“〈《≪「『【〔（＜［｛｢",
-                                       close_chars=u"!\"'),.:;>?]`}゜’”′″、。々＞》≫」』】〕゛°ゝゞヽヾ！），．：；＞？］｝｡｣､ﾞﾟ",
+                                       close_chars=u"!\"'),.:;>?]`}゜’”′″、。々＞》≫」』】〕〟゛°ゝゞヽヾ〻！），．：；＞？］｝｡｣､ﾞﾟぁぃぅぇぉァィゥェォｧｨｩｪｫヵっッｯゃゅょャュョｬｭｮゎヮㇵㇶㇷㇸㇹㇺ…―ーｰ",
                                        spcharinfo=None):
     if spcharinfo:
         spcharinfo2 = []
@@ -3352,8 +3353,10 @@ class CheckableListCtrl(wx.ListCtrl,
         self.DeleteAllItems()
 
         self.resizeLastColumn(0)
+
         self.imglist = self.GetImageList(wx.IMAGE_LIST_SMALL)
         assert self.imglist.ImageCount == 2
+
         if not system:
             w, h = cw.cwpy.rsrc.debugs_noscale["NOCHECK"].GetSize()
             w, h = cw.wins((w, h))
@@ -3392,7 +3395,6 @@ class CheckableListCtrl(wx.ListCtrl,
                 if index <> i:
                     self.CheckItem(index, flag)
         self._checking = False
-
 
 
 class CWBackCheckBox(wx.CheckBox):
