@@ -458,7 +458,6 @@ class CWPy(_Singleton, threading.Thread):
                     raise cw.event.EffectBreakError()
                 else:
                     self.startup(loadyado=False)
-
             else:
                 for music in self.music:
                     music.play(music.path, updatepredata=False)
@@ -1076,7 +1075,7 @@ class CWPy(_Singleton, threading.Thread):
 
     def lazy_draw(self):
         if self._lazy_draw:
-            self.draw()    
+            self.draw()
 
     def draw(self, mainloop=False, clip=None):
         if not clip:
@@ -2003,6 +2002,7 @@ class CWPy(_Singleton, threading.Thread):
     def set_gameover(self):
         """ゲームオーバー画面へ遷移。"""
         cw.cwpy.sdata.in_endprocess = True
+
         cw.cwpy.advlog.gameover()
         self.set_status("GameOver")
         del self.pre_dialogs[:]
@@ -2058,6 +2058,7 @@ class CWPy(_Singleton, threading.Thread):
             return
 
         self.sdata.in_endprocess = True
+
         cw.cwpy.advlog.f9()
         self.sdata.is_playing = False
         self.statusbar.change(False)
@@ -2284,6 +2285,7 @@ class CWPy(_Singleton, threading.Thread):
         # イベントを中止
         self.event._stoped = True
         self.event.breakwait = True
+        self.lock_menucards = True
         del self.pre_dialogs[:]
         del self.pre_areaids[:]
 
@@ -2299,6 +2301,7 @@ class CWPy(_Singleton, threading.Thread):
                         if self.is_showingdebugger() and self.event:
                             self.event.refresh_tools()
                     self.frame.exec_func(func)
+                    self.lock_menucards = False
                 self.exec_func(func)
             self.exec_func(func)
 
@@ -2372,7 +2375,6 @@ class CWPy(_Singleton, threading.Thread):
 
     def _load_yado2(self, yadodir):
         del self.pre_dialogs[:]
-        del self.pre_dialogs[:]
         del self.pre_areaids[:]
 
         optscenario = cw.OPTIONS.scenario
@@ -2416,6 +2418,7 @@ class CWPy(_Singleton, threading.Thread):
                             pos_noscale = (95 * idx + 9 * (idx + 1), 285)
                             pcard = cw.sprite.card.PlayerCard(data, pos_noscale=pos_noscale, status="normal", index=idx)
                             pcard.set_pos_noscale(pos_noscale)
+                            pcard.set_fullrecovery()
                             pcard.update_image()
                         self.ydata.party._loading = False
                         self.ydata.party.lastscenario = []
