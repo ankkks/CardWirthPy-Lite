@@ -9,6 +9,7 @@ import copy
 import time
 import shutil
 import threading
+import ctypes
 import xml.parsers.expat
 from xml.etree.cElementTree import ElementTree
 from xml.etree.ElementTree import _ElementInterface
@@ -75,6 +76,7 @@ class SystemData(object):
         self.pre_battleareadata = None
         self.data_cache = {}
         self.resource_cache = {}
+        self.resource_cache_size = 0
         self.autostart_round = False
         self.breakpoints = set()
         self.in_f9 = False
@@ -170,10 +172,44 @@ class SystemData(object):
         for mcards in self.sparea_mcards.itervalues():
             for mcard in mcards:
                 mcard.update_scale()
-        #Attributeエラーが出るので更新しない
         for log in self.backlog:
             if log.specialchars:
                 log.specialchars.reset()
+
+    def sweep_resourcecache(self, size):
+        """新しくキャッシュを追加した時にメモリが不足しそうであれば
+        これまでのキャッシュをクリアする。
+        """
+        # 使用可能なヒープサイズの半分までをキャッシュに使用する"
+        if sys.platform == "win32":
+            class MEMORYSTATUSEX(ctypes.Structure):
+                _fields_ = [
+                    ("dwLength", ctypes.wintypes.DWORD),
+                    ("dwMemoryLoad", ctypes.wintypes.DWORD),
+                    ("ullTotalPhys", ctypes.c_ulonglong),
+                    ("ullAvailPhys", ctypes.c_ulonglong),
+                    ("ullTotalPageFile", ctypes.c_ulonglong),
+                    ("ullAvailPageFile", ctypes.c_ulonglong),
+                    ("ullTotalVirtual", ctypes.c_ulonglong),
+                    ("ullAvailVirtual", ctypes.c_ulonglong),
+                    ("ullAvailExtendedVirtual", ctypes.c_ulonglong),
+                ]
+
+            ms = MEMORYSTATUSEX()
+            ms.dwLength = ctypes.sizeof(ms)
+            if ctypes.windll.kernel32.GlobalMemoryStatusEx(ctypes.byref(ms)):
+                limit = ms.ullTotalVirtual // 2
+            else:
+                limit = 1*1024*1024*1024
+        else:
+            import resource
+            limit = resource.getrlimit(resource.RLIMIT_DATA)[0] // 2
+
+        if min(limit, 2*1024*1024*1024) < self.resource_cache_size + size:
+            self.resource_cache.clear()
+            self.resource_cache_size = 0
+
+        self.resource_cache_size += size
 
     def start(self):
         pass
@@ -253,7 +289,9 @@ class SystemData(object):
                             scenario = prop.properties.get("Scenario", "")
                             author = prop.properties.get("Author", "")
                             premium = prop.properties.get("Premium", "Normal")
-                            debuglog.add_lostcard(type, name, desc, scenario, author, premium)
+                            attachment = cw.util.str2bool(prop.properties.get("Attachment", "False"))
+                            if type <> "BeastCard" or attachment:
+                                debuglog.add_lostcard(type, name, desc, scenario, author, premium)
 
         cw.util.remove(cw.util.join_paths(cw.tempdir, u"ScenarioLog"))
         path = cw.util.splitext(cw.cwpy.ydata.party.data.fpath)[0] + ".wsl"
@@ -750,6 +788,7 @@ class ScenarioData(SystemData):
         self.data_cache = {}
         # ロードしたイメージ等のリソースのキャッシュ
         self.resource_cache = {}
+        self.resource_cache_size = 0
         # メッセージのバックログ
         self.backlog = []
 
@@ -982,6 +1021,7 @@ class ScenarioData(SystemData):
             stepvals[name] = step.value
         self.data_cache = {}
         self.resource_cache = {}
+        self.resource_cache_size = 0
         self._init_xmlpaths()
         self._init_flags()
         self._init_steps()
@@ -2877,7 +2917,7 @@ class Party(object):
         s.discard("")
         return s
 
-    def has_keycode(self, keycode, skill=True, item=True, beast=True):
+    def has_keycode(self, keycode, skill=True, item=True, beast=True, hand=True):
         """指定されたキーコードを所持しているか。"""
         for header in self.backpack:
             if not skill and header.type == "SkillCard":

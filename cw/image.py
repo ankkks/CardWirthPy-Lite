@@ -512,10 +512,9 @@ class CardImage(Image):
                 cw.imageretouch.wxblit_2bitbmp_to_card(dc, subimg2, cw.wins(3)+baserect.x, cw.wins(13)+baserect.y, True,
                                                        bitsizekey=subimg)
 
-        pixelsize = cw.cwpy.setting.fonttypes["cardname"][2] #カードサイズ
-        ##効果型カードだけ1ピクセル大きくなっている
-        #if wx.VERSION[0] < 3:
-        #    pixelsize += 1
+        pixelsize = cw.cwpy.setting.fonttypes["cardname"][2]
+        if wx.VERSION[0] < 3:
+            pixelsize += 1
         if cw.cwpy.setting.fontsmoothing_cardname:
             font = cw.cwpy.rsrc.get_wxfont("cardname", pixelsize=cw.wins(pixelsize)*2, adjustsizewx3=False)
         else:
@@ -554,7 +553,7 @@ class CardImage(Image):
                 pixelsize = cw.cwpy.setting.fonttypes["uselimit"][2]
                 bold = wx.BOLD if cw.cwpy.setting.fonttypes["uselimit"][3 if cw.UP_SCR <= 1 else 4] else wx.NORMAL
                 italic = wx.ITALIC if cw.cwpy.setting.fonttypes["uselimit"][5] else wx.NORMAL
-                if wx.VERSION[0] <= 3:
+                if wx.VERSION[0] < 3:
                     pixelsize += 1
                 font = cw.cwpy.rsrc.get_wxfont("uselimit", pixelsize=cw.wins(pixelsize), style=italic, weight=bold, adjustsizewx3=False)
                 dc.SetFont(font)
@@ -786,7 +785,7 @@ class LargeCardImage(CardImage):
                                                        bitsizekey=subimg)
 
         pixelsize = cw.cwpy.setting.fonttypes["ccardname"][2]
-        if wx.VERSION[0] <= 3:
+        if wx.VERSION[0] < 3:
             pixelsize += 1
         if cw.cwpy.setting.fontsmoothing_cardname:
             font = cw.cwpy.rsrc.get_wxfont("ccardname", pixelsize=cw.wins(pixelsize)*2, adjustsizewx3=False)
@@ -822,13 +821,6 @@ class CharacterCardImage(CardImage):
         self.set_nameimg(self.ccard.name)
         # フォント画像(レベル)
         self.set_levelimg(self.ccard.level)
-        # ライフバー画像
-        guagesize = cw.setting.SIZE_RESOURCES["Status/LIFEGUAGE"]
-        self.lifeimg = pygame.Surface(guagesize).convert()
-        guage = cw.cwpy.rsrc.statuses["LIFEGUAGE"]
-        self.lifeguage = guage
-        self.lifebar = cw.cwpy.rsrc.statuses["LIFEBAR"]
-        self.lifeimg.set_colorkey(guage.get_at((0, 0)), pygame.locals.RLEACCEL)
         # rect
         self.rect = pygame.Rect(cw.s(self._pos_noscale), cw.s((95, 130)))
 
@@ -975,7 +967,6 @@ class CharacterCardImage(CardImage):
                 guage = cw.cwpy.rsrc.statuses["LIFEGUAGE"]
                 lifeimg = pygame.Surface(guage.get_size()).convert()
                 lifeimg.set_colorkey(guage.get_at((0, 0)), pygame.locals.RLEACCEL)
-
                 lifeimg.blit(lifebar, calc_barpos(guage))
                 lifeimg.blit(guage, (0, 0))
 
@@ -1224,6 +1215,7 @@ def create_colorcell(size, color1, gradient, color2):
     image = cw.cwpy.sdata.resource_cache.get(key, None)
     if image:
         return image
+
     image = pygame.Surface(size).convert_alpha()
 
     def calc_per(mn, mx, per):
@@ -1252,7 +1244,8 @@ def create_colorcell(size, color1, gradient, color2):
             pygame.draw.line(image, (r, g, b, a), (0, y), (w, y), 1)
     else:
         image.fill(color1)
-    
+
+    cw.cwpy.sdata.sweep_resourcecache(cw.util.calc_imagesize(image))
     cw.cwpy.sdata.resource_cache[key] = image
     return image
 
@@ -1314,6 +1307,7 @@ def smoothscale(surface, size, smoothing=True, iscard=False):
                 bmp = surface.convert(24)
             else:
                 bmp = surface
+
         return pygame.transform.smoothscale(bmp, size)
     else:
         return pygame.transform.scale(surface, size)
