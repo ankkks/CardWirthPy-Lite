@@ -312,7 +312,6 @@ class CardHeader(object):
         """
         return cw.effectmotion.get_vocation_level(owner, self.vocation, enhance_act=enhance_act)
 
-
     def get_showed_vocation_level(self, owner):
         """
         表示される適性値の段階値を返す。値は0～3の範囲となる。
@@ -333,7 +332,6 @@ class CardHeader(object):
             return value
         else:
             return min(3, self.get_vocation_level(owner, enhance_act=False))
-
 
     def get_vocation_val(self, owner, enhance_act=False):
         """
@@ -476,7 +474,9 @@ class CardHeader(object):
                 if header.uselimit <= 0 and not header.recycle and header.get_owner() == owner:
                     # 召喚獣消去効果で消えてる場合もあるのでチェック
                     if header in owner.cardpocket[cw.POCKET_BEAST] and header.get_owner() == owner:
+                        cw.animation.animate_sprite(owner, "hide", battlespeed=cw.cwpy.is_battlestatus())
                         cw.cwpy.trade("TRASHBOX", header=header, from_event=True, clearinusecard=False)
+                        cw.animation.animate_sprite(owner, "deal", battlespeed=cw.cwpy.is_battlestatus())
 
     def write(self, party=None, move=False, from_getcontent=False):
         def create_newpath(party):
