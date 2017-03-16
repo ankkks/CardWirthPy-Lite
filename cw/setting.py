@@ -966,7 +966,7 @@ class Setting(object):
     def set_dealspeed(self, value, battlevalue, usebattle):
         self.dealspeed = value
         self.dealspeed = cw.util.numwrap(self.dealspeed, 0, 10)
-        scales_len = int((self.dealspeed+1) * 1.2)
+        scales_len = int((self.dealspeed+1) * 1.0)
         self.dealing_scales = [
             int(math.cos(math.radians(90.0 * i / scales_len)) * 100)
             for i in xrange(scales_len)
@@ -975,7 +975,7 @@ class Setting(object):
 
         self.dealspeed_battle = battlevalue
         self.dealspeed_battle = cw.util.numwrap(self.dealspeed_battle, 0, 10)
-        scales_len = int((self.dealspeed_battle+1) * 1.2)
+        scales_len = int((self.dealspeed_battle+1) * 1.0)
         self.dealing_scales_battle = [
             int(math.cos(math.radians(90.0 * i / scales_len)) * 100)
             for i in xrange(scales_len)
