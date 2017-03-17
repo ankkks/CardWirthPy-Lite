@@ -2098,7 +2098,7 @@ class Character(object):
         self.data.edit("Property/Life", str(self.maxlife), "max")
         self.set_life(self.maxlife)
         # 技能の使用回数
-        for header in self.cardpocket[0]:
+        for header in self.cardpocket[cw.POCKET_SKILL]:
             header.get_uselimit(reset=True)
 
         if not regulate:
