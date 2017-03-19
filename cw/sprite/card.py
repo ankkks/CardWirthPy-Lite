@@ -396,14 +396,7 @@ class CWPyCard(base.SelectableSprite):
             if inout:
                 self.zoomimgs.append((self.get_animeimage(), pygame.Rect(self.get_animerect())))
 
-        if inout:
-            # 拡大
-            zoom_w, zoom_h = cw.s(self.zoomsize_noscale)
-        else:
-            # 縮小
-            zoom_w, zoom_h = self.zoomimgs[-1][1].size
-            zoom_w -= self.zoomimgs[0][1].width
-            zoom_h -= self.zoomimgs[0][1].height
+        zoom_w, zoom_h = cw.s(self.zoomsize_noscale)
         maxw = self._rect.w + zoom_w
         maxh = self._rect.h + zoom_h
 
