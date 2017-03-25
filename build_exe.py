@@ -69,7 +69,7 @@ class BuildExe(object):
         self.srcfile_name = "src.zip"
 
         #Extra files/dirs copied to game
-        self.extra_datas = ["Data/SoundFont", "Data/Skin/Classic", "Data/SkinBase", "Data/Debugger", "Data/Font",
+        self.extra_datas = ["Data/SoundFont", "Data/Skin/Classic", "Data/SkinBase", "Data/Debugger", "Data/Font", "Data/Materials",
             "Data/Compatibility.xml", "Data/SystemCoupons.xml", "Data/SearchEngines.xml", 
             "License.txt", "msvcr90.dll", "msvcp90.dll", 
             "bass.dll", "bass_fx.dll", "bassmidi.dll", 
