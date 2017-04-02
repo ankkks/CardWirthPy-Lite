@@ -814,7 +814,7 @@ class YadoSelect(MultiViewSelect):
             self._sort_list()
             self.update_narrowcondition()
             self.draw(True)
-        self.left2btn.SetFocus()
+        #self.left2btn.SetFocus()
 
     def _sort_list(self):
         objs = self._list_to_obj()
@@ -972,7 +972,7 @@ class YadoSelect(MultiViewSelect):
                         cw.util.release_mutex()
                         cw.cwpy.play_sound("harvest")
                         cw.util.remove(cw.util.join_paths(u"Data/Temp/Local", path))
-                        self.update_list(dlg.yadodir)
+                        self.update_list(dlg.yadodir, clear_narrowcondition=True)
                     else:
                         cw.cwpy.play_sound("error")
                 finally:
@@ -1062,14 +1062,8 @@ class YadoSelect(MultiViewSelect):
                     dlg = cw.dialog.transfer.TransferYadoDataDialog(self, dirs, names, path)
                     cw.cwpy.frame.move_dlg(dlg)
                     if dlg.ShowModal() == wx.ID_OK:
-                        self._names, self._list, self._list2, self._skins, self._classic, self._isshortcuts = self._get_yadolist()
-                        self.index = self._list.index(path)
-                        self.list = self._list
-                        self._sort_list()
-                        draw = True
+                        self.update_list()
                     dlg.Destroy()
-                if draw:
-                    self.draw(True)
             finally:
                 cw.util.release_mutex()
         else:
@@ -1128,7 +1122,7 @@ class YadoSelect(MultiViewSelect):
 
         if dlg.ShowModal() == wx.ID_OK:
             cw.cwpy.play_sound("harvest")
-            self.update_list(dlg.yadodir)
+            self.update_list(dlg.yadodir, clear_narrowcondition=True)
 
         dlg.Destroy()
 
@@ -1233,6 +1227,11 @@ class YadoSelect(MultiViewSelect):
             # 所属冒険者
             dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlglist", pixelsize=cw.wins(14)))
             for idx, name in enumerate(self.list2[self.index]):
+                if 24 <= idx:
+                    break
+                if 23 == idx:
+                    if 24 < len(self.list2[self.index]):
+                        name = cw.cwpy.msgs["scenario_etc"]
                 name = cw.util.abbr_longstr(dc, name, cw.wins(90))
                 x = (bmpw - cw.wins(270)) / 2 + ((idx % 3) * cw.wins(95))
                 y = cw.wins(200) + (idx / 3) * cw.wins(16)
@@ -1426,7 +1425,7 @@ class YadoSelect(MultiViewSelect):
                     shutil.move(path, topath)
 
                 cw.cwpy.play_sound("page")
-                self.update_list(yadodir)
+                self.update_list(yadodir, clear_narrowcondition=True)
             finally:
                 cw.util.release_mutex()
         else:
@@ -1509,20 +1508,23 @@ class YadoSelect(MultiViewSelect):
         dlg.ShowModal()
         dlg.Destroy()
 
-    def update_list(self, yadodir=""):
+    def update_list(self, yadodir="", clear_narrowcondition=False):
         """
         登録されている宿のリストを更新して、
         引数のnameの宿までページを移動する。
         """
-        self._names, self._list, self._list2, self._skins, self._classic, self._isshortcuts = self._get_yadolist()
-
-        try:
-            self.index = self._list.index(yadodir)
-        except:
-            self.index = 0
-
+        if clear_narrowcondition:
+            self._processing = True
+            self.narrow.SetValue(u"")
+            self._processing = False
+        self._names, self._list, self._list2, self._skins, self._classic, self._isshortcuts = self.get_yadolist()
         self.list = self._list
+
+        if yadodir:
+            self.index = self.list.index(yadodir)
+
         self._sort_list()
+        self.update_narrowcondition()
 
         self.draw(True)
         self.enable_btn()
@@ -1952,7 +1954,7 @@ class PartySelect(MultiViewSelect):
             cw.cwpy.ydata.sort_parties()
             self.update_narrowcondition()
             self.draw(True)
-        self.left2btn.SetFocus()
+        #self.left2btn.SetFocus()
 
     def OnMouseWheel(self, event):
         if self._processing:
@@ -2529,7 +2531,7 @@ class PlayerSelect(MultiViewSelect):
             cw.cwpy.ydata.sort_standbys()
             self.update_narrowcondition()
             self.draw(True)
-        self.left2btn.SetFocus()
+        #self.left2btn.SetFocus()
 
     def can_clickcenter(self):
         return self.addbtn.IsEnabled()
