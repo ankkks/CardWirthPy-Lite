@@ -411,10 +411,9 @@ def install_scenario(parentdialog, headers, scedir, dstpath, db, skintype):
             for (_parent, relparent), headers_seq in self.headers.iteritems():
                 self._install(relparent, headers_seq, dstpath, allret)
 
-            if cw.cwpy.setting.delete_sourceafterinstalled:
-                # 不要になったインストール元のディレクトリを削除
-                for parent, relparent in self.headers.iterkeys():
-                    if not (relparent in (u"", u".") or relparent.startswith(u".." + os.path.sep)):
+            # 不要になったインストール元のディレクトリを削除
+            for parent, relparent in self.headers.iterkeys():
+                if not (relparent in (u"", u".") or relparent.startswith(u".." + os.path.sep)):
                         _remove_emptydir(parent)
 
         def _install(self, parent, headers_seq, dstpath, allret):
