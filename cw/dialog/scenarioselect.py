@@ -1108,6 +1108,7 @@ class ScenarioSelect(select.Select):
         self._processing = True
         cw.cwpy.play_sound("equipment")
         self.narrow.SetValue("")
+        headers = reduce(lambda a, b: a + b, headers.itervalues())
         selfirstheader = (1 == len(headers))
         self._set_findresult(headers, selfirstheader=selfirstheader)
 
@@ -1129,28 +1130,29 @@ class ScenarioSelect(select.Select):
         dpath, seldname = self._get_installtarget()
 
         cw.cwpy.play_sound("signal")
+        headers_seq = reduce(lambda a, b: a + b, headers.itervalues())
         if sys.platform == "win32" and os.path.isfile(dpath) and os.path.splitext(dpath)[1].lower() == ".lnk":
             dname = os.path.splitext(os.path.basename(dpath))[0]
         else:
             dname = os.path.basename(dpath)
-        if 1 < len(headers):
-            s = u"%s本のシナリオを%sに移動しますか？" % (len(headers), dname)
+        if 1 < len(headers_seq):
+            s = u"%s本のシナリオを%sにインストールしますか？" % (len(headers_seq), dname)
         else:
-            name = headers[0].name
-            if headers[0].author:
-                name += u"(%s)" % headers[0].author
-            s = u"「%s」を%sに移動しますか？" % (name, dname)
+            name = headers_seq[0].name
+            if headers_seq[0].author:
+                name += u"(%s)" % headers_seq[0].author
+            s = u"「%s」を%sにインストールしますか？" % (name, dname)
 
         dpath = cw.util.get_linktarget(dpath)
 
-        if 1 < len(headers):
-            name = u"%s本のシナリオ" % (len(headers))
+        if 1 < len(headers_seq):
+            name = u"%s本のシナリオ" % (len(headers_seq))
         else:
-            if headers[0].author:
-                name = u"「%s(%s)」" % (headers[0].name, headers[0].author)
+            if headers_seq[0].author:
+                name = u"「%s(%s)」" % (headers_seq[0].name, headers_seq[0].author)
             else:
-                name = u"「%s」" % (headers[0].name)
-        desc = scenarioinstall.create_installdesc(headers)
+                name = u"「%s」" % (headers_seq[0].name)
+        desc = scenarioinstall.create_installdesc(headers_seq)
         choices = (
             (u"インストール", wx.ID_YES, cw.wins(105), desc),
             (u"表示のみ", wx.ID_NO, cw.wins(105), u"%sを検索結果として表示します。" % (name)),
@@ -1170,7 +1172,6 @@ class ScenarioSelect(select.Select):
             if paths:
                 firstpath = paths[0]
                 cw.cwpy.play_sound("harvest")
-
                 self._processing = True
                 self.narrow.SetValue(u"")
                 self._processing = False
@@ -2445,10 +2446,12 @@ class ScenarioSelect(select.Select):
             self.leftbtn.Disable()
             self.left2btn.Disable()
             self.SetTitle(cw.cwpy.msgs["select_scenario_title"])
+
             if self.dirstack and not self.tree.IsShown():
                 self.nobtn.SetLabel(cw.cwpy.msgs["return"])
             else:
                 self.nobtn.SetLabel(cw.cwpy.msgs["entry_cancel"])
+
             return
 
         self.texts = self.get_texts()
