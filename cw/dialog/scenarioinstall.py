@@ -675,7 +675,7 @@ def create_installdesc(headers_seq):
     if 1 < len(headers_seq):
         name = u"%s本のシナリオ" % (len(headers_seq))
     else:
-        name = headers[0].fname
+        name = headers_seq[0].fname
     desc = u"%sを選択先のフォルダに移動します。\n" % (name)
     return desc
 
