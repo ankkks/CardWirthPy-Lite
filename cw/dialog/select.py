@@ -631,7 +631,7 @@ class YadoSelect(MultiViewSelect):
         self._init_narrowpanel(choices, u"", cw.cwpy.setting.yado_narrowtype)
 
         # sort
-        font = cw.cwpy.rsrc.get_wxfont("paneltitle2", pixelsize=cw.wins(15))
+        font = cw.cwpy.rsrc.get_wxfont("paneltitle2", pixelsize=cw.wins(13))
         self.sort_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["sort_title"])
         self.sort_label.SetFont(font)
         choices = (cw.cwpy.msgs["sort_name"],
@@ -1698,7 +1698,7 @@ class PartySelect(MultiViewSelect):
         self._init_narrowpanel(choices, u"", cw.cwpy.setting.parties_narrowtype)
 
         # sort
-        font = cw.cwpy.rsrc.get_wxfont("paneltitle2", pixelsize=cw.wins(15))
+        font = cw.cwpy.rsrc.get_wxfont("paneltitle2", pixelsize=cw.wins(13))
         self.sort_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["sort_title"])
         self.sort_label.SetFont(font)
         choices = (cw.cwpy.msgs["sort_no"],
