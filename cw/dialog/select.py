@@ -814,7 +814,6 @@ class YadoSelect(MultiViewSelect):
             self._sort_list()
             self.update_narrowcondition()
             self.draw(True)
-        #self.left2btn.SetFocus()
 
     def _sort_list(self):
         objs = self._list_to_obj()
@@ -1954,7 +1953,6 @@ class PartySelect(MultiViewSelect):
             cw.cwpy.ydata.sort_parties()
             self.update_narrowcondition()
             self.draw(True)
-        #self.left2btn.SetFocus()
 
     def OnMouseWheel(self, event):
         if self._processing:
@@ -2531,7 +2529,6 @@ class PlayerSelect(MultiViewSelect):
             cw.cwpy.ydata.sort_standbys()
             self.update_narrowcondition()
             self.draw(True)
-        #self.left2btn.SetFocus()
 
     def can_clickcenter(self):
         return self.addbtn.IsEnabled()
