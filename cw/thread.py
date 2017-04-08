@@ -1871,12 +1871,15 @@ class CWPy(_Singleton, threading.Thread):
             # 初期状態
             areaid = 3
 
+        def change_area():
+            self.change_area(areaid)
+            self.is_pcardsselectable = self.ydata and self.ydata.party
+
         if self.setting.store_skinoneachbase and self.ydata.skindirname <> cw.cwpy.setting.skindirname:
             self.update_skin(self.ydata.skindirname, changearea=False)
-
-        self.change_area(areaid)
-
-        self.is_pcardsselectable = self.ydata and self.ydata.party
+            cw.cwpy.exec_func(change_area)
+        else:
+            change_area()
 
     def start_scenario(self):
         """
@@ -4237,7 +4240,7 @@ class CWPy(_Singleton, threading.Thread):
             # 使用回数を設定
             header.get_uselimit()
             if from_event and header.type == "SkillCard":
-                header.set_uselimit(header.maxuselimit)
+                header.uselimit = header.maxuselimit
             # カードのエレメントを追加
             path = "%ss" % header.type
             if toindex == -1:
