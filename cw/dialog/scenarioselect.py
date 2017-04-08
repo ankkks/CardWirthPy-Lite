@@ -1259,7 +1259,7 @@ class ScenarioSelect(select.Select):
             self.toppanel.Show()
             selitem = self.tree.GetSelection()
             if selitem and self.tree.IsExpanded(selitem):
-                self.update_narrowcondition()
+                self._update_narrowcondition_impl()
             else:
                 self.draw(True)
             cw.cwpy.setting.show_scenariotree = False
@@ -1546,6 +1546,7 @@ class ScenarioSelect(select.Select):
                         # 整列条件: 更新日時
                         addition = u"[%s]" % (self._formatted_mtime(header.mtime, False))
                     elif header.levelmin or header.levelmax:
+                        # 整列条件: 対象レベル
                         levelmin = str(header.levelmin) if header.levelmin else " "
                         levelmax = str(header.levelmax) if header.levelmax else " "
                         if levelmin == levelmax:
@@ -1724,7 +1725,8 @@ class ScenarioSelect(select.Select):
                     elif self.sort.GetSelection() == 4:
                         # 整列条件: 更新日時
                         addition = u"[%s]" % (self._formatted_mtime(header.mtime, False))
-                    elif header.levelmin or header.levelmax:
+                    elif self.sort.GetSelection() == 0 and (header.levelmin or header.levelmax):
+                        # 整列条件: 対象レベル
                         levelmin = str(header.levelmin) if header.levelmin else " "
                         levelmax = str(header.levelmax) if header.levelmax else " "
                         if levelmin == levelmax:
@@ -1876,7 +1878,9 @@ class ScenarioSelect(select.Select):
     def update_narrowcondition(self):
         if not self._update_narrowparams():
             return
+        self._update_narrowcondition_impl()
 
+    def _update_narrowcondition_impl(self):
         self._processing = True
         self._no_treechangedsound = True
         selected = self.list[self.index] if self.list else None
