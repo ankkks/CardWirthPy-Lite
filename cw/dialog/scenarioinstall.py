@@ -35,7 +35,7 @@ class SelectScenarioDirectory(wx.Dialog):
         self.text = text
 
         # フォルダの作成
-        bmp = cw.cwpy.rsrc.dialogs["CREATE_DIRECTORY"]
+        bmp = cw.cwpy.rsrc.dialogs["DIRECTORY"]
         self.createdirbtn = cw.cwpy.rsrc.create_wxbutton(self, -1, (cw.wins(24), cw.wins(24)), bmp=bmp)
         self.createdirbtn.SetToolTip(wx.ToolTip(cw.cwpy.msgs["create_directory"]))
 
