@@ -1888,20 +1888,20 @@ class ScenarioSelect(select.Select):
                         dc.DrawBitmap(bmp, cw.wins(63), cw.wins(65)+yp, False)
 
             # contents
-            dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(16)))
+            dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(14)))
             s = cw.cwpy.msgs["contents"]
             w = dc.GetTextExtent(s)[0]
-            dc.DrawText(s, (bmpw-w)/2, cw.wins(110)+yp)
+            dc.DrawText(s, (bmpw-w)/2, cw.wins(100)+yp)
             # 中身
             font = cw.cwpy.rsrc.get_wxfont("dlglist", pixelsize=cw.wins(14), adjustsize=True)
             font2 = cw.cwpy.rsrc.get_wxfont("dlglist", pixelsize=cw.wins(12))
 
             names = self._narrow_scenario(self.names)
-            if len(names) > 13:
-                names = names[0:12]
+            if len(names) > 14:
+                names = names[0:13]
                 names.append(cw.cwpy.msgs["history_etc"])
 
-            y = cw.wins(130)
+            y = cw.wins(120)
             for name in names:
                 addition = ""
                 if isinstance(name, cw.header.ScenarioHeader):
@@ -1999,7 +1999,7 @@ class ScenarioSelect(select.Select):
             # 対象レベル
             dc.SetTextForeground(wx.Colour(0, 128, 128, 255))
             dc.SetFont(cw.cwpy.rsrc.get_wxfont("targetlevel",
-                                            style=wx.FONTSTYLE_ITALIC, pixelsize=cw.wins(16)))
+                                            style=wx.FONTSTYLE_ITALIC, pixelsize=cw.wins(15)))
             levelmax = str(header.levelmax) if header.levelmax else ""
             levelmin = str(header.levelmin) if header.levelmin else ""
 
