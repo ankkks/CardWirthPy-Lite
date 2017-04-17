@@ -528,19 +528,10 @@ def install_scenario(parentdialog, headers, scedir, dstpath, db, skintype):
                             os.path.normcase(os.path.normpath(os.path.abspath(dst))):
                         for rmpath in rmpaths:
                             cw.util.remove(rmpath, trashbox=True)
-                        try:
-                            shutil.move(fpath, dst)
-                        except:
-                            # FIXME: フォルダがロックされていて削除できない場合がある
-                            cw.util.print_ex()
-                            if os.path.isdir(fpath):
-                                for dpath2, dnames, fnames in os.walk(fpath):
-                                    if fnames:
-                                        raise
-                                else:
-                                    cw.util.remove(fpath, trashbox=True)
-                            else:
-                                raise
+                        if os.path.isfile(fpath):
+                            shutil.copy2(fpath, dst)
+                        else:
+                            shutil.copytree(fpath, dst)
                     elif repls:
                         for rmpath in repls:
                             cw.util.remove(rmpath, trashbox=True)
