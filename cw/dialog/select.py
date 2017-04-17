@@ -1205,20 +1205,20 @@ class YadoSelect(MultiViewSelect):
             w = dc.GetTextExtent(s)[0]
             maxwidth = bmpw - cw.wins(5)*2
             if maxwidth < w:
-                cw.util.draw_witharound(dc, s, cw.wins(5), cw.wins(40), maxwidth=maxwidth)
+                cw.util.draw_witharound(dc, s, cw.wins(5), cw.wins(38), maxwidth=maxwidth)
             else:
-                cw.util.draw_witharound(dc, s, (bmpw-w)/2, cw.wins(40))
+                cw.util.draw_witharound(dc, s, (bmpw-w)/2, cw.wins(38))
 
             # ページ番号
-            dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(15)))
+            dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(14)))
             s = str(self.index+1) if self.index > 0 else str(-self.index + 1)
-            s = s + "/" + str(len(self.list))
+            s = s + " / " + str(len(self.list))
             w = dc.GetTextExtent(s)[0]
             cw.util.draw_witharound(dc, s, (bmpw-w)/2, cw.wins(338))
             # Adventurers
             s = cw.cwpy.msgs["adventurers"]
             w = dc.GetTextExtent(s)[0]
-            dc.DrawText(s, (bmpw-w)/2, cw.wins(175))
+            dc.DrawText(s, (bmpw-w)/2, cw.wins(170))
 
             # 所属冒険者
             dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlglist", pixelsize=cw.wins(14)))

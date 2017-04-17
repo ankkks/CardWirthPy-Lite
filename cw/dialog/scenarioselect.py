@@ -1451,13 +1451,12 @@ class ScenarioSelect(select.Select):
 
         cw.cwpy.play_sound("equipment")
         if self.tree.IsShown():
+            self.toppanel.Freeze()
             self.tree.Hide()
             self.toppanel.Show()
-            selitem = self.tree.GetSelection()
-            if selitem and self.tree.IsExpanded(selitem):
-                self._update_narrowcondition_impl()
-            else:
-                self.draw(True)
+            self._update_narrowcondition_impl()
+            self.draw(True)
+            self.toppanel.Thaw()
             cw.cwpy.setting.show_scenariotree = False
         else:
             self.show_tree()
@@ -2017,7 +2016,7 @@ class ScenarioSelect(select.Select):
         # ページ数を表示
         dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(15)))
         s = str(self.index+1) if self.list else str(0)
-        s = s + "/" + str(len(self.list))
+        s = s + " / " + str(len(self.list))
         w = dc.GetTextExtent(s)[0]
         cw.util.draw_witharound(dc, s, bmpw-w-cw.wins(190), cw.wins(340))
 
@@ -2229,7 +2228,8 @@ class ScenarioSelect(select.Select):
         #一覧表示なら省略する
         if cw.cwpy.setting.show_paperandtree:
             name = u"%s" % (name)
-        elif header.levelmin <> 0 or header.levelmax <> 0:
+        elif self.sort.GetSelection() == 0 and (header.levelmin <> 0 or header.levelmax <> 0):
+            # 対象レベルによる整列中
             if header.levelmin == header.levelmax:
                 name = u"[    %2d] %s" % (header.levelmin, name)
             else:
