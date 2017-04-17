@@ -1218,7 +1218,7 @@ class ScenarioSelect(select.Select):
             else:
                 s = u"フォルダ「%s」を削除します。\nフォルダの中に存在する全てのサブフォルダとシナリオも削除されます。よろしいですか？" % name
 
-        dlg = message.YesNoMessage(self, cw.cwpy.msgs["message"], s)
+        dlg = message.YesNoMessage(self, cw.cwpy.msgs["delete"], s)
         self.Parent.move_dlg(dlg)
 
         if not dlg.ShowModal() == wx.ID_OK:
