@@ -110,7 +110,7 @@ class LocalSetting(object):
             "tab": ("pgothic", "", -1, True, True, False),
             "menu": ("uigothic", "", -1, False, False, False),
             "scenario": ("pmincho", "", -1, True, True, False),
-            "targetlevel": ("mincho", "", -1, True, True, True),
+            "targetlevel": ("pmincho", "", -1, True, True, True),
             "paneltitle": ("pmincho", "", -1, True, True, False),
             "paneltitle2": ("uigothic", "", -1, False, False, False),
             "dlgmsg": ("uigothic", "", -1, True, True, False),
@@ -299,7 +299,7 @@ class Setting(object):
         self.smoothexpand = True
         self.debug = False
         self.debug_saved = False
-        self.no_levelup_in_debugmode = False
+        self.no_levelup_in_debugmode = True
         self.play_bgm = True
         self.play_sound = True
         self.vol_master = 0.5 #少し大きい気がするので中間にしておく
@@ -310,7 +310,7 @@ class Setting(object):
         self.messagespeed = 5
         self.dealspeed = 5
         self.dealspeed_battle = 5
-        self.wait_usecard = False
+        self.wait_usecard = True
         self.use_battlespeed = False
         self.transition = "Fade"
         self.transitionspeed = 5
@@ -397,6 +397,7 @@ class Setting(object):
         self.write_playlog = False
         self.enable_oldf9 = False
         self.move_repeat = 250 #移動ボタン押しっぱなしの速度
+        self.open_lastscenario = True
         # アップデートに伴うファイルの自動移動・削除を行う
         self.auto_update_files = True
 
@@ -755,9 +756,10 @@ class Setting(object):
             self.init_skin(basedata=basedata)
 
         # 設定バージョンの更新 設定ファイルを独立させているためカット
-
         # F9互換オプション
         self.enable_oldf9 = data.getbool("EnableOldF9", self.enable_oldf9)
+        # 最後に選んだシナリオを開始地点にする
+        self.open_lastscenario = data.getbool("OpenLastScenario", self.open_lastscenario)
 
     def init_skin(self, basedata=None):
         self.skindir = cw.util.join_paths(u"Data/Skin", self.skindirname)

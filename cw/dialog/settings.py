@@ -636,8 +636,8 @@ class SettingsPanel(wx.Panel):
             setting.folderoftype.append((skintype, folder))
         value = self.pane_scenario.cb_show_debuglogdialog.GetValue()
         setting.show_debuglogdialog = value
-        value = self.pane_scenario.cb_nolevelup.GetValue()
-        setting.no_levelup_in_debugmode = value
+        value = self.pane_scenario.cb_open_lastscenario.GetValue()
+        setting.open_lastscenario = value
         value = self.pane_scenario.cb_oldf9.GetValue()
         setting.enable_oldf9 = value
 
@@ -650,8 +650,7 @@ class SettingsPanel(wx.Panel):
         setting.can_skipwait_with_wheel = value
         value = self.pane_ui.cb_can_forwardmessage_with_wheel.GetValue()
         setting.can_forwardmessage_with_wheel = value
-        value = self.pane_ui.cb_wait_usecard.GetValue()
-        setting.wait_usecard = value
+
         value = self.pane_ui.cb_can_repeatlclick.GetValue()
         setting.can_repeatlclick = value
         value = self.pane_ui.cb_autoenter_on_sprite.GetValue()
@@ -1452,6 +1451,9 @@ class SpeedPanel(wx.Panel):
             self.sl_deal_battle.SetTickFreq(1, 1)
             self.cb_use_battlespeed = wx.CheckBox(
                 self, -1, u"戦闘中の描画速度を同期")
+            self.cb_wait_usecard  = wx.CheckBox(
+                self, -1, u"カード使用前に空白時間")
+            self.cb_wait_usecard.SetToolTipString( u"戦闘中の描画速度にも影響します" )
         # メッセージ表示速度
         self.box_msgs = wx.StaticBox(
             self, -1, u"メッセージ表示速度(速い⇔遅い)")
@@ -1472,6 +1474,7 @@ class SpeedPanel(wx.Panel):
             self.sl_deal_battle.SetValue(setting.dealspeed_battle)
             self.cb_use_battlespeed.SetValue(not setting.use_battlespeed)
             self.sl_deal_battle.Enable(setting.use_battlespeed)
+            self.cb_wait_usecard.SetValue(setting.wait_usecard)
         self.sl_msgs.SetValue(setting.messagespeed)
 
     def _bind(self):
@@ -1483,6 +1486,7 @@ class SpeedPanel(wx.Panel):
 
         bsizer_tran = wx.StaticBoxSizer(self.box_tran, wx.VERTICAL)
         bsizer_deal = wx.StaticBoxSizer(self.box_deal, wx.VERTICAL)
+
         if self.battlespeed:
             bsizer_deal_battle = wx.StaticBoxSizer(self.box_deal_battle, wx.VERTICAL)
         bsizer_msgs = wx.StaticBoxSizer(self.box_msgs, wx.VERTICAL)
@@ -1492,7 +1496,10 @@ class SpeedPanel(wx.Panel):
         bsizer_deal.Add(self.sl_deal, 0, wx.EXPAND, cw.ppis(0))
         if self.battlespeed:
             bsizer_deal_battle.Add(self.sl_deal_battle, 0, wx.EXPAND, cw.ppis(0))
-            bsizer_deal.Add(self.cb_use_battlespeed, 0, wx.ALIGN_RIGHT, cw.ppis(0))
+            bsizer_deal2 = wx.GridSizer(0, 2)
+            bsizer_deal2.Add(self.cb_wait_usecard, 0, wx.LEFT|wx.RIGHT, cw.ppis(3))
+            bsizer_deal2.Add(self.cb_use_battlespeed, 0, wx.ALIGN_RIGHT, cw.ppis(0))
+            bsizer_deal.Add(bsizer_deal2, 0, wx.EXPAND, cw.ppis(0))
         bsizer_msgs.Add(self.sl_msgs, 0, wx.EXPAND, cw.ppis(0))
 
         sizer.Add(bsizer_tran, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
@@ -1523,11 +1530,14 @@ class SpeedPanel(wx.Panel):
         setting.transition = value
         value = self.sl_tran.GetValue()
         setting.transitionspeed = value
+        value = self.cb_wait_usecard.GetValue()
+        setting.wait_usecard = value
 
     def copy_values(self, speed):
         self.ch_tran.SetSelection(speed.ch_tran.GetSelection())
         self.sl_tran.SetValue(speed.sl_tran.GetValue())
         self.sl_deal.SetValue(speed.sl_deal.GetValue())
+        self.cb_use_battlespeed.SetValue(speed.cb_use_battlespeed.GetValue())
         if self.battlespeed and speed.battlespeed:
             self.sl_deal_battle.SetValue(speed.sl_deal_battle.GetValue())
             self.cb_use_battlespeed.SetValue(speed.cb_use_battlespeed.GetValue())
@@ -1658,6 +1668,7 @@ class DrawingSettingPanel(wx.Panel):
             self.speed.sl_deal.SetValue(setting.dealspeed_init)
             self.speed.sl_deal_battle.SetValue(setting.dealspeed_battle_init)
             self.speed.cb_use_battlespeed.SetValue(not setting.use_battlespeed_init)
+            self.speed.cb_wait_usecard.SetValue(setting.wait_usecard_init)
             self.speed.sl_deal_battle.Enable(setting.use_battlespeed_init)
             self.speed.sl_msgs.SetValue(setting.messagespeed_init)
             self.speed.ch_tran.SetSelection(self.speed.transitions.index(setting.transition_init))
@@ -2123,20 +2134,23 @@ class ScenarioSettingPanel(wx.Panel):
         wx.Panel.__init__(self, parent)
 
         # シナリオのオプション
-        self.box_gene = wx.StaticBox(self, -1, u"詳細")
-        self.cb_selectscenariofromtype = wx.CheckBox(self, -1, u"シナリオの選択開始位置をスキン毎に変更する")
+        self.box_gene = wx.StaticBox(self, -1, u"シナリオの選択")
         self.cb_show_paperandtree = wx.CheckBox(self, -1, u"シナリオ選択ダイアログで貼紙と一覧を同時に表示する")
-        self.cb_write_playlog = wx.CheckBox(self, -1, u"シナリオのプレイログを出力する")
+        self.cb_open_lastscenario = wx.CheckBox(
+            self, -1, u"最後に選んだシナリオを開始位置にする")
+        self.cb_selectscenariofromtype = wx.CheckBox(self, -1, u"シナリオ選択の初期位置をスキンタイプ別に変更")
+        self.cb_selectscenariofromtype.SetToolTipString( u"シナリオフォルダ(スキンタイプ別)で設定した場所をデフォルトの開始位置にします\n無効にした場合はScenarioを読みます")
+
 
         # デバッグオプション
-        self.box_debug = wx.StaticBox(self, -1, u"デバッグ")
+        self.box_debug = wx.StaticBox(self, -1, u"デバッグ・ログ")
         self.cb_show_debuglogdialog = wx.CheckBox(
             self, -1, u"シナリオの終了時にデバッグ情報を表示する")
-        self.cb_nolevelup = wx.CheckBox(
-            self, -1, u"デバッグ中はレベル上昇を抑止する")
+        self.cb_write_playlog = wx.CheckBox(self, -1, u"シナリオのプレイログをテキスト出力する")
         self.cb_oldf9 = wx.CheckBox(
             self, -1, u"CardWirth1.28由来のF9仕様を使用する")
         self.cb_oldf9.SetToolTipString( u"有効化非推奨\nシナリオによって変更された終了印・ゴシップがF9でリセットされなくなります")
+
 
         # スキンタイプ毎の初期フォルダ
         self.box_folderoftype = wx.StaticBox(self, -1, u"シナリオフォルダ(スキンタイプ別)")
@@ -2198,7 +2212,7 @@ class ScenarioSettingPanel(wx.Panel):
         self.cb_show_paperandtree.SetValue(setting.show_paperandtree)
         self.cb_write_playlog.SetValue(setting.write_playlog)
         self.cb_show_debuglogdialog.SetValue(setting.show_debuglogdialog)
-        self.cb_nolevelup.SetValue(setting.no_levelup_in_debugmode)
+        self.cb_open_lastscenario.SetValue(setting.open_lastscenario)
         self.cb_oldf9.SetValue(setting.enable_oldf9)
 
         if 0 < self.grid_folderoftype.GetNumberRows():
@@ -2222,7 +2236,7 @@ class ScenarioSettingPanel(wx.Panel):
         self.cb_show_paperandtree.SetValue(setting.show_paperandtree)
         self.cb_write_playlog.SetValue(setting.write_playlog)
         self.cb_show_debuglogdialog.SetValue(setting.show_debuglogdialog_init)
-        self.cb_nolevelup.SetValue(setting.no_levelup_in_debugmode_init)
+        self.cb_open_lastscenario.SetValue(setting.open_lastscenario_init)
         self.cb_oldf9.SetValue(setting.enable_oldf9_init)
 
         self.tx_filer_dir.SetValue(setting.filer_dir_init)
@@ -2263,13 +2277,13 @@ class ScenarioSettingPanel(wx.Panel):
         bsizer_debug = wx.StaticBoxSizer(self.box_debug, wx.VERTICAL)
         bsizer_folderoftype = wx.StaticBoxSizer(self.box_folderoftype, wx.VERTICAL)
 
-        bsizer_gene.Add(self.cb_selectscenariofromtype, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.Add(self.cb_show_paperandtree, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_gene.Add(self.cb_write_playlog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_gene.Add(self.cb_open_lastscenario, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_gene.Add(self.cb_selectscenariofromtype, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         #bsizer_gene.SetMinSize((_settings_width(), -1))
 
         bsizer_debug.Add(self.cb_show_debuglogdialog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_debug.Add(self.cb_nolevelup, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_debug.Add(self.cb_write_playlog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_debug.Add(self.cb_oldf9, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
 
         sizer_v2.Add(bsizer_gene, 1, wx.RIGHT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
@@ -2427,9 +2441,6 @@ class UISettingPanel(wx.Panel):
         choices = [u"全てのシステムカード", u"キャンプモードへの切替のみ", u"使用しない"]
         self.st_quickdeal.SetToolTipString( u"一度にカードアニメーションを行うことで瞬時に画面を移行します" )
         self.ch_quickdeal = wx.Choice(self, -1, choices=choices)
-        self.cb_wait_usecard = wx.CheckBox(
-            self, -1, u"カードの使用前に空白時間を入れる")
-        self.cb_wait_usecard.SetToolTipString( u"戦闘中の描画速度にも影響します" )
         self.cb_show_cardkind = wx.CheckBox(
             self, -1, u"カード置場と荷物袋でカードの種類を表示する")
         self.cb_show_premiumicon = wx.CheckBox(
@@ -2494,7 +2505,7 @@ class UISettingPanel(wx.Panel):
             self, -1, u"カード使用時に確認ダイアログを表示")
         self.cb_noticeimpossibleaction = wx.CheckBox(
             self, -1, u"不可能な行動を選択した時に警告を表示")
-        self.cb_noticeimpossibleaction.SetToolTipString( u"Capを超えてカードを配ろうとした時等" )
+        self.cb_noticeimpossibleaction.SetToolTipString( u"Capを超えてカードを配ろうとした時など" )
 
         self._do_layout()
         #self._bind()
@@ -2504,7 +2515,6 @@ class UISettingPanel(wx.Panel):
         self.cb_can_skipanimation.SetValue(setting.can_skipanimation)
         self.cb_can_skipwait_with_wheel.SetValue(setting.can_skipwait_with_wheel)
         self.cb_can_forwardmessage_with_wheel.SetValue(setting.can_forwardmessage_with_wheel)
-        self.cb_wait_usecard.SetValue(setting.wait_usecard)
         self.cb_can_repeatlclick.SetValue(setting.can_repeatlclick)
         self.cb_autoenter_on_sprite.SetValue(setting.autoenter_on_sprite)
 
@@ -2558,7 +2568,6 @@ class UISettingPanel(wx.Panel):
         self.cb_can_skipanimation.SetValue(setting.can_skipanimation_init)
         self.cb_can_skipwait_with_wheel.SetValue(setting.can_skipwait_with_wheel_init)
         self.cb_can_forwardmessage_with_wheel.SetValue(setting.can_forwardmessage_with_wheel_init)
-        self.cb_wait_usecard.SetValue(setting.wait_usecard_init)
         self.cb_can_repeatlclick.SetValue(setting.can_repeatlclick_init)
         self.cb_autoenter_on_sprite.SetValue(setting.autoenter_on_sprite_init)
 
@@ -2634,7 +2643,7 @@ class UISettingPanel(wx.Panel):
         bsizer_quickdeal.Add(self.ch_quickdeal, 0, wx.ALIGN_CENTER, cw.ppis(3))
 
         bsizer_draw.Add(bsizer_quickdeal, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_draw.Add(self.cb_wait_usecard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        #bsizer_draw.Add(self.cb_wait_usecard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_draw.Add(self.cb_show_premiumicon, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_draw.Add(self.cb_show_cardkind, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         #bsizer_draw.Add(self.cb_protect_staredcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
@@ -2772,7 +2781,7 @@ class FontSettingPanel(wx.Panel):
 
         # 描画オプション
         self.box_gene = wx.StaticBox(self, -1, u"詳細")
-        self.cb_bordering_cardname = wx.CheckBox(self, -1, u"カード名を縁取りする")
+        self.cb_bordering_cardname = wx.CheckBox(self, -1, u"カード名やタイトルを縁取りする")
         self.cb_decorationfont = wx.CheckBox(self, -1, u"メッセージで装飾フォントを使用する")
         self.cb_fontsmoothingmessage = wx.CheckBox(self, -1, u"メッセージの文字を滑らかにする")
         self.cb_fontsmoothingcardname = wx.CheckBox(self, -1, u"カード名の文字を滑らかにする")

@@ -1190,7 +1190,7 @@ class YadoSelect(MultiViewSelect):
             path = "Resource/Image/Card/COMMAND0"
             path = cw.util.find_resource(cw.util.join_paths(skindir, path), cw.cwpy.rsrc.ext_img)
             bmp = cw.wins(cw.util.load_wxbmp(path, True, can_loaded_scaledimage=True))
-            dc.DrawBitmap(bmp, (bmpw-cw.wins(74))/2, cw.wins(70), True)
+            dc.DrawBitmap(bmp, (bmpw-cw.wins(74))/2, cw.wins(65), True)
             if self.isshortcuts[self.index]:
                 bmp = cw.cwpy.rsrc.dialogs["LINK"]
                 dc.DrawBitmap(bmp, (bmpw-cw.wins(74))/2-cw.wins(3), cw.wins(135), True)
@@ -1204,16 +1204,16 @@ class YadoSelect(MultiViewSelect):
             # シナリオ名
             maxwidth = bmpw - cw.wins(5)*2
             if maxwidth < w:
-                cw.util.draw_witharound(dc, s, cw.wins(5), cw.wins(38), maxwidth=maxwidth)
+                cw.util.draw_witharound(dc, s, cw.wins(5), cw.wins(36), maxwidth=maxwidth)
             else:
-                cw.util.draw_witharound(dc, s, (bmpw-w)/2, cw.wins(38))
+                cw.util.draw_witharound(dc, s, (bmpw-w)/2, cw.wins(36))
 
             # ページ番号
             dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(14)))
             s = str(self.index+1) if self.index > 0 else str(-self.index + 1)
             s = s + " / " + str(len(self.list))
             w = dc.GetTextExtent(s)[0]
-            cw.util.draw_witharound(dc, s, (bmpw-w)/2, cw.wins(338))
+            cw.util.draw_witharound(dc, s, (bmpw-w)/2, cw.wins(340))
             # Adventurers
             s = cw.cwpy.msgs["adventurers"]
             w = dc.GetTextExtent(s)[0]
@@ -1229,7 +1229,7 @@ class YadoSelect(MultiViewSelect):
                         name = cw.cwpy.msgs["scenario_etc"]
                 name = cw.util.abbr_longstr(dc, name, cw.wins(90))
                 x = (bmpw - cw.wins(270)) / 2 + ((idx % 3) * cw.wins(95))
-                y = cw.wins(200) + (idx / 3) * cw.wins(16)
+                y = cw.wins(195) + (idx / 3) * cw.wins(16)
                 dc.DrawText(name, x, y)
 
             # 使用中マーク

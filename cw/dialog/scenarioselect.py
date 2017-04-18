@@ -267,8 +267,11 @@ class ScenarioSelect(select.Select):
         self.Bind(wx.EVT_BUTTON, self.OnCancel2, id=wx.ID_CANCEL)
         self.Bind(wx.EVT_CLOSE, self.OnCancel2)
 
-        if lastscenario or lastscenariopath:
-            self.set_selected(lastscenario, lastscenariopath)
+        if cw.cwpy.setting.open_lastscenario:
+            if lastscenario or lastscenariopath:
+                self.set_selected(lastscenario, lastscenariopath)
+            else:
+                self.draw(True)
         else:
             self.draw(True)
 
@@ -1872,19 +1875,19 @@ class ScenarioSelect(select.Select):
                     if s.lower().endswith(".lnk"):
                         s = s[0:-len(".lnk")]
                 maxwidth = bmpw-cw.wins(135)-cw.wins(5)
-                cw.util.draw_witharound(dc, s, cw.wins(135), cw.wins(65)+yp, maxwidth=maxwidth)
+                cw.util.draw_witharound(dc, s, cw.wins(135), cw.wins(61)+yp, maxwidth=maxwidth)
                 # フォルダ画像
                 bmp = cw.cwpy.rsrc.dialogs["FOLDER"]
-                dc.DrawBitmap(bmp, cw.wins(65), cw.wins(30)+yp, True)
+                dc.DrawBitmap(bmp, cw.wins(63), cw.wins(28)+yp, True)
                 if isinstance(dpath, FindResult):
                     # 検索アイコン
                     bmp = cw.cwpy.rsrc.dialogs["FIND_SCENARIO3"]
-                    dc.DrawBitmap(bmp, cw.wins(108), cw.wins(65)+yp, True)
+                    dc.DrawBitmap(bmp, cw.wins(106), cw.wins(63)+yp, True)
                 else:
                     if sys.platform == "win32" and dpath.lower().endswith(".lnk"):
                         # リンクシンボル
                         bmp = cw.cwpy.rsrc.dialogs["LINK"]
-                        dc.DrawBitmap(bmp, cw.wins(63), cw.wins(65)+yp, False)
+                        dc.DrawBitmap(bmp, cw.wins(62), cw.wins(63)+yp, False)
 
             # contents
             dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(14)))
@@ -1979,7 +1982,7 @@ class ScenarioSelect(select.Select):
                                                            bitsizekey=bmp_noscale)
 
             # シナリオ名
-            dc.SetFont(cw.cwpy.rsrc.get_wxfont("scenario", pixelsize=cw.wins(21)))
+            dc.SetFont(cw.cwpy.rsrc.get_wxfont("scenario", pixelsize=cw.wins(22)))
             s = header.name
             w = dc.GetTextExtent(s)[0]
             maxwidth = bmpw - cw.wins(5)*2
@@ -1997,8 +2000,7 @@ class ScenarioSelect(select.Select):
                 y += cw.wins(15)
             # 対象レベル
             dc.SetTextForeground(wx.Colour(0, 128, 128, 255))
-            dc.SetFont(cw.cwpy.rsrc.get_wxfont("targetlevel",
-                                            style=wx.FONTSTYLE_ITALIC, pixelsize=cw.wins(15)))
+            dc.SetFont(cw.cwpy.rsrc.get_wxfont("targetlevel", pixelsize=cw.wins(14)))
             levelmax = str(header.levelmax) if header.levelmax else ""
             levelmin = str(header.levelmin) if header.levelmin else ""
 
@@ -2008,13 +2010,13 @@ class ScenarioSelect(select.Select):
                 else:
                     s = cw.cwpy.msgs["target_level_2"] % (levelmin, levelmax)
 
-                w = dc.GetTextExtent(s)[0]
+                w = dc.GetTextExtent(s)[0] - cw.wins(1)
                 dc.DrawText(s, (bmpw-w)/2, cw.wins(15)+yp)
 
             self._enable_btn2(header, dc=dc)
 
         # ページ数を表示
-        dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(15)))
+        dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(14)))
         s = str(self.index+1) if self.list else str(0)
         s = s + " / " + str(len(self.list))
         w = dc.GetTextExtent(s)[0]
