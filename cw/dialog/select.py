@@ -1202,7 +1202,6 @@ class YadoSelect(MultiViewSelect):
             w = dc.GetTextExtent(s)[0]
 
             # シナリオ名
-            w = dc.GetTextExtent(s)[0]
             maxwidth = bmpw - cw.wins(5)*2
             if maxwidth < w:
                 cw.util.draw_witharound(dc, s, cw.wins(5), cw.wins(38), maxwidth=maxwidth)

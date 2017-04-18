@@ -3126,7 +3126,7 @@ def draw_witharound(dc, s, x, y, maxwidth=0):
 def draw_antialiasedtext(dc, text, x, y, white, maxwidth, padding,
                          quality=None, scaledown=True, alpha=64,
                          bordering=False):
-    if bordering:
+    if cw.cwpy.setting.bordering_cardname and bordering:
         subimg = cw.util.render_antialiasedtext(dc, text, not white, maxwidth, padding,
                                                 scaledown=scaledown, quality=quality, alpha=alpha)
         for xx in xrange(x-1, x+2):
