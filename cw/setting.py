@@ -310,7 +310,7 @@ class Setting(object):
         self.messagespeed = 5
         self.dealspeed = 5
         self.dealspeed_battle = 5
-        self.wait_usecard = True
+        self.wait_usecard = False
         self.use_battlespeed = False
         self.transition = "Fade"
         self.transitionspeed = 5
