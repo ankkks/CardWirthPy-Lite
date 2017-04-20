@@ -1,142 +1,142 @@
                  CardWirth Py Lite
-                  Ver 1.2��8
-                  �t�H�[�N����ҁF�Í��R�m<ankkkcw������excite.co.jp>
-                  wiki�Fhttps://www65.atwiki.jp/pylite/
-                  �J���Fhttps://bitbucket.org/akkw/cardwirthpy-lite/
+                  Ver 1.2α8
+                  フォーク制作者：暗黒騎士<ankkkcwあっとexcite.co.jp>
+                  wiki：https://www65.atwiki.jp/pylite/
+                  開発：https://bitbucket.org/akkw/cardwirthpy-lite/
 ---------------------------------------------------------------------------
 
-����́FCardWirthPy Reboot 1.1 2016/11/21�ł���̂���Ȃ�t�H�[�N(�h����)�ł��B
-Py Reboot�Ƃ̕������̈Ⴂ�ɂ��A�s�{�ӂȂ��番�򂵂܂����BReboot�̍X�V��I��I�Ɏ�荞�݂܂��B
+これは：CardWirthPy Reboot 1.1 2016/11/21版からのさらなるフォーク(派生版)です。
+Py Rebootとの方向性の違いにより、不本意ながら分岐しました。Rebootの更新を選択的に取り込みます。
 
-������ۏ؊�
+●動作保証環境
 Windows 7/10 64bit
-���C���X�g�[��/�A���C���X�g�[��
-CardWirthPyLite.exe���N�����ĉ������B
-�A���C���X�g�[���́ACW�Ɠ��������W�X�g�����g�p���Ȃ��̂Ńt�H���_���ƍ폜��OK�ł��B
+●インストール/アンインストール
+CardWirthPyLite.exeを起動して下さい。
+アンインストールは、CWと同じくレジストリを使用しないのでフォルダごと削除でOKです。
 
-�E�V�i���I���R����ďd���ꍇ
-�@�@�@�@�@�ݒ聄�V�i���I���V�i���I�^�C�v���f�[�^�x�[�X�\�z�𐄏��B
+・シナリオを沢山入れて重い場合
+　　　　　設定＞シナリオ＞シナリオタイプ＞データベース構築を推奨。
 
-�Egdiplus.dll���Ȃ��ꍇ
-�@�@�@�@�@https://www7.atwiki.jp/nico_player/pages/16.html
+・gdiplus.dllがない場合
+　　　　　https://www7.atwiki.jp/nico_player/pages/16.html
 
-�E[�X�L���̎��������_�C�A���O]���o���ꍇ
-�@�@�@�@�@�X�L���������Ă��܂���B
-�@�@�@�@�u��{>�{�́v�E�̃{�^�����炲�g�p��Cardwirth1.20~1.50�̃G���W��exe��I�����邩Data\Skin�ɒ��ڃX�L�������Ă��������B
+・[スキンの自動生成ダイアログ]が出た場合
+　　　　　スキンが入っていません。
+　　　　「基本>本体」右のボタンからご使用のCardwirth1.20~1.50のエンジンexeを選択するかData\Skinに直接スキンを入れてください。
 
-�E�A�b�v�f�[�g���@
-�@�@�@�@�@�t�@�C����S�ď㏑�����ĉ������B
-�@�@�@�@�@�@�\�ǉ�������ꍇ�Aexe�����̍X�V���ƃG���[�ɂȂ邱�Ƃ�����܂��B
+・アップデート方法
+　　　　　ファイルを全て上書きして下さい。
+　　　　　機能追加がある場合、exeだけの更新だとエラーになることがあります。
 
-��PyReboot�Ƃ̌݊�
-[�h/�X�L��]
-1.0~�ŋ߂̃e�X�g�Ŋ��ŃV�F�A���镪�ɂ͂قږ��Ȃ��͂��B
-�Ȃɂ���肪�N�������ꍇ�͈�x1.50�ɕϊ�����Α��v���Ǝv���܂��B(Py��p�̏��X�͏���������܂���)
-[�V�i���I]
-PyReboot�x�[�X�Ȃ̂�CW1.20�`1.50�d�l/WSN1/WSN2(��)�ɑΉ����܂��BNEXT�V�i���I�͓\�莆�ɕ\������܂���B
-��̓I�ɂ�1.50�t���̋�WB��XEditor4.1�ō���OK�ł��B
-��KC��������ɂ��Ă�WSN�`���ł�1.50�Ɠ����̋���������_���������ӂ��������B
-([�A�C�e��]�����Ƀ`�F�b�N���t���Ă����Ԃł��퓬��D����������܂�)
+●PyRebootとの互換
+[宿/スキン]
+1.0~最近のテスト版環境でシェアする分にはほぼ問題ないはず。
+なにか問題が起こった場合は一度1.50に変換すれば大丈夫だと思います。(Py専用の諸々は初期化されますが)
+[シナリオ]
+PyRebootベースなのでCW1.20～1.50仕様/WSN1/WSN2(※)に対応します。NEXTシナリオは貼り紙に表示されません。
+具体的には1.50付属の旧WBかXEditor4.1で作ればOKです。
+※KC所持分岐についてはWSN形式でも1.50と同等の挙動をする点だけご注意ください。
+([アイテム]だけにチェックが付いている状態でも戦闘手札が検索されます)
 
-Lite�̎u����
-�uCW�Č����̌���v�X�L���ȊO�̊O��/�������A�o�O���܂�CardWirth1.28/1.50�ɉ\�Ȍ���߂Â���B
-�u��Ƃ艻(���C�g��)�v�t�H���_�E�t�@�C���\���E�I���W�i���������V���v���E�y�ʉ����A�ʓ|�Ȃ��ƂȂ��ł����V�ׂ�悤�ɂ���B
-
---------------------------------------------------------------------------
-
-��Reboot��荞�ݏ�
-17.04.16 �܂�
-��PyLite�̍X�V���
-17.04.20 �I�v�V�����̓��p���Ɛ���
-         �u�Ō�ɑI�񂾃V�i���I���J�n�ʒu�ɂ���v��ǉ�(�f�t�H���g�ŗL��)
-         �u�f�o�b�O���̓��x���㏸��}�~����v��p�~
-         �u�J�[�h��������肷��v���u�J�[�h����^�C�g��������肷��v�ɕύX
-         �u�J�[�h�g�p�O�ɋ󔒎��ԁv��`��^�u�Ɉړ�
-         �Ώۃ��x���̏����t�H���g���ϕ������ɕύX
-17.04.19 �I���n�̃y�[�W���́u/�v�̂������ɃX�y�[�X����ꂽ
-17.04.18 �h�E�V�i���I�I���_�C�A���O�̃I�u�W�F�N�g�ʒu�A���X�g�\�����A�Ώۃ��x���̑傫��/�X�y�[�X��CW�����ɒ���
-17.04.17 �V�i���I�C���X�g�[���̋������ړ�(���t�@�C�����폜)���猳�t�@�C�����c���悤�ɕύX����
-17.04.16 �V�i���I�I���_�C�A���O��Reboot�ǉ��@�\���V���[�g�J�b�g�Ƃ��ĈڐA
-         �폜(Ctrl+Delete)�A���O�̕ύX(Ctrl+R)�A�ړ�(Ctrl+M)
-17.04.03 �h�I���E�h���E�`���̍ĊJ�̌����Ńt�H�[�J�X���΂��Ȃ��悤��
-17.03.26 �f�o�b�K�A�C�R��(1.30�ȍ~�̐V�R���e���g�n)��ASK�A�C�R�����ςɍ���
-17.03.19 �u�J�[�h�̎g�p�O�ɋ󔒎��Ԃ�����v�̏����b�T�C�Y�ύX��p�~
-17.03.17 �J�[�h�`�摬�x�̐ݒ�l��ύX
-         ���ݒ��-4�`-5���Ȃ��Ȃ�A+1�`+2�Ԃł����Ȃ葁���Ȃ��肪�������܂��B
-         �ݒ�ɂ���Ă�1�`2�̃Y����������ꍇ������܂��B���萔�ł����蓮�ōĒ��߂��Ă�������
-17.03.13 Reboot�h���_�C�A���O�̃c�[���`�b�v����͎�荞�܂Ȃ�(�{�Ə����D��)
-17.02.08 WSN2�̃��b�Z�[�W�Z���^�����O�I�v�V�����ǉ��Ń��O�̕���������o�O�̎b��Ώ�
-17.02.07 ���ʃR���e���g�̔���l��4�ɂȂ��Ă����̂�HAND���̌��؂������������ɍ��킹��
-17.01.29 WSN2��KC���肪�܂Ƃ��ɋ@�\���ĂȂ��̂œƎ��d�l�Ƃ��đΉ��͂��A�A�C�e���̋���������ς���悤�ɕύX
-17.01.28 ���C����ʂł̃~�h���N���b�N�����N���b�N�Ɠ��������ɂ��� 
-17.01.27 ���C����ʂƊe���_�C�A���O�́uBackspace�v�u\(BackSlash)�v�L�[�̋�����Esc�����������Ɠ����ɂȂ�悤�ɂ���
-         (CW����)���̃_�C�A���O�͕������͂𔺂����߁A�딚���₷�������̂ŕۗ�
-17.01.26 ���C����ʂƃJ�[�h����_�C�A���O��Ctrl+ENTER�ŉ�����\�������悤�ɂ���(CW����)
-17.01.25 �����Ȃ��Ă����̂�1.1���_�܂ł̃��O������
-17.01.21 �V�i���I�I���_�C�A���O�ւ�D&D�̋��������ɖ߂���
-17.01.15 ��2�ł�PyGame�X�V�̉e���ŃG�t�F�u�̎B�e���o���Ȃ����߃�3�Ɉڍs
-17.01.10 �Ώۂ����@��������Ԃ̎��ɖ��@�����̃J�[�h���f�ʂ肵�Ă��� 
-17.01.08 ���C����ʂւ̃V�i���I�C���X�g�[���_�C�A���O����荞�݁A�ꕔ�������ړ��ɒu��
-17.01.05 Reboot����1.1�Ƃ�₱�����̂�Ver��1.2�Ɉ����グ
---------------------------------------------------------------------------
-��Py Reboot�ƈقȂ�Ƃ���
-CW����(�O��)
-�E�ړ��n�{�^���̃{�[�_�[���C���ƃX�^�C���������A�p�l���T�C�Y��CW�ɍ��킹�t���b�g�Ȍ`���
-�E�f�o�b�K�A�C�R���Ȃǂ�ASK���ɍ����ւ��f�t�H���g�œ���
-�E�t�H���g�̏����ݒ��CW�ɏ���(win98�ɂ�����������Ă��Ȃ����͕̂ۗ�)
-�E�u�ו��܁v�u�J�[�h�u����v�y�ю�D�̃I�u�W�F�N�g�`��ʒu���قڊ��S�ɍ��킹��
-�E�u�\��������v�Əh�I���̃I�u�W�F�N�g�`��ʒu���قڊ��S�ɍ��킹��
-�E�I���n�_�C�A���O�̃y�[�W���́u/�v�ƑΏۃ��x���ɃX�y�[�X����ꂽ
-�E�u�p�[�e�B���v�E���x�����߁E�f�o�b�O���[�h�̏������X���C�_�{�^�����l�p�ɕύX
-�E�u�p�[�e�B���v�̃X�s���̔w�i��ύX�A�e�L�X�g���A�C�R���̃c�[���`�b�v�Ɉړ�
-�E�X���C�_�̃������\���X�^�C�����I�t�ɂ��A�����CW�ɋ߂��΂̌��ݒl/�ő�l�r���[��t����
-�E�u�h���v�_�C�A���O�̃c�[���`�b�v�����p�~
-�E�`��I�v�V�����u�J�[�h��������肷��v�𖳌��ɂ����ꍇ�̓^�C�g�����������Ȃ��Ȃ�悤�ɂ���
-
-CW����(�d�l)
-�EF9�ŃS�V�b�v�E�ς݈󂪖߂�Ȃ�CardWirth1.28-1.50�d�l�̌݊��I�v�V������ǉ�(�f�t�H���g�Ŗ���)
-�ECTRL+�����œ\�莆���ړ�����Ə����𖞂����Ă��Ȃ��V�i���I�ɓ˓��ł���o�O�̍Č�
-�E���@��������Ԃ̓G��PC�����@����(�����I���@����)�J�[�h��I������
-�E�u�Ō�ɑI�񂾃V�i���I���J�n�ʒu�ɂ���v��ǉ�(�f�t�H���g�ŗL��)���A�]���ʂ�J�n�ʒu���Œ�ł���悤�ɂ���
-
-�d�l�ύX
-�E�����ݒ�̃f�t�H���g�l�Ɛݒ�t�@�C������ύX
-�E�푰���L���ȃX�L���ł���΃X�L���ɂȂ��푰�ł��\������悤�ɂ���(�X�L���푰�D��)
-�E�I�𒆃J�[�h�̔������Z�x��������
-�E�V�i���I�I���_�C�A���O�̍i�荞�ݓ��͗���ENTER�L�[�����������ł������ł���悤�ɂ���
-�E�V�i���I�I���_�C�A���O�����C����ʂ�菬�����Ȃ�悤����
-�E�V�i���I�I���_�C�A���O���ꗗ�\���ɂ��Ă���ꍇ�̓c���[���̃��x���\��([1�`3]�Ȃ�)���\���ɂ���悤�ɂ���
-�E�V�i���I�I���_�C�A���O�̊g���@�\���V���[�g�J�b�g��
-�@�V�i���I�C���X�g�[��(CTRL+I)/�V�K�t�H���_(CTRL+N)/�ړ�(CTRL+M)/���O�̕ύX(CTRL+R)/�폜(CTRL+DELETE)
-�E�ו���/�J�[�h�u����̐���(�\�[�g)�͏펞�\�������悤�ɂ��� 
-�E�f�o�b�K���j���[�o�[�̃G���A�ړ�/�퓬���f�A�C�R���̌Œ�
-
-�y�ʁE�ȑf��
-�E�t���t�H���g�𓙕��S�V�b�N�ɍi��IPA����~�t�H���g�ɍ����ւ�
-�E�t�H���g���ځu�X�s���v�u�X���C�_�[�v�u���X�g�v���폜�A�u�c���[�v���u�c���[�E���X�g�v�ɉ��́A���o�����^�C�g���ɉ���
-�E�t�H���g���ځu�Ώۃ��x���v���u�\�莆�̑Ώۃ��x���v�ɉ��� 
-�E�X�L������"show_skillcards""show_itemcards""show_beastcards�h���폜���A�L�������̕���+"��\��"�ɕύX
-�E�X�L������"sort_title2""narrow_condition2"��p�~���A1�ɓ���
-�E�f�o�b�K�A�C�R��"COUPON_MINUS""COUPON_PLUS""COUPON_ZERO"���폜���A�X�L���̃A�C�R����ǂނ悤��
-�E�f�o�b�K�A�C�R��"SELECTION""STEP""FLAG""YADO"���폜���A"EVT_BRANCH_SELECT""EVT_BRANCH_STEPVALUE""EVT_SET_FLAG""EVT_GET_GOSSIP"��ǂނ悤��
-�E�f�o�b�K�A�C�R��"INIT_VARIABLES"���폜���A"RESET"��ǂނ悤��
-�E�X�L���x�[�X�A�C�R��"CREATE_DIRECTORY"�hINSTALL_SCENARIO�h���폜(�{�^����t���Ȃ�����)
-
-�p�~�I�v�V����
-�E�W���u�f�o�b�O���̓��x���㏸��}�~����v��p�~(�f�o�b�O���[�h�ł͏�Ƀ��x���A�b�v���Ȃ�)
-�E�ڍׁu���_���ƂɃX�L�����L�����Ȃ��v��p�~(�f�t�H���g�ŋL��)
-�E�ڍׁu�X�^�[�t���J�[�h�̔��p�j�����֎~���Ȃ��v��p�~(�f�t�H���g�ŋ֎~)
-�E�`��u�����J�[�\�����g�p����v��p�~(���J�[�\���ŌŒ�)
-�E�ڍׁu�V�i���I�̃C���X�g�[���ɐ��������猳�t�@�C�����폜����v��p�~(��Ɍ��t�@�C�����폜���Ȃ�)
-�E�ڍׁu�����b�J�[�h�̊g�嗦��傫������v��p�~(CW�d�l�ŌŒ�)
-
-���Ή��ł��Ă��Ȃ��s�(Reboot�Ɠ��l)
-�E�ݒ�_�C�A���O�Ńt�H���g��ύX��G���W�����I��������ƁA���p�x��AssertionError���o��(�\�����o�邱�ƈȊO�͖��Q�ł�)
-�EWindowsSearch�֘A�v���Z�X�������Ă���ƃ_�C�A���O�̊J�ɍő�10�b�߂��x�����N����(Windows���ċN���ŉ��P)
-�E�T�E���h�t�H���g���`�F�b�N����Ă��Ȃ��ꍇ�ɗl�X�ȕs����N����(�f�t�H���g�ŕt���Ă���̂Œʏ�C�ɂ���K�v�͂Ȃ��͂�)
-�o�O�񍐂͂ǂ̑����ɂ����Ă����}���܂����ALite���̉����\�͂͒Ⴂ�̂ŁAReboot�Ŕ�������o�O��Reboot�Ɏ�������Œ����������X���[�Y���Ǝv���܂��B
+Liteの志向性
+「CW再現性の向上」スキン以外の外観/挙動を、バグも含めCardWirth1.28/1.50に可能な限り近づける。
+「ゆとり化(ライト化)」フォルダ・ファイル構成・オリジナル文言をシンプル・軽量化し、面倒なことなしですぐ遊べるようにする。
 
 --------------------------------------------------------------------------
 
-�����C�Z���X
-���쌠����license.txt���Q�Ɖ������B�e���C�Z���X�𖞂�������A�Ĕz�z�A�ăt�H�[�N���͎��R�ł��B
+●Reboot取り込み状況
+17.04.16 まで
+●PyLiteの更新情報
+17.04.20 オプションの統廃合と整理
+         「最後に選んだシナリオを開始位置にする」を追加(デフォルトで有効)
+         「デバッグ中はレベル上昇を抑止する」を廃止
+         「カード名を縁取りする」を「カード名やタイトルを縁取りする」に変更
+         「カード使用前に空白時間」を描画タブに移動
+         対象レベルの初期フォントを可変幅明朝に変更
+17.04.19 選択系のページ数の「/」のあいだにスペースを入れた
+17.04.18 宿・シナリオ選択ダイアログのオブジェクト位置、リスト表示数、対象レベルの大きさ/スペースをCW準拠に調整
+17.04.17 シナリオインストールの挙動を移動(元ファイルを削除)から元ファイルを残すように変更した
+17.04.16 シナリオ選択ダイアログのReboot追加機能をショートカットとして移植
+         削除(Ctrl+Delete)、名前の変更(Ctrl+R)、移動(Ctrl+M)
+17.04.03 宿選択・宿帳・冒険の再開の検索でフォーカスを飛ばさないように
+17.03.26 デバッガアイコン(1.30以降の新コンテント系)をASKアイコン改変に差替
+17.03.19 「カードの使用前に空白時間を入れる」の召喚獣サイズ変更を廃止
+17.03.17 カード描画速度の設定値を変更
+         旧設定の-4～-5がなくなり、+1～+2間でいきなり早くなる問題が解決します。
+         設定によっては1～2のズレが生じる場合があります。お手数ですが手動で再調節してください
+17.03.13 Reboot宿帳ダイアログのツールチップ解説は取り込まない(本家準拠優先)
+17.02.08 WSN2のメッセージセンタリングオプション追加でログの文字が削れるバグの暫定対処
+17.02.07 効果コンテントの判定値が4になっていたのをHAND氏の検証した正しい式に合わせる
+17.01.29 WSN2のKC判定がまともに機能してないので独自仕様として対応はしつつ、アイテムの挙動だけを変えるように変更
+17.01.28 メイン画面でのミドルクリックを左クリックと同じ挙動にした 
+17.01.27 メイン画面と各情報ダイアログの「Backspace」「\(BackSlash)」キーの挙動をEscを押した時と同じになるようにした
+         (CW準拠)他のダイアログは文字入力を伴うため、誤爆しやすかったので保留
+17.01.26 メイン画面とカード操作ダイアログでCtrl+ENTERで解説が表示されるようにした(CW準拠)
+17.01.25 長くなってきたので1.1時点までのログを消去
+17.01.21 シナリオ選択ダイアログへのD&Dの挙動を元に戻した
+17.01.15 α2ではPyGame更新の影響でエフェブの撮影が出来ないためα3に移行
+17.01.10 対象が魔法無効化状態の時に魔法属性のカードが素通りしていた 
+17.01.08 メイン画面へのシナリオインストールダイアログを取り込み、一部文言を移動に置換
+17.01.05 Reboot側の1.1とややこしいのでVerを1.2に引き上げ
+--------------------------------------------------------------------------
+●Py Rebootと異なるところ
+CW準拠(外観)
+・移動系ボタンのボーダーラインとスタイルを消し、パネルサイズをCWに合わせフラットな形状に
+・デバッガアイコンなどをASK製に差し替えデフォルトで同梱
+・フォントの初期設定をCWに準拠(win98にしか同梱されていないものは保留)
+・「荷物袋」「カード置き場」及び手札のオブジェクト描画位置をほぼ完全に合わせた
+・「貼紙を見る」と宿選択のオブジェクト描画位置をほぼ完全に合わせた
+・選択系ダイアログのページ数の「/」と対象レベルにスペースを入れた
+・「パーティ情報」・レベル調節・デバッグモードの所持金スライダボタンを四角に変更
+・「パーティ情報」のスピンの背景を変更、テキストをアイコンのツールチップに移動
+・スライダのメモリ表示スタイルをオフにし、代わりにCWに近い緑の現在値/最大値ビューを付けた
+・「宿帳」ダイアログのツールチップ解説を廃止
+・描画オプション「カード名を縁取りする」を無効にした場合はタイトル等も縁取らなくなるようにした
+
+CW準拠(仕様)
+・F9でゴシップ・済み印が戻らないCardWirth1.28-1.50仕様の互換オプションを追加(デフォルトで無効)
+・CTRL+方向で貼り紙を移動すると条件を満たしていないシナリオに突入できるバグの再現
+・魔法無効化状態の敵にPCが魔法属性(物理的魔法属性)カードを選択する
+・「最後に選んだシナリオを開始位置にする」を追加(デフォルトで有効)し、従来通り開始位置を固定できるようにした
+
+仕様変更
+・初期設定のデフォルト値と設定ファイル名を変更
+・種族が有効なスキンであればスキンにない種族でも表示するようにした(スキン種族優先)
+・選択中カードの半透明濃度を下げた
+・シナリオ選択ダイアログの絞り込み入力欄でENTERキーを押すだけでも検索できるようにした
+・シナリオ選択ダイアログをメイン画面より小さくなるよう調整
+・シナリオ選択ダイアログを一覧表示にしている場合はツリー側のレベル表示([1～3]など)を非表示にするようにした
+・シナリオ選択ダイアログの拡張機能をショートカット化
+　シナリオインストール(CTRL+I)/新規フォルダ(CTRL+N)/移動(CTRL+M)/名前の変更(CTRL+R)/削除(CTRL+DELETE)
+・荷物袋/カード置き場の整列(ソート)は常時表示されるようにした 
+・デバッガメニューバーのエリア移動/戦闘中断アイコンの固定
+
+軽量・簡素化
+・付属フォントを等幅ゴシックに絞りIPAから梅フォントに差し替え
+・フォント項目「スピン」「スライダー」「リスト」を削除、「ツリー」を「ツリー・リスト」に改称、見出しをタイトルに改称
+・フォント項目「対象レベル」を「貼り紙の対象レベル」に改称 
+・スキン文言"show_skillcards""show_itemcards""show_beastcards”を削除し、キャラ情報の文言+"を表示"に変更
+・スキン文言"sort_title2""narrow_condition2"を廃止し、1に統合
+・デバッガアイコン"COUPON_MINUS""COUPON_PLUS""COUPON_ZERO"を削除し、スキンのアイコンを読むように
+・デバッガアイコン"SELECTION""STEP""FLAG""YADO"を削除し、"EVT_BRANCH_SELECT""EVT_BRANCH_STEPVALUE""EVT_SET_FLAG""EVT_GET_GOSSIP"を読むように
+・デバッガアイコン"INIT_VARIABLES"を削除し、"RESET"を読むように
+・スキンベースアイコン"CREATE_DIRECTORY"”INSTALL_SCENARIO”を削除(ボタンを付けないため)
+
+廃止オプション
+・標準「デバッグ中はレベル上昇を抑止する」を廃止(デバッグモードでは常にレベルアップしない)
+・詳細「拠点ごとにスキンを記憶しない」を廃止(デフォルトで記憶)
+・詳細「スター付きカードの売却破棄を禁止しない」を廃止(デフォルトで禁止)
+・描画「白いカーソルを使用する」を廃止(白カーソルで固定)
+・詳細「シナリオのインストールに成功したら元ファイルを削除する」を廃止(常に元ファイルを削除しない)
+・詳細「召喚獣カードの拡大率を大きくする」を廃止(CW仕様で固定)
+
+●対応できていない不具合(Rebootと同様)
+・設定ダイアログでフォントを変更後エンジンを終了させると、高頻度でAssertionErrorが出る(表示が出ること以外は無害です)
+・WindowsSearch関連プロセスが動いているとダイアログの開閉に最大10秒近い遅延が起こる(Windowsを再起動で改善)
+・サウンドフォントがチェックされていない場合に様々な不具合が起こる(デフォルトで付いているので通常気にする必要はないはず)
+バグ報告はどの窓口においても歓迎しますが、Lite側の解決能力は低いので、Rebootで発現するバグはRebootに持ち込んで頂いた方がスムーズだと思います。
+
+--------------------------------------------------------------------------
+
+●ライセンス
+著作権情報はlicense.txtを参照下さい。各ライセンスを満たす限り、再配布、再フォーク等は自由です。
