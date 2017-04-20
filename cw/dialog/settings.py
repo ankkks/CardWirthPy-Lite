@@ -1453,7 +1453,7 @@ class SpeedPanel(wx.Panel):
                 self, -1, u"戦闘中の描画速度を同期")
             self.cb_wait_usecard  = wx.CheckBox(
                 self, -1, u"カード使用前に空白時間")
-            self.cb_wait_usecard.SetToolTipString( u"戦闘中の描画速度にも影響します" )
+            self.cb_wait_usecard.SetToolTipString( u"戦闘中の描画速度にも影響します(1.28互換)" )
         # メッセージ表示速度
         self.box_msgs = wx.StaticBox(
             self, -1, u"メッセージ表示速度(速い⇔遅い)")
@@ -1491,7 +1491,7 @@ class SpeedPanel(wx.Panel):
             bsizer_deal_battle = wx.StaticBoxSizer(self.box_deal_battle, wx.VERTICAL)
         bsizer_msgs = wx.StaticBoxSizer(self.box_msgs, wx.VERTICAL)
 
-        bsizer_tran.Add(self.ch_tran, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_tran.Add(self.ch_tran, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(0))
         bsizer_tran.Add(self.sl_tran, 0, wx.EXPAND, cw.ppis(0))
         bsizer_deal.Add(self.sl_deal, 0, wx.EXPAND, cw.ppis(0))
         if self.battlespeed:
@@ -1499,6 +1499,7 @@ class SpeedPanel(wx.Panel):
             bsizer_deal2 = wx.GridSizer(0, 2)
             bsizer_deal2.Add(self.cb_wait_usecard, 0, wx.LEFT|wx.RIGHT, cw.ppis(3))
             bsizer_deal2.Add(self.cb_use_battlespeed, 0, wx.ALIGN_RIGHT, cw.ppis(0))
+            bsizer_deal2.Fit
             bsizer_deal.Add(bsizer_deal2, 0, wx.EXPAND, cw.ppis(0))
         bsizer_msgs.Add(self.sl_msgs, 0, wx.EXPAND, cw.ppis(0))
 
@@ -1569,7 +1570,7 @@ class DrawingSettingPanel(wx.Panel):
         self.cs_mwin = wx.ColourPickerCtrl(self, -1)
         self.st_blwin = wx.StaticText(self, -1, u"ログ")
         self.cs_blwin = wx.ColourPickerCtrl(self, -1)
-        self.st_mwin2 = wx.StaticText(self, -1, u"アルファ値")
+        self.st_mwin2 = wx.StaticText(self, -1, u"透明度")
         self.sc_mwin = wx.SpinCtrl(self, -1, "", size=(cw.ppis(50), -1))
         self.sc_mwin.SetRange(0, 255)
         # メッセージウィンドウ枠色
@@ -1578,7 +1579,7 @@ class DrawingSettingPanel(wx.Panel):
         self.cs_mframe = wx.ColourPickerCtrl(self, -1)
         self.st_blframe = wx.StaticText(self, -1, u"ログ")
         self.cs_blframe = wx.ColourPickerCtrl(self, -1)
-        self.st_mframe2 = wx.StaticText(self, -1, u"アルファ値")
+        self.st_mframe2 = wx.StaticText(self, -1, u"透明度")
         self.sc_mframe = wx.SpinCtrl(self, -1, "", size=(cw.ppis(50), -1))
         self.sc_mframe.SetRange(0, 255)
 
@@ -1586,7 +1587,7 @@ class DrawingSettingPanel(wx.Panel):
         self.box_blcurtain = wx.StaticBox(self, -1, u"メッセージログの背景")
         self.st_blcurtain = wx.StaticText(self, -1, u"カラー")
         self.cs_blcurtain = wx.ColourPickerCtrl(self, -1)
-        self.st_blcurtain2 = wx.StaticText(self, -1, u"アルファ値")
+        self.st_blcurtain2 = wx.StaticText(self, -1, u"透明度")
         self.sc_blcurtain = wx.SpinCtrl(self, -1, "", size=(cw.ppis(50), -1))
         self.sc_blcurtain.SetRange(0, 255)
 
@@ -1594,7 +1595,7 @@ class DrawingSettingPanel(wx.Panel):
         self.box_curtain = wx.StaticBox(self, -1, u"カーテン(選択モードの背景効果)")
         self.st_curtain = wx.StaticText(self, -1, u"カラー")
         self.cs_curtain = wx.ColourPickerCtrl(self, -1)
-        self.st_curtain2 = wx.StaticText(self, -1, u"アルファ値")
+        self.st_curtain2 = wx.StaticText(self, -1, u"透明度")
         self.sc_curtain = wx.SpinCtrl(self, -1, "", size=(cw.ppis(50), -1))
         self.sc_curtain.SetRange(0, 255)
 
