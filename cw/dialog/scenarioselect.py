@@ -2157,6 +2157,7 @@ class ScenarioSelect(select.Select):
             if self.toppanel.IsShown():
                 self.draw(True)
 
+        self._no_treechangedsound = False#FIX フラグを戻さないと音が消える
         self._update_saveddirstack()
 
     def create_treeitems(self, treeitem):
