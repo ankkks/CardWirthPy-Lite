@@ -61,6 +61,7 @@ class Select(wx.Dialog):
         self.rightkeyid = wx.NewId()
         self.left2keyid = wx.NewId()
         self.right2keyid = wx.NewId()
+        self.backid = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnPrevButton, id=self.previd)
         self.Bind(wx.EVT_MENU, self.OnNextButton, id=self.nextid)
         self.Bind(wx.EVT_MENU, self.OnClickLeftBtn, id=self.leftkeyid)
@@ -94,7 +95,7 @@ class Select(wx.Dialog):
         def recurse(ctrl):
             if not isinstance(ctrl, (wx.TextCtrl, wx.SpinCtrl)):
                 ctrl.Bind(wx.EVT_RIGHT_UP, self.OnCancel)
-                ctrl.Bind(wx.EVT_KEY_DOWN, self._OnKeyDown)
+                ctrl.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
             for child in ctrl.GetChildren():
                 recurse(child)
         recurse(self)
@@ -201,10 +202,10 @@ class Select(wx.Dialog):
         self.draw(True)
         self.index_changed()
 
-    def index_changed(self):
+    def OnKeyDown(self, event):
         pass
 
-    def _OnKeyDown(self, event):
+    def index_changed(self):
         pass
 
     def OnMouseWheel(self, event):
@@ -785,7 +786,7 @@ class YadoSelect(MultiViewSelect):
         self._bg = cw.util.load_wxbmp(path, can_loaded_scaledimage=True)
         return self._bg
 
-    def _OnKeyDown(self, event):
+    def OnKeyDown(self, event):
         if event.GetKeyCode() == wx.WXK_DELETE and self.list:
             return self.delete_yado()
 
@@ -2379,7 +2380,7 @@ class PlayerSelect(MultiViewSelect):
         Select.update_additionals(self)
         cw.cwpy.setting.show_additional_player = self.addctrlbtn.GetToggle()
 
-    def _OnKeyDown(self, event):
+    def OnKeyDown(self, event):
         if event.GetKeyCode() == wx.WXK_DELETE and self.list:
             self.delete_adventurer()
             return
@@ -3192,7 +3193,7 @@ class Album(PlayerSelect):
     def OnMouseWheel(self, event):
         Select.OnMouseWheel(self, event)
 
-    def _OnKeyDown(self, event):
+    def OnKeyDown(self, event):
         if event.GetKeyCode() == wx.WXK_DELETE and self.list:                
             return self.OnClickDelBtn(event)
 

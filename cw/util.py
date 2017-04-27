@@ -3504,7 +3504,7 @@ def set_acceleratortable(panel, seq):
     # テキスト入力欄に限り左右キーを取り除く
     seq2 = []
     for accel in seq:
-        if not (accel[0] == wx.ACCEL_NORMAL and accel[1] in ( wx.WXK_LEFT, wx.WXK_RIGHT)):
+        if not (accel[0] == wx.ACCEL_NORMAL and accel[1] in ( wx.WXK_LEFT, wx.WXK_RIGHT, wx.WXK_BACK)):
             seq2.append(accel)
 
     accel1 = wx.AcceleratorTable(seq)

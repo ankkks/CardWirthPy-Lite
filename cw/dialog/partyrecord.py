@@ -48,6 +48,12 @@ class SelectPartyRecord(select.Select):
         self.Bind(wx.EVT_BUTTON, self.OnClickRestoreBtn, self.restorebtn)
         self.Bind(wx.EVT_BUTTON, self.OnClickDeleteBtn, self.deletebtn)
 
+        seq = self.accels
+        deleteid = wx.NewId()
+        self.Bind(wx.EVT_MENU, self.OnClickDeleteBtn, id=deleteid)
+        seq.append((wx.ACCEL_NORMAL, wx.WXK_DELETE, deleteid))
+        cw.util.set_acceleratortable(self, seq)
+
         self.draw(True)
 
     def OnSelect(self, event):
@@ -133,7 +139,9 @@ class SelectPartyRecord(select.Select):
 
     def OnClickDeleteBtn(self, event):
         """パーティ記録の削除。"""
-        if self.Parent.is_processing():
+        if not self.deletebtn.IsEnabled():
+            return
+        elif self.Parent.is_processing():
             return
         header = self.list[self.index]
         assert bool(header)
@@ -334,7 +342,7 @@ class SelectPartyRecord(select.Select):
         dc.SetTextForeground((0, 0, 0))
         dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(14)))
         s = str(self.index+1) if self.index > 0 else str(-self.index + 1)
-        s = s + "/" + str(len(self.list))
+        s = s + " / " + str(len(self.list))
         w = dc.GetTextExtent(s)[0]
         dc.DrawText(s, (bmpw-w)/2, cw.wins(250))
 

@@ -291,6 +291,15 @@ class ScenarioSelect(select.Select):
         self.Bind(wx.EVT_MENU, self.OnEscape, id=esckey)
         seq.append((wx.ACCEL_NORMAL, wx.WXK_ESCAPE, esckey))
 
+        backkey = wx.NewId()
+        self.Bind(wx.EVT_MENU, self.OnBackspace, id=backkey)
+        seq.append((wx.ACCEL_NORMAL, wx.WXK_BACK, backkey))
+
+        deleteid = wx.NewId()
+        self.Bind(wx.EVT_MENU, self.OnDeleteBtn, id=deleteid)
+        seq.append((wx.ACCEL_NORMAL, wx.WXK_DELETE, deleteid))
+        seq.append((wx.ACCEL_CTRL, wx.WXK_DELETE, deleteid))
+
         bookmarkkey = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnBookmark2, id=bookmarkkey)
         seq.append((wx.ACCEL_CTRL, ord('b'), bookmarkkey))
@@ -310,10 +319,6 @@ class ScenarioSelect(select.Select):
         moveid = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnMoveBtn, id=moveid)
         seq.append((wx.ACCEL_CTRL, ord('M'), moveid))
-
-        deleteid = wx.NewId()
-        self.Bind(wx.EVT_MENU, self.OnDeleteBtn, id=deleteid)
-        seq.append((wx.ACCEL_CTRL, wx.WXK_DELETE, deleteid))
 
         renameid = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnRenameBtn, id=renameid)
@@ -386,6 +391,12 @@ class ScenarioSelect(select.Select):
             return
         cw.cwpy.play_sound("equipment")
         cw.util.to_clipboard(s)
+
+    def OnBackspace(self, event):
+        fc = wx.Window.FindFocus()
+        if fc <> self.narrow:
+            if cw.cwpy.setting.show_paperandtree or not cw.cwpy.setting.show_scenariotree:
+                self.BackPaper()
 
     def OnEscape(self, event):
         btnevent = wx.PyCommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, wx.ID_CANCEL)
@@ -861,16 +872,6 @@ class ScenarioSelect(select.Select):
             self.ProcessEvent(btnevent)
         else:
             self._tree_dclick()
-
-    def _OnKeyDown(self, event):
-        #Lite独自拡張
-        if event.GetKeyCode() == wx.WXK_DELETE:
-            self.OnDeleteBtn(event)
-            return
-        if event.GetKeyCode() == wx.WXK_BACK:
-            if cw.cwpy.setting.show_paperandtree or not cw.cwpy.setting.show_scenariotree:
-                self.BackPaper()
-            return
 
     def can_clickcenter(self):
         return self.yesbtn.IsEnabled()
