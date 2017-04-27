@@ -39,6 +39,8 @@ class ScenarioSelect(select.Select):
         self._quit = False
 
         self._last_narrowparams = None
+        # 貼り紙バグの再現
+        self._paperslide = False
 
         # ディレクトリとシナリオリストの対応
         self.scetable = {}
@@ -64,8 +66,6 @@ class ScenarioSelect(select.Select):
         self.coupons = cw.cwpy.ydata.party.get_coupontable()
         # 現在進行中のシナリオパスの集合
         self.nowplayingpaths = cw.cwpy.ydata.get_nowplayingpaths()
-        # 貼り紙バグの再現
-        self._paperslide = False
 
         # 検索結果
         self.find_result = None
@@ -842,7 +842,10 @@ class ScenarioSelect(select.Select):
                 self.tree.Expand(selitem)
 
     def OnKeyDown(self, event):
-        if event.GetKeyCode() <> wx.WXK_RETURN:
+        if event.GetKeyCode() == wx.WXK_DELETE:
+            return self.OnDeleteBtn(event)
+        
+        elif event.GetKeyCode() <> wx.WXK_RETURN:
             event.Skip()
             return
 
@@ -858,6 +861,16 @@ class ScenarioSelect(select.Select):
             self.ProcessEvent(btnevent)
         else:
             self._tree_dclick()
+
+    def _OnKeyDown(self, event):
+        #Lite独自拡張
+        if event.GetKeyCode() == wx.WXK_DELETE:
+            self.OnDeleteBtn(event)
+            return
+        if event.GetKeyCode() == wx.WXK_BACK:
+            if cw.cwpy.setting.show_paperandtree or not cw.cwpy.setting.show_scenariotree:
+                self.BackPaper()
+            return
 
     def can_clickcenter(self):
         return self.yesbtn.IsEnabled()
@@ -1220,7 +1233,7 @@ class ScenarioSelect(select.Select):
                 name = os.path.splitext(name)[0]
                 s = u"ショートカット「%s」を削除します。\nよろしいですか？" % name
             else:
-                s = u"フォルダ「%s」を削除します。\nフォルダの中に存在する全てのサブフォルダとシナリオも削除されます。よろしいですか？" % name
+                s = u"フォルダ「%s」を削除します。\nフォルダの中に存在する全てのシナリオも削除されます。よろしいですか？" % name
 
         dlg = message.YesNoMessage(self, cw.cwpy.msgs["delete"], s)
         self.Parent.move_dlg(dlg)
@@ -1423,6 +1436,9 @@ class ScenarioSelect(select.Select):
             self.ProcessEvent(btnevent)
 
     def BackPaper(self):
+        if not self.dirstack:
+            return
+
         cw.cwpy.play_sound("equipment")
         self.nowdir, selname = self.dirstack.pop()
         self.list = self._get_nowlist(update=True)
@@ -2158,7 +2174,7 @@ class ScenarioSelect(select.Select):
                 self.draw(True)
 
         self._no_treechangedsound = False#FIX フラグを戻さないと音が消える
-        self._update_saveddirstack()
+        self._update_saveddirstack()#pagelabelはLiteでは貼り紙側に表示するので不要
 
     def create_treeitems(self, treeitem):
         # 再描画を抑止して軽くする

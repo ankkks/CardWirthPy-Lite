@@ -94,6 +94,7 @@ class Select(wx.Dialog):
         def recurse(ctrl):
             if not isinstance(ctrl, (wx.TextCtrl, wx.SpinCtrl)):
                 ctrl.Bind(wx.EVT_RIGHT_UP, self.OnCancel)
+                ctrl.Bind(wx.EVT_KEY_DOWN, self._OnKeyDown)
             for child in ctrl.GetChildren():
                 recurse(child)
         recurse(self)
@@ -201,6 +202,9 @@ class Select(wx.Dialog):
         self.index_changed()
 
     def index_changed(self):
+        pass
+
+    def _OnKeyDown(self, event):
         pass
 
     def OnMouseWheel(self, event):
@@ -780,6 +784,10 @@ class YadoSelect(MultiViewSelect):
         path = cw.util.find_resource(cw.util.join_paths(cw.cwpy.skindir, path), cw.cwpy.rsrc.ext_img)
         self._bg = cw.util.load_wxbmp(path, can_loaded_scaledimage=True)
         return self._bg
+
+    def _OnKeyDown(self, event):
+        if event.GetKeyCode() == wx.WXK_DELETE and self.list:
+            return self.delete_yado()
 
     def OnNumberKeyDown(self, event):
         """
@@ -2371,6 +2379,11 @@ class PlayerSelect(MultiViewSelect):
         Select.update_additionals(self)
         cw.cwpy.setting.show_additional_player = self.addctrlbtn.GetToggle()
 
+    def _OnKeyDown(self, event):
+        if event.GetKeyCode() == wx.WXK_DELETE and self.list:
+            self.delete_adventurer()
+            return
+
     def _add_topsizer(self):
         nsizer = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -3131,7 +3144,7 @@ class PlayerSelect(MultiViewSelect):
                 # ページ番号
                 dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(14)))
                 s = str(page+1) if page > 0 else str(-page + 1)
-                s = s + "/" + str(self.get_pagecount())
+                s = s + " / " + str(self.get_pagecount())
                 cw.util.draw_witharound(dc, s, cw.wins(5), cw.wins(5))
 
 #-------------------------------------------------------------------------------
@@ -3178,6 +3191,10 @@ class Album(PlayerSelect):
 
     def OnMouseWheel(self, event):
         Select.OnMouseWheel(self, event)
+
+    def _OnKeyDown(self, event):
+        if event.GetKeyCode() == wx.WXK_DELETE and self.list:                
+            return self.OnClickDelBtn(event)
 
     def _add_topsizer(self):
         pass
