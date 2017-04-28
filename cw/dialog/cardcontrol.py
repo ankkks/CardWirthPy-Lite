@@ -202,6 +202,7 @@ class CardControl(wx.Dialog):
         self._proc = False
 
         self.toppanel.SetFocusIgnoringChildren()
+        #Focusを変えるとBACKキーが効かなくなってしまう
 
         if self.addctrlbtn:
             self.update_additionals()
@@ -252,11 +253,13 @@ class CardControl(wx.Dialog):
         self.uptargkeyid = wx.NewId()
         self.downtargkeyid = wx.NewId()
         self.infokeyid = wx.NewId()
+        self.deleteid = wx.NewId()
         addctrl = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.leftkeyid)
         self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.rightkeyid)
         self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.returnkeyid)
         self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.infokeyid)
+        self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.deleteid)
         self.Bind(wx.EVT_MENU, self.OnUp, id=self.upid)
         self.Bind(wx.EVT_MENU, self.OnDown, id=self.downid)
         self.Bind(wx.EVT_MENU, self.OnClickLeftBtn, id=self.leftpagekeyid)
@@ -271,6 +274,7 @@ class CardControl(wx.Dialog):
             (wx.ACCEL_NORMAL, wx.WXK_UP, self.upid),
             (wx.ACCEL_NORMAL, wx.WXK_DOWN, self.downid),
             (wx.ACCEL_NORMAL, wx.WXK_RETURN, self.returnkeyid),
+            (wx.ACCEL_NORMAL, wx.WXK_DELETE, self.deleteid),
             (wx.ACCEL_CTRL, wx.WXK_LEFT, self.leftpagekeyid),
             (wx.ACCEL_CTRL, wx.WXK_RIGHT, self.rightpagekeyid),
             (wx.ACCEL_CTRL, wx.WXK_UP, self.uptargkeyid),
@@ -566,6 +570,17 @@ class CardControl(wx.Dialog):
                         self.rclick_event(header)
                     self.animate_click(header, func)
                     return
+        elif eid == self.deleteid:
+            if not cw.cwpy.is_playingscenario():
+                count = len(self.combo.GetItems())
+                for header in self.get_headers():
+                    if header.negaflag:
+                        cw.cwpy.play_sound("click")
+                        def func(): 
+                            self.combo.SetSelection(count -1)
+                            self.lclick_event(header)
+                        self.animate_click(header, func)
+                        return
         elif eid == self.leftkeyid:
             seq = self.get_headers()[:]
             seq.reverse()
