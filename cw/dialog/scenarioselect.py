@@ -29,6 +29,7 @@ _NARROW_AUTHOR = 3
 _NARROW_LEVEL = 4
 _NARROW_FNAME = 5
 
+
 #-------------------------------------------------------------------------------
 #　貼り紙選択ダイアログ
 #-------------------------------------------------------------------------------
@@ -100,11 +101,10 @@ class ScenarioSelect(select.Select):
         self.invisible, self.bmp_invisible, self.dbmp_invisible = create_btn(cw.cwpy.msgs["show_invisible_scenario"],
                                                                              cw.cwpy.rsrc.dialogs["SUMMARY_INVISIBLE"],
                                                                              cw.cwpy.setting.show_invisiblescenario)
-
-        # エクスプローラーで開く
-        bmp = cw.cwpy.rsrc.dialogs["DIRECTORY"]
-        self.opendirbtn = cw.cwpy.rsrc.create_wxbutton(self, -1, (cw.wins(32), cw.wins(24)), bmp=bmp)
-        self.opendirbtn.SetToolTip(wx.ToolTip(cw.cwpy.msgs["open_directory"]))
+        # 追加メニュー
+        bmp = cw.cwpy.rsrc.dialogs["SETTINGS"]
+        self.addmenubtn = cw.cwpy.rsrc.create_wxbutton(self, -1, (cw.wins(32), cw.wins(24)), bmp=bmp)
+        self.addmenubtn.SetToolTip(wx.ToolTip(cw.cwpy.msgs["extension_title_2"]))
 
         # エディタで開く
         if cw.cwpy.is_debugmode():
@@ -194,7 +194,6 @@ class ScenarioSelect(select.Select):
             self.additionals.append((self.unfitness, lambda: cw.cwpy.setting.show_scenariotree))
             self.additionals.append((self.completed, lambda: cw.cwpy.setting.show_scenariotree))
             self.additionals.append((self.invisible, lambda: cw.cwpy.setting.show_scenariotree))
-            self.additionals.append((self.opendirbtn, lambda: cw.cwpy.setting.show_scenariotree))
             if self.editorbtn:
                 self.additionals.append((self.editorbtn, lambda: cw.cwpy.setting.show_scenariotree))
 
@@ -205,6 +204,7 @@ class ScenarioSelect(select.Select):
             self.additionals.append(self.sort)
             self.additionals.append(self.find)
             self.additionals.append(self.bookmark)
+            self.additionals.append(self.addmenubtn)
             self.update_additionals()
 
         # ok
@@ -259,7 +259,6 @@ class ScenarioSelect(select.Select):
         self.Bind(wx.EVT_BUTTON, self.OnUnfitnessBtn, self.unfitness)
         self.Bind(wx.EVT_BUTTON, self.OnCompletedBtn, self.completed)
         self.Bind(wx.EVT_BUTTON, self.OnInvisibleBtn, self.invisible)
-        self.Bind(wx.EVT_BUTTON, lambda event: self.open_directory(), self.opendirbtn)
         if self.editorbtn:
             self.Bind(wx.EVT_BUTTON, lambda event: self.open_with_editor(), self.editorbtn)
         self.tree.Bind(wx.EVT_TREE_ITEM_EXPANDED, self.OnTreeItemExpanded)
@@ -271,6 +270,7 @@ class ScenarioSelect(select.Select):
         self.sort.Bind(wx.EVT_CHOICE, self.OnNarrowCondition)
         self.find.Bind(wx.EVT_BUTTON, self.OnFind)
         self.bookmark.Bind(wx.EVT_BUTTON, self.OnBookmark)
+        self.addmenubtn.Bind(wx.EVT_BUTTON, self.OnAdditionalMenu)
 
         self.Bind(wx.EVT_BUTTON, self.OnOk, id=wx.ID_OK)
         self.Bind(wx.EVT_BUTTON, self.OnCancel2, id=wx.ID_CANCEL)
@@ -284,6 +284,7 @@ class ScenarioSelect(select.Select):
         else:
             self.draw(True)
 
+        self.addmenu = None
         self.bookmarkmenu = None
 
         seq = self.accels
@@ -308,6 +309,9 @@ class ScenarioSelect(select.Select):
         seq.append((wx.ACCEL_NORMAL, wx.WXK_DELETE, deleteid))
         seq.append((wx.ACCEL_CTRL, wx.WXK_DELETE, deleteid))
 
+        addmenukey = wx.NewId()
+        self.Bind(wx.EVT_MENU, self.OnAdditionalMenu2, id=addmenukey)
+        seq.append((wx.ACCEL_CTRL, ord('a'), addmenukey))
         bookmarkkey = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnBookmark2, id=bookmarkkey)
         seq.append((wx.ACCEL_CTRL, ord('b'), bookmarkkey))
@@ -375,7 +379,7 @@ class ScenarioSelect(select.Select):
             h = size[1]
             h -= max(map(lambda ctrl: ctrl.GetSize()[1] if ctrl else 0,
                          (self.unfitness, self.completed, self.invisible, 
-                          self.editorbtn, self.opendirbtn, self.addctrlbtn)))
+                          self.editorbtn, self.addmenubtn, self.addctrlbtn)))
             treesize = (size[0], h)
         else:
             treesize = size
@@ -542,7 +546,7 @@ class ScenarioSelect(select.Select):
         hsizer1.Add(self.completed, 0, 0, 0)
         hsizer1.Add(self.invisible, 0, 0, 0)
         hsizer1.AddStretchSpacer(1)
-        hsizer1.Add(self.opendirbtn, 0, 0, 0)
+        hsizer1.Add(self.addmenubtn, 0, 0, 0)
         if self.editorbtn:
             hsizer1.Add(self.editorbtn, 0, 0, 0)
         if self.addctrlbtn and (self.addctrlbtn.GetToggle() or cw.cwpy.setting.show_scenariotree):
@@ -661,6 +665,80 @@ class ScenarioSelect(select.Select):
         self.index = 0
         if headers and selfirstheader:
             self.dirstack = [(self.scedir, "/find_result")]
+
+ 
+    def OnAdditionalMenu(self, event):
+        # シナリオ・ディレクトリ操作の追加メニューを生成して表示する
+        cw.cwpy.play_sound("page")
+        self._create_addmenu()
+
+        self.addmenubtn.PopupMenu(self.addmenu)
+
+    def OnAdditionalMenu2(self, event):
+        if not self.addmenubtn.IsShown():
+            return
+        cw.cwpy.play_sound("page")
+        self._create_addmenu()
+
+        size = self.addmenubtn.GetSize()
+        self.addmenubtn.PopupMenuXY(self.addmenu, size[0] / 2, size[1] / 2)
+
+    def _create_addmenu(self):
+        if not self.addmenu:
+            menu = wx.Menu()
+            self.addmenu = menu
+            font = cw.cwpy.rsrc.get_wxfont("menu", pixelsize=cw.wins(13))
+
+            # エクスプローラーで開く
+            #menu.AppendSeparator()
+            self._opendir = wx.MenuItem(menu, -1, cw.cwpy.msgs["open_directory"])
+            #self._opendir.SetBitmap(cw.cwpy.rsrc.dialogs["DIRECTORY"])
+            self._opendir.SetFont(font)
+            menu.AppendItem(self._opendir)
+
+            # 移動
+            self._move = wx.MenuItem(menu, -1, cw.cwpy.msgs["move"])
+            #self._move.SetBitmap(cw.cwpy.rsrc.dialogs["MOVE_FILE"])
+            self._move.SetFont(font)
+            menu.AppendItem(self._move)
+            # 名前の変更
+            self._rename = wx.MenuItem(menu, -1, cw.cwpy.msgs["rename"])
+            #self._rename.SetBitmap(cw.cwpy.rsrc.dialogs["RENAME_FILE"])
+            self._rename.SetFont(font)
+            menu.AppendItem(self._rename)
+            # 削除
+            self._delete = wx.MenuItem(menu, -1, cw.cwpy.msgs["delete"])
+            #self._delete.SetBitmap(cw.cwpy.rsrc.dialogs["SUMMARY_PLAYING"])
+            self._delete.SetFont(font)
+            menu.AppendItem(self._delete)
+
+            # フォルダの作成
+            menu.AppendSeparator()
+            self._createdir = wx.MenuItem(menu, -1, cw.cwpy.msgs["create_directory"])
+            #self._createdir.SetBitmap(cw.cwpy.rsrc.dialogs["DIRECTORY"])
+            self._createdir.SetFont(font)
+            menu.AppendItem(self._createdir)
+            # シナリオのインストール
+            self._install = wx.MenuItem(menu, -1, cw.cwpy.msgs["install_scenario"])
+            #self._install.SetBitmap(cw.cwpy.rsrc.dialogs["SUMMARY"])
+            self._install.SetFont(font)
+            menu.AppendItem(self._install)
+
+            self.Bind(wx.EVT_MENU, self.OnInstallBtn, self._install)
+            self.Bind(wx.EVT_MENU, self.OnCreateDirBtn, self._createdir)
+            self.Bind(wx.EVT_MENU, self.OnMoveBtn, self._move)
+            self.Bind(wx.EVT_MENU, self.OnDeleteBtn, self._delete)
+            self.Bind(wx.EVT_MENU, self.OnRenameBtn, self._rename)
+            self.Bind(wx.EVT_MENU, lambda event: self.open_directory(), self._opendir)
+
+        findresult = not self.dirstack or self.dirstack[0][1] <> u"/find_result"
+        self._createdir.Enable(findresult)
+        scenarioordir = bool(self.list) and not isinstance(self.list[self.index], FindResult) and findresult
+        scenarioordir = bool(self.list) and not isinstance(self.list[self.index], FindResult) and findresult
+        self._move.Enable(scenarioordir)
+        self._delete.Enable(scenarioordir)
+        self._rename.Enable(scenarioordir)
+        self._opendir.Enable(self._can_opendir())
 
     def OnBookmark(self, event):
         # ブックマークメニューを生成して表示する
@@ -2650,7 +2728,7 @@ class ScenarioSelect(select.Select):
                cw.cwpy.setting.show_completedscenario, cw.cwpy.setting.show_invisiblescenario, \
                self.sort.GetSelection()
 
-    def _is_showing(self, header, ntypes, intnarrow, narrow, donarrow, level):
+    def _is_showing(self, header, ntypes, narrow, intnarrow, donarrow, level):
         if isinstance(header, cw.header.ScenarioHeader):
             if not cw.cwpy.setting.show_unfitnessscenario and not (ntypes == set([_NARROW_LEVEL]) and donarrow) and\
                     ((header.levelmin <> 0 and level < header.levelmin) or\
@@ -2695,7 +2773,6 @@ class ScenarioSelect(select.Select):
         if self._processing:
             return
 
-        self.opendirbtn.Enable(self._can_opendir())
         if self.editorbtn:
             self.editorbtn.Enable(self._can_editor())
 
