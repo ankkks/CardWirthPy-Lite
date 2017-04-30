@@ -1223,7 +1223,7 @@ class ScenarioSelect(select.Select):
         if isinstance(header, FindResult):
             return
 
-        cw.cwpy.play_sound("click")
+        cw.cwpy.play_sound("signal")
         if isinstance(header, cw.header.ScenarioHeader):
             fpath = header.get_fpath()
             name = header.name
@@ -1240,7 +1240,7 @@ class ScenarioSelect(select.Select):
                 name = os.path.splitext(name)[0]
                 s = u"ショートカット「%s」を削除します。\nよろしいですか？" % name
             else:
-                s = u"フォルダ「%s」を削除します。\nフォルダの中に存在する全てのシナリオも削除されます。よろしいですか？" % name
+                s = u"フォルダ「%s」を削除します。\nフォルダの中にある全てのシナリオも削除されます。\nよろしいですか？" % name
 
         dlg = message.YesNoMessage(self, cw.cwpy.msgs["delete"], s)
         self.Parent.move_dlg(dlg)

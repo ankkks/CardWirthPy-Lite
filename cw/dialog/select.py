@@ -971,19 +971,7 @@ class YadoSelect(MultiViewSelect):
         cw.cwpy.frame.move_dlg(dlg)
 
         if dlg.ShowModal() == wx.ID_OK:
-            if cw.util.create_mutex(u"Yado"):
-                try:
-                    if cw.util.create_mutex(self.list[self.index]):
-                        cw.util.release_mutex()
-                        cw.cwpy.play_sound("harvest")
-                        cw.util.remove(cw.util.join_paths(u"Data/Temp/Local", path))
-                        self.update_list(dlg.yadodir, clear_narrowcondition=True)
-                    else:
-                        cw.cwpy.play_sound("error")
-                finally:
-                    cw.util.release_mutex()
-            else:
-                cw.cwpy.play_sound("error")
+            self.update_list(dlg.yadodir, clear_narrowcondition=True)
 
         dlg.Destroy()
 
@@ -2184,7 +2172,7 @@ class PartySelect(MultiViewSelect):
             # ページ番号
             dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(14)))
             s = str(self.index+1) if self.index > 0 else str(-self.index + 1)
-            s = s + "/" + str(len(self.list))
+            s = s + " / " + str(len(self.list))
             w = dc.GetTextExtent(s)[0]
             dc.DrawText(s, (bmpw-w)/2, cw.wins(250))
 
@@ -2260,7 +2248,7 @@ class PartySelect(MultiViewSelect):
             # ページ番号
             dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(14)))
             s = str(page+1) if page > 0 else str(-page + 1)
-            s = s + "/" + str(self.get_pagecount())
+            s = s + " / " + str(self.get_pagecount())
             cw.util.draw_witharound(dc, s, cw.wins(5), cw.wins(5))
 
 #-------------------------------------------------------------------------------
@@ -3081,7 +3069,7 @@ class PlayerSelect(MultiViewSelect):
                 # ページ番号
                 dc.SetFont(cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(14)))
                 s = str(self.index+1) if self.index > 0 else str(-self.index + 1)
-                s = s + "/" + str(len(self.list))
+                s = s + " / " + str(len(self.list))
                 w = dc.GetTextExtent(s)[0]
                 dc.DrawText(s, (bmpw-w)/2, cw.wins(250))
             else:
