@@ -778,6 +778,7 @@
     <Message key="silence">沈黙状態</Message>
     <Message key="faceup">暴露状態</Message>
     <Message key="antimagic">完全魔法防御状態</Message>
+    <Message key="all">全て</Message>
     <!-- 2.0 ここまで -->
   </Messages>
   <Settings importantdrawing="False" importantfont="False" />
