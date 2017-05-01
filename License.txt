@@ -27,6 +27,7 @@ CardWirthPy Rebootソースコードのライセンス
 >[The MIT License](http://www.opensource.org/licenses/mit-license.php)
 改変元のソースはlogの中の人さん、Reboot制作者各位が著作権を保有しています。
 コーディング貢献者(敬称略)：logの中の人,k4nagatsuki,takuto_cw,TachiGigas,暗黒騎士,Iraka.T,name.req,HAND
+PyLiteのソースを再利用する場合も同様にMITライセンスで利用して下さい。
 
 Data/Debugger にあるPy独自機能の画像ファイル
 > : [CWXEditor](https://bitbucket.org/k4nagatsuki/cwxeditor/)
