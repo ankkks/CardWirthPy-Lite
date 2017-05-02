@@ -52,6 +52,10 @@ class SelectPartyRecord(select.Select):
         deleteid = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnClickDeleteBtn, id=deleteid)
         seq.append((wx.ACCEL_NORMAL, wx.WXK_DELETE, deleteid))
+        backkey = wx.NewId()
+        self.Bind(wx.EVT_MENU, self.OnCancel, id=backkey)
+        seq.append((wx.ACCEL_NORMAL, wx.WXK_BACK, backkey))
+        seq.append((wx.ACCEL_NORMAL, ord('_'), backkey))
         cw.util.set_acceleratortable(self, seq)
 
         self.draw(True)
