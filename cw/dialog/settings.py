@@ -59,12 +59,9 @@ class SettingsDialog(wx.Dialog):
         """
         cw.cwpy.frame.filter_event = self.OnFilterEvent
         self.panel = None
-        if cw.cwpy.setting.show_advancedsettings:
-            wx.Dialog.__init__(self, parent, -1, cw.APP_NAME + u"の設定(詳細モード)")
-            self.panel = SettingsPanel(self)
-        else:
-            wx.Dialog.__init__(self, parent, -1, cw.APP_NAME + u"の設定")
-            self.panel = SimpleSettingsPanel(self)
+        wx.Dialog.__init__(self, parent, -1, cw.APP_NAME + u"の設定(F2)")
+        self.panel = SettingsPanel(self)
+
         self.cwpy_debug = True # このダイアログではスクリーンショットの撮影を行わない
 
         self._bind()
@@ -135,161 +132,6 @@ class SettingsDialog(wx.Dialog):
         # モニタ内に収める
         cw.util.adjust_position(self)
 
-class SimpleSettingsPanel(wx.Panel):
-    def __init__(self, parent):
-        wx.Panel.__init__(self, parent, -1)
-
-        self.panel = wx.Panel(self, -1, style=wx.SIMPLE_BORDER)
-        if sys.platform == "win32":
-            self.panel.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_BTNHIGHLIGHT))
-
-        # デバッグモード
-        self.box_debug = wx.StaticBox(self.panel, -1, u"デバッグ")
-        self.cb_debug = wx.CheckBox(self.panel, -1, u"デバッグモードでプレイする")
-        self.cb_debug.SetValue(cw.cwpy.debug)
-
-        # スキン
-        self.box_skin = wx.StaticBox(self.panel, -1, u"スキン")
-        self.skin = SkinPanel(self.panel, False)
-
-        # 拡大表示モード
-        self.box_expandmode = wx.StaticBox(self.panel, -1, u"拡大表示方式(F4キーで拡大)")
-        self.expand = ExpandPanel(self.panel, False)
-        self.expand.load(cw.cwpy.setting)
-
-        # 背景切替方式と各種速度
-        self.speed = SpeedPanel(self.panel, False)
-        self.speed.load(cw.cwpy.setting)
-
-        self.box_audio = wx.StaticBox(self.panel, -1, u"音声")
-        # 音楽を再生する
-        self.cb_playbgm = wx.CheckBox(self.panel, -1, u"音楽を再生する")
-        self.cb_playbgm.SetValue(cw.cwpy.setting.play_bgm)
-        # 効果音を再生する
-        self.cb_playsound = wx.CheckBox(self.panel, -1, u"効果音を再生する")
-        self.cb_playsound.SetValue(cw.cwpy.setting.play_sound)
-
-        create_versioninfo(self)
-
-        self.btn_details = wx.Button(self, wx.NewId(), u"詳細設定...")
-        self.btn_ok = wx.Button(self, wx.ID_OK, u"OK")
-        self.btn_apply = wx.Button(self, wx.ID_APPLY, u"適用")
-        self.btn_cncl = wx.Button(self, wx.ID_CANCEL, u"キャンセル")
-
-        self.btn_apply.Disable()
-
-        self._do_layout()
-        self._bind()
-
-    def _bind(self):
-        self.Bind(wx.EVT_BUTTON, self.OnOk, id=wx.ID_OK)
-        self.Bind(wx.EVT_BUTTON, self.OnApply, id=wx.ID_APPLY)
-        self.Bind(wx.EVT_BUTTON, self.OnClose, id=wx.ID_CANCEL)
-        self.Bind(wx.EVT_BUTTON, self.OnDetails, id=self.btn_details.GetId())
-
-    def OnOk(self, event):
-        self.apply()
-        
-        # FIXME: クローズしながらスキンを切り替えると時々エラーになる
-        #        原因不明の不具合があるので、ダイアログのクローズを遅延する
-        def func(self):
-            def func(self):
-                if self:
-                    self.Parent.Close()
-            cw.cwpy.frame.exec_func(func, self)
-        cw.cwpy.exec_func(func, self)
-        self.Parent.Disable()
-
-    def OnApply(self, event):
-        self.apply()
-
-    def apply(self):
-        # 設定変更前はレベル上昇が可能な状態だったか
-        can_levelup = not (cw.cwpy.is_debugmode() and cw.cwpy.setting.no_levelup_in_debugmode)
-
-        # デバッグ
-        value = self.cb_debug.GetValue()
-        if not value == cw.cwpy.setting.debug:
-            cw.cwpy.exec_func(cw.cwpy.set_debug, value)
-
-        # 拡大倍率
-        self.expand.apply_expand(cw.cwpy.setting)
-
-        # 描画
-        self.speed.apply_speed(cw.cwpy.setting)
-
-        # オーディオ
-        value = self.cb_playbgm.GetValue()
-        cw.cwpy.setting.play_bgm = value
-        value = self.cb_playsound.GetValue()
-        cw.cwpy.setting.play_sound = value
-        for music in cw.cwpy.music:
-            music.set_volume()
-
-        # スキン
-        self.skin.apply_skin(False)
-
-        # レベル調節
-        apply_levelupparams(can_levelup)
-
-        if cw.cwpy.is_showingdebugger() and cw.cwpy.frame.debugger:
-            cw.cwpy.frame.debugger.refresh_tools()
-
-        self.GetTopLevelParent().clear_applied()
-
-    def OnClose(self, event):
-        self.Parent.Close()
-
-    def close(self):
-        pass
-
-    def OnDetails(self, event):
-        self.Parent.show_details()
-
-    def _do_layout(self):
-        sizer = wx.BoxSizer(wx.VERTICAL)
-        sizer_h1 = wx.BoxSizer(wx.HORIZONTAL)
-
-        sizer_left = wx.BoxSizer(wx.VERTICAL)
-        sizer_right = wx.BoxSizer(wx.VERTICAL)
-        sizer_btn = wx.BoxSizer(wx.HORIZONTAL)
-
-        sizer_debug = wx.StaticBoxSizer(self.box_debug, wx.VERTICAL)
-        sizer_debug.Add(self.cb_debug, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        sizer_skin = wx.StaticBoxSizer(self.box_skin, wx.VERTICAL)
-        sizer_skin.Add(self.skin, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
-        sizer_skin.SetMinSize((cw.ppis(270), -1))
-        sizer_expand = wx.StaticBoxSizer(self.box_expandmode, wx.VERTICAL)
-        sizer_expand.Add(self.expand, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        sizer_audio = wx.StaticBoxSizer(self.box_audio, wx.VERTICAL)
-        sizer_audio.Add(self.cb_playbgm, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        sizer_audio.Add(self.cb_playsound, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-
-        sizer_left.Add(sizer_debug, 0, wx.EXPAND, cw.ppis(0))
-        sizer_left.Add(sizer_skin, 1, wx.EXPAND|wx.TOP, cw.ppis(3))
-        sizer_left.Add(sizer_audio, 0, wx.EXPAND|wx.TOP, cw.ppis(3))
-
-        sizer_right.Add(sizer_expand, 0, wx.EXPAND, cw.ppis(0))
-        sizer_right.Add(self.speed, 0, wx.EXPAND|wx.TOP, cw.ppis(3))
-
-        sizer_btn.Add(self.btn_details, 0, wx.ALIGN_CENTER, cw.ppis(0))
-        sizer_btn.AddStretchSpacer(1)
-        sizer_btn.Add(self.versioninfo, 0, wx.LEFT|wx.RIGHT|wx.ALIGN_CENTER, cw.ppis(10))
-        sizer_btn.AddStretchSpacer(1)
-        sizer_btn.Add(self.btn_ok, 0, wx.ALIGN_CENTER)
-        sizer_btn.Add(self.btn_apply, 0, wx.LEFT|wx.ALIGN_CENTER, cw.ppis(5))
-        sizer_btn.Add(self.btn_cncl, 0, wx.LEFT|wx.TOP|wx.BOTTOM|wx.ALIGN_CENTER, cw.ppis(5))
-
-        sizer_h1.Add(sizer_left, 1, wx.EXPAND|wx.ALL, cw.ppis(10))
-        sizer_h1.Add(sizer_right, 0, wx.EXPAND|wx.TOP|wx.BOTTOM|wx.RIGHT, cw.ppis(10))
-
-        self.panel.SetSizer(sizer_h1)
-
-        sizer.Add(self.panel, 0, wx.EXPAND, cw.ppis(0))
-        sizer.Add(sizer_btn, 0, wx.LEFT|wx.RIGHT|wx.EXPAND, cw.ppis(5))
-        self.SetSizer(sizer)
-        sizer.Fit(self)
-        self.Layout()
 
 class SettingsPanel(wx.Panel):
     def __init__(self, parent):
@@ -438,8 +280,6 @@ class SettingsPanel(wx.Panel):
             if not value == cw.cwpy.setting.debug:
                 cw.cwpy.exec_func(cw.cwpy.set_debug, value)
 
-        value = self.pane_gene.cb_show_advancedsettings.GetValue()
-        setting.show_advancedsettings = value
         value = self.pane_gene.sc_initmoneyamount.GetValue()
         setting.initmoneyamount = value
         value = self.pane_gene.cb_initmoneyisinitialcash.GetValue()
@@ -507,19 +347,6 @@ class SettingsPanel(wx.Panel):
             setting.smoothing_card_down = value
 
         self.pane_draw.speed.apply_speed(setting)
-
-        """カーソル
-        value = self.pane_draw.cb_whitecursor.GetValue()
-        if value <> (setting.cursor_type == cw.setting.CURSOR_WHITE):
-            if value:
-                setting.cursor_type = cw.setting.CURSOR_WHITE
-            else:
-                setting.cursor_type = cw.setting.CURSOR_BLACK
-            if update:
-                def func():
-                    cw.cwpy.change_cursor(cw.cwpy.cursor, force=True)
-                cw.cwpy.exec_func(func)
-        """
 
         # オーディオ
         value = self.pane_sound.cb_playbgm.GetValue()
@@ -1149,12 +976,9 @@ class GeneralSettingPanel(wx.Panel):
         wx.Panel.__init__(self, parent)
         # デバッグモード
         self.box_gene = wx.StaticBox(self, -1, u"詳細")
-        self.cb_debug = wx.CheckBox(self, -1, u"デバッグモードでプレイする")
+        self.cb_debug = wx.CheckBox(self, -1, u"デバッグモードでプレイする" + u"(Ctrl+D)")
         self.cb_debug.SetValue(cw.cwpy.debug)
         
-        self.cb_show_advancedsettings = wx.CheckBox(
-            self, -1, u"最初から詳細モードで設定を行う")
-
         self.st_startupscene = wx.StaticText(self, -1, u"起動時の動作:")
         self.ch_startupscene = wx.Choice(self, -1, choices=[u"タイトル画面を開く", u"最後に選択した拠点を開く"])
 
@@ -1250,7 +1074,6 @@ class GeneralSettingPanel(wx.Panel):
             tx.Bind(wx.EVT_KILL_FOCUS, self.OnSSFocus)
 
     def load(self, setting):
-        self.cb_show_advancedsettings.SetValue(setting.show_advancedsettings)
         if setting.messagelog_type == cw.setting.LOG_SINGLE:
             self.ch_messagelog_type.SetSelection(0) # 単一表示
         elif setting.messagelog_type == cw.setting.LOG_COMPRESS:
@@ -1278,7 +1101,6 @@ class GeneralSettingPanel(wx.Panel):
         self.expand.load(setting)
 
     def init_values(self, setting):
-        self.cb_show_advancedsettings.SetValue(setting.show_advancedsettings_init)
 
         if setting.messagelog_type_init == cw.setting.LOG_SINGLE:
             self.ch_messagelog_type.SetSelection(0)
@@ -1349,7 +1171,6 @@ class GeneralSettingPanel(wx.Panel):
         bsizer_expandmode = wx.StaticBoxSizer(self.box_expandmode, wx.VERTICAL)
 
         bsizer_gene.Add(self.cb_debug, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_gene.Add(self.cb_show_advancedsettings, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
 
         bsizer_startup = wx.BoxSizer(wx.HORIZONTAL)
         bsizer_startup.Add(self.st_startupscene, 0, wx.ALIGN_CENTER, cw.ppis(0))
@@ -1559,7 +1380,6 @@ class DrawingSettingPanel(wx.Panel):
             self.cb_smoothing_card_up = wx.CheckBox(self, -1, u"拡大したカード画像を滑らかにする")
             self.cb_smoothing_card_down = wx.CheckBox(self, -1, u"縮小したカード画像を滑らかにする")
             self.cb_smooth_bg = wx.CheckBox(self, -1, u"拡大・縮小した背景画像を滑らかにする")
-            #self.cb_whitecursor = wx.CheckBox(self, -1, u"メイン画面で白いカーソルを使用する")
 
             # 背景切替方式と各種速度
             self.speed = SpeedPanel(self, True)
@@ -2143,8 +1963,8 @@ class ScenarioSettingPanel(wx.Panel):
         self.cb_selectscenariofromtype.SetToolTipString( u"シナリオフォルダ(スキンタイプ別)で設定した場所をデフォルトの開始位置にします\n無効にした場合はScenarioを読みます")
 
 
-        # デバッグオプション
-        self.box_debug = wx.StaticBox(self, -1, u"デバッグ・ログ")
+        # その他オプション
+        self.box_other = wx.StaticBox(self, -1, u"その他")
         self.cb_show_debuglogdialog = wx.CheckBox(
             self, -1, u"シナリオの終了時にデバッグ情報を表示する")
         self.cb_write_playlog = wx.CheckBox(self, -1, u"シナリオのプレイログをテキスト出力する")
@@ -2275,7 +2095,7 @@ class ScenarioSettingPanel(wx.Panel):
         sizer_v2 = wx.GridSizer( 0, 2, 0, 0 )
 
         bsizer_gene = wx.StaticBoxSizer(self.box_gene, wx.VERTICAL)
-        bsizer_debug = wx.StaticBoxSizer(self.box_debug, wx.VERTICAL)
+        bsizer_other = wx.StaticBoxSizer(self.box_other, wx.VERTICAL)
         bsizer_folderoftype = wx.StaticBoxSizer(self.box_folderoftype, wx.VERTICAL)
 
         bsizer_gene.Add(self.cb_show_paperandtree, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
@@ -2283,12 +2103,12 @@ class ScenarioSettingPanel(wx.Panel):
         bsizer_gene.Add(self.cb_selectscenariofromtype, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         #bsizer_gene.SetMinSize((_settings_width(), -1))
 
-        bsizer_debug.Add(self.cb_show_debuglogdialog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_debug.Add(self.cb_write_playlog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_debug.Add(self.cb_oldf9, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_other.Add(self.cb_show_debuglogdialog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_other.Add(self.cb_write_playlog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_other.Add(self.cb_oldf9, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
 
         sizer_v2.Add(bsizer_gene, 1, wx.RIGHT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
-        sizer_v2.Add(bsizer_debug, 1, wx.LEFT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
+        sizer_v2.Add(bsizer_other, 1, wx.LEFT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
 
         sizer_folderbtns = wx.BoxSizer(wx.HORIZONTAL)
         sizer_folderbtns.Add(self.btn_reffolder, 0, wx.RIGHT, cw.ppis(3))
@@ -2495,15 +2315,15 @@ class UISettingPanel(wx.Panel):
         self.box_dlg = wx.StaticBox(self, -1, u"ダイアログ省略")
 
         self.st_confirm_beforesaving = wx.StaticText(self, -1,
-                                                     u"セーブ前の確認ダイアログ:")
+                                                     u"セーブ前の確認メッセージ:")
         choices = [u"常に表示", u"拠点にいる時だけ表示", u"表示しない"]
         self.ch_confirm_beforesaving = wx.Choice(self, -1, choices=choices)
         self.cb_showsavedmessage = wx.CheckBox(
-            self, -1, u"セーブ完了時に確認ダイアログを表示")
+            self, -1, u"セーブ完了時に確認メッセージを表示")
         self.cb_cautionbeforesaving = wx.CheckBox(
             self, -1, u"保存せずに終了しようとしたら警告を表示")
         self.cb_confirmbeforeusingcard = wx.CheckBox(
-            self, -1, u"カード使用時に確認ダイアログを表示")
+            self, -1, u"カード使用時に確認メッセージを表示")
         self.cb_noticeimpossibleaction = wx.CheckBox(
             self, -1, u"不可能な行動を選択した時に警告を表示")
         self.cb_noticeimpossibleaction.SetToolTipString( u"Capを超えてカードを配ろうとした時など" )
@@ -2644,7 +2464,6 @@ class UISettingPanel(wx.Panel):
         bsizer_quickdeal.Add(self.ch_quickdeal, 0, wx.ALIGN_CENTER, cw.ppis(3))
 
         bsizer_draw.Add(bsizer_quickdeal, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        #bsizer_draw.Add(self.cb_wait_usecard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_draw.Add(self.cb_show_premiumicon, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_draw.Add(self.cb_show_cardkind, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         #bsizer_draw.Add(self.cb_protect_staredcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
@@ -2716,8 +2535,8 @@ class FontSettingPanel(wx.Panel):
                           "tree"         : u"ツリー・リスト",
                           "tab"          : u"タブ",
                           "menu"         : u"メニュー",
-                          "scenario"     : u"貼紙タイトル",
-                          "targetlevel"  : u"貼紙の対象レベル",
+                          "scenario"     : u"貼り紙のタイトル",
+                          "targetlevel"  : u"貼り紙の対象レベル",
                           "paneltitle"   : u"パネルタイトル1",
                           "paneltitle2"  : u"パネルタイトル2",
                           "dlgmsg"       : u"ダイアログテキスト1",
