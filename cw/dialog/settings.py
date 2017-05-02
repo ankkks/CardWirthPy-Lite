@@ -1376,16 +1376,16 @@ class DrawingSettingPanel(wx.Panel):
             self.cb_important = wx.CheckBox(self, -1, u"このスキンの描画設定を基本設定よりも優先して使用する")
         else:
             self.cb_important = None
-            self.box_gene = wx.StaticBox(self, -1, u"詳細")
-            self.cb_smoothing_card_up = wx.CheckBox(self, -1, u"拡大したカード画像を滑らかにする")
-            self.cb_smoothing_card_down = wx.CheckBox(self, -1, u"縮小したカード画像を滑らかにする")
+            self.box_gene = wx.StaticBox(self, -1, u"カードの画像補正")
+            self.cb_smoothing_card_down = wx.CheckBox(self, -1, u"縮小カードの画像補正を行う")
+            self.cb_smoothing_card_up = wx.CheckBox(self, -1, u"拡大カードの画像補正を行う")
             self.cb_smooth_bg = wx.CheckBox(self, -1, u"拡大・縮小した背景画像を滑らかにする")
 
             # 背景切替方式と各種速度
             self.speed = SpeedPanel(self, True)
 
-        # メッセージウィンドウ背景色
-        self.box_mwin = wx.StaticBox(self, -1, u"メッセージウィンドウ背景")
+        # メッセージボード背景色
+        self.box_mwin = wx.StaticBox(self, -1, u"メッセージボードの背景")
         self.st_mwin = wx.StaticText(self, -1, u"カラー")
         self.cs_mwin = wx.ColourPickerCtrl(self, -1)
         self.st_blwin = wx.StaticText(self, -1, u"ログ")
@@ -1393,8 +1393,8 @@ class DrawingSettingPanel(wx.Panel):
         self.st_mwin2 = wx.StaticText(self, -1, u"透明度")
         self.sc_mwin = wx.SpinCtrl(self, -1, "", size=(cw.ppis(50), -1))
         self.sc_mwin.SetRange(0, 255)
-        # メッセージウィンドウ枠色
-        self.box_mframe = wx.StaticBox(self, -1, u"メッセージウィンドウ枠")
+        # メッセージボード枠色
+        self.box_mframe = wx.StaticBox(self, -1, u"メッセージボードの枠")
         self.st_mframe = wx.StaticText(self, -1, u"カラー")
         self.cs_mframe = wx.ColourPickerCtrl(self, -1)
         self.st_blframe = wx.StaticText(self, -1, u"ログ")
@@ -1608,8 +1608,8 @@ class DrawingSettingPanel(wx.Panel):
         if not self._for_local:
             bsizer_gene = wx.StaticBoxSizer(self.box_gene, wx.VERTICAL)
 
-            bsizer_gene.Add(self.cb_smoothing_card_up, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
             bsizer_gene.Add(self.cb_smoothing_card_down, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+            bsizer_gene.Add(self.cb_smoothing_card_up, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
             bsizer_gene.Add(self.cb_smooth_bg, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
             #bsizer_gene.Add(self.cb_whitecursor, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
             bsizer_gene.SetMinSize((_settings_width(), -1))
@@ -1744,13 +1744,13 @@ class AudioSettingPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
 
-        self.box_gene = wx.StaticBox(self, -1, u"詳細")
+        self.box_gene = wx.StaticBox(self, -1, u"音響効果")
         # 音楽を再生する
         self.cb_playbgm = wx.CheckBox(
-            self, -1, u"音楽を再生する")
+            self, -1, u"BGMを鳴らす")
         # 効果音を再生する
         self.cb_playsound = wx.CheckBox(
-            self, -1, u"効果音を再生する")
+            self, -1, u"効果音を鳴らす")
 
         # 全体音量
         self.box_master = wx.StaticBox(self, -1, u"全体音量")
@@ -1760,14 +1760,14 @@ class AudioSettingPanel(wx.Panel):
         self.sl_master.SetTickFreq(10, 1)
 
         # 音量
-        self.box_music = wx.StaticBox(self, -1, u"ミュージック音量")
+        self.box_music = wx.StaticBox(self, -1, u"BGM音量")
         self.sl_music = wx.Slider(
             self, -1, 0, 0, 100, size=(_settings_width()-cw.ppis(10), -1),
             style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS|wx.SL_LABELS)
         self.sl_music.SetTickFreq(10, 1)
 
         # midi音量
-        self.box_midi = wx.StaticBox(self, -1, u"MIDIミュージック音量")
+        self.box_midi = wx.StaticBox(self, -1, u"MIDI音量")
         self.sl_midi = wx.Slider(
             self, -1, 0, 0, 100, size=(_settings_width()-cw.ppis(10), -1),
             style=wx.SL_HORIZONTAL|wx.SL_AUTOTICKS|wx.SL_LABELS)
