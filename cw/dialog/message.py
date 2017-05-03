@@ -75,8 +75,12 @@ class Message(wx.Dialog):
         self.Bind(wx.EVT_PAINT, self.OnPaint)
 
         copyid = wx.NewId()
+        backid =wx.NewId()
+        self.Bind(wx.EVT_MENU, self.OnCancel, id=backid)
         self.Bind(wx.EVT_MENU, self.OnCopyDetail, id=copyid)
         seq = [
+            (wx.ACCEL_NORMAL, wx.WXK_BACK, backid),
+            (wx.ACCEL_NORMAL, ord('_'), backid),
             (wx.ACCEL_CTRL, ord('C'), copyid),
         ]
         cw.util.set_acceleratortable(self, seq)
