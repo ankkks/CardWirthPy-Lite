@@ -52,7 +52,8 @@ class CharaInfo(wx.Dialog):
 
         # notebook
         self.notebook = wx.lib.agw.aui.auibook.AuiNotebook(self, -1, size=(self.width, cw.wins(203)),
-                                                           agwStyle=aui.AUI_NB_BOTTOM|aui.AUI_NB_TAB_FIXED_WIDTH)
+                                                           agwStyle=aui.AUI_NB_BOTTOM|aui.AUI_NB_TAB_FIXED_WIDTH|
+                                                           aui.AUI_NB_NO_TAB_FOCUS)
         self.notebook.SetMinSize((self.width, cw.wins(199)))
         self.notebook.SetArtProvider(cw.util.CWTabArt())
         self.notebook.SetFont(cw.cwpy.rsrc.get_wxfont("tab", pixelsize=cw.wins(13)))
@@ -107,7 +108,8 @@ class CharaInfo(wx.Dialog):
         self._bind()
         cw.util.add_sideclickhandlers(self.toppanel, self.leftbtn, self.rightbtn)
 
-        self.notebook.SetFocus()
+        tab = self.notebook.GetActiveTabCtrl()
+        tab.SetFocus()
 
         self.leftpagekeyid = wx.NewId()
         self.rightpagekeyid = wx.NewId()
