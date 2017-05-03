@@ -77,13 +77,18 @@ class BattleCommand(wx.Dialog):
         self.leftkeyid = wx.NewId()
         self.rightkeyid = wx.NewId()
         self.returnkeyid = wx.NewId()
+        self.escid = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.leftkeyid)
         self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.rightkeyid)
         self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.returnkeyid)
+        self.Bind(wx.EVT_MENU, self.OnCancel, id=self.backid)
         seq = [
             (wx.ACCEL_NORMAL, wx.WXK_LEFT, self.leftkeyid),
             (wx.ACCEL_NORMAL, wx.WXK_RIGHT, self.rightkeyid),
             (wx.ACCEL_NORMAL, wx.WXK_RETURN, self.returnkeyid),
+            (wx.ACCEL_NORMAL, wx.WXK_ESCAPE, self.escid),
+            (wx.ACCEL_NORMAL, wx.WXK_BACK, self.escid),
+            (wx.ACCEL_NORMAL, ord('_'), self.escid),
         ]
         accel = wx.AcceleratorTable(seq)
         self.SetAcceleratorTable(accel)
