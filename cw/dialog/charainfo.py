@@ -108,8 +108,7 @@ class CharaInfo(wx.Dialog):
         self._bind()
         cw.util.add_sideclickhandlers(self.toppanel, self.leftbtn, self.rightbtn)
 
-        tab = self.notebook.GetActiveTabCtrl()
-        tab.SetFocus()
+        self.closebtn.SetFocus()
 
         self.leftpagekeyid = wx.NewId()
         self.rightpagekeyid = wx.NewId()
@@ -123,6 +122,8 @@ class CharaInfo(wx.Dialog):
         self.openinfo = wx.NewId()
         copyid = wx.NewId()
         esckeyid = wx.NewId()
+        leftkeyid = wx.NewId()
+        rightkeyid = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnClickLeftBtn, id=self.leftpagekeyid)
         self.Bind(wx.EVT_MENU, self.OnClickRightBtn, id=self.rightpagekeyid)
         self.Bind(wx.EVT_MENU, self.OnUp, id=self.upkeyid)
@@ -135,6 +136,8 @@ class CharaInfo(wx.Dialog):
         self.Bind(wx.EVT_MENU, self.OnOpenInfo, id=self.openinfo)
         self.Bind(wx.EVT_MENU, self.OnCopyDetail, id=copyid)
         self.Bind(wx.EVT_MENU, self.OnCancel, id=esckeyid)
+        self.Bind(wx.EVT_MENU, self.OnLeftKey, id=leftkeyid)
+        self.Bind(wx.EVT_MENU, self.OnRightKey, id=rightkeyid)
         seq = [
             (wx.ACCEL_CTRL, wx.WXK_LEFT, self.leftpagekeyid),
             (wx.ACCEL_CTRL, wx.WXK_RIGHT, self.rightpagekeyid),
@@ -147,6 +150,8 @@ class CharaInfo(wx.Dialog):
             (wx.ACCEL_NORMAL, wx.WXK_RETURN, self.enter),
             (wx.ACCEL_NORMAL, wx.WXK_BACK, esckeyid),
             (wx.ACCEL_NORMAL, ord('_'), esckeyid),
+            (wx.ACCEL_NORMAL, wx.WXK_LEFT, leftkeyid),
+            (wx.ACCEL_NORMAL, wx.WXK_RIGHT, rightkeyid),
             (wx.ACCEL_CTRL, wx.WXK_RETURN, self.openinfo),
             (wx.ACCEL_CTRL, ord('C'), copyid),
         ]
@@ -227,6 +232,16 @@ class CharaInfo(wx.Dialog):
             x = page.GetScrollPos(wx.HORIZONTAL)
             y = page.GetScrollPos(wx.VERTICAL)
             page.Scroll(x, y + 10)
+
+    def OnLeftKey(self, event):
+        event.Skip()
+        index = self.notebook.GetSelection()
+        self.notebook.SetSelection(index-1 if 0 < index else len(self.bottompanel)-1)
+
+    def OnRightKey(self, event):
+        event.Skip()
+        index = self.notebook.GetSelection()
+        self.notebook.SetSelection((index+1) % len(self.bottompanel))
 
     def OnEnd(self, event):
         page = self.notebook.GetPage(self.notebook.GetSelection())
