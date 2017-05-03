@@ -64,6 +64,7 @@ class Select(wx.Dialog):
         self.backid = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnPrevButton, id=self.previd)
         self.Bind(wx.EVT_MENU, self.OnNextButton, id=self.nextid)
+        self.Bind(wx.EVT_MENU, self.OnCancel, id=self.backid)        
         self.Bind(wx.EVT_MENU, self.OnClickLeftBtn, id=self.leftkeyid)
         self.Bind(wx.EVT_MENU, self.OnClickRightBtn, id=self.rightkeyid)
         self.Bind(wx.EVT_MENU, self.OnClickLeft2Btn, id=self.left2keyid)
@@ -71,6 +72,8 @@ class Select(wx.Dialog):
         seq = [
             (wx.ACCEL_NORMAL, wx.WXK_LEFT, self.previd),
             (wx.ACCEL_NORMAL, wx.WXK_RIGHT, self.nextid),
+            (wx.ACCEL_NORMAL, wx.WXK_BACK, self.backid),
+            (wx.ACCEL_NORMAL, ord('_'), self.backid),
             (wx.ACCEL_CTRL, wx.WXK_LEFT, self.leftkeyid),
             (wx.ACCEL_CTRL, wx.WXK_RIGHT, self.rightkeyid),
             (wx.ACCEL_CTRL|wx.ACCEL_ALT, wx.WXK_LEFT, self.left2keyid),
@@ -2383,7 +2386,7 @@ class PlayerSelect(MultiViewSelect):
 
         randomcreateid = wx.NewId()
         self.Bind(wx.EVT_MENU, self.create_randomadventurer, id=randomcreateid)
-        seq.append((wx.ACCEL_CTRL, ord('R'), randomcreateid))
+        seq.append((wx.ACCEL_CTRL, ord('A'), randomcreateid))
 
         self.sortkeydown = []
         for i in xrange(0, 9):

@@ -67,6 +67,14 @@ class PartyEditor(wx.Dialog):
             for child in ctrl.GetChildren():
                 recurse(child)
         recurse(self)
+        self.backid = wx.NewId()
+        self.Bind(wx.EVT_MENU, self.OnCancel, id=self.backid)
+        seq = [
+            (wx.ACCEL_NORMAL, wx.WXK_BACK, self.backid),
+            (wx.ACCEL_NORMAL, ord('_'), self.backid),
+        ]
+        self.accels = seq
+        cw.util.set_acceleratortable(self, seq)            
 
     def _do_layout(self):
         sizer = wx.BoxSizer(wx.VERTICAL)

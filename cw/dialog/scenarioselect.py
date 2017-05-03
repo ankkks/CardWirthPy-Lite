@@ -300,10 +300,6 @@ class ScenarioSelect(select.Select):
         self.Bind(wx.EVT_MENU, self.OnEscape, id=esckey)
         seq.append((wx.ACCEL_NORMAL, wx.WXK_ESCAPE, esckey))
 
-        backkey = wx.NewId()
-        self.Bind(wx.EVT_MENU, self.OnBackspace, id=backkey)
-        seq.append((wx.ACCEL_NORMAL, wx.WXK_BACK, backkey))
-
         deleteid = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnDeleteBtn, id=deleteid)
         seq.append((wx.ACCEL_NORMAL, wx.WXK_DELETE, deleteid))
@@ -698,12 +694,10 @@ class ScenarioSelect(select.Select):
 
             # 移動
             self._move = wx.MenuItem(menu, -1, cw.cwpy.msgs["move"])
-            #self._move.SetBitmap(cw.cwpy.rsrc.dialogs["MOVE_FILE"])
             self._move.SetFont(font)
             menu.AppendItem(self._move)
             # 名前の変更
             self._rename = wx.MenuItem(menu, -1, cw.cwpy.msgs["rename"])
-            #self._rename.SetBitmap(cw.cwpy.rsrc.dialogs["RENAME_FILE"])
             self._rename.SetFont(font)
             menu.AppendItem(self._rename)
             # 削除

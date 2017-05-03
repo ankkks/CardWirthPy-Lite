@@ -3501,16 +3501,16 @@ def add_sideclickhandlers(toppanel, leftbtn, rightbtn):
 def set_acceleratortable(panel, seq):
     """panelにseqから生成したAcceleratorTableを設定する。
     """
-    # テキスト入力欄に限り左右キーを取り除く
+    # テキスト入力欄に限り左右キーとBACKキーを取り除く
     seq2 = []
     for accel in seq:
-        if not (accel[0] == wx.ACCEL_NORMAL and accel[1] in ( wx.WXK_LEFT, wx.WXK_RIGHT, wx.WXK_BACK)):
+        if not (accel[0] == wx.ACCEL_NORMAL and accel[1] in ( wx.WXK_LEFT, wx.WXK_RIGHT, wx.WXK_BACK , ord('_'))):
             seq2.append(accel)
 
     accel1 = wx.AcceleratorTable(seq)
     accel2 = wx.AcceleratorTable(seq2)
     def recurse(widget):
-        if isinstance(widget, (wx.TextCtrl, wx.Dialog, wx.Panel)):
+        if isinstance(widget, (wx.TextCtrl, wx.Dialog)):
             widget.SetAcceleratorTable(accel2)
         else:
             widget.SetAcceleratorTable(accel1)
