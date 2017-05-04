@@ -3510,7 +3510,7 @@ def set_acceleratortable(panel, seq, ignoreleftrightkeys=(wx.TextCtrl, wx.Dialog
     accel1 = wx.AcceleratorTable(seq)
     accel2 = wx.AcceleratorTable(seq2)
     def recurse(widget):
-        if isinstance(widget, (wx.TextCtrl, wx.Dialog, ignoreleftrightkeys)):
+        if isinstance(widget, ignoreleftrightkeys):
             widget.SetAcceleratorTable(accel2)
         else:
             widget.SetAcceleratorTable(accel1)

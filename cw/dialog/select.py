@@ -80,7 +80,7 @@ class Select(wx.Dialog):
             (wx.ACCEL_CTRL|wx.ACCEL_ALT, wx.WXK_RIGHT, self.right2keyid),
         ]
         self.accels = seq
-        cw.util.set_acceleratortable(self, seq)
+        cw.util.set_acceleratortable(self, seq, ignoreleftrightkeys=(wx.TextCtrl, wx.Dialog))
 
     def _bind(self):
         self.Bind(wx.EVT_BUTTON, self.OnClickLeftBtn, self.leftbtn)
