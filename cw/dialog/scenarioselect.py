@@ -295,7 +295,6 @@ class ScenarioSelect(select.Select):
         self.Bind(wx.EVT_MENU, self.OnDownKeyDown, id=downkey)
         seq.append((wx.ACCEL_CTRL, wx.WXK_DOWN, downkey))
 
-        seq = self.accels
         esckey = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnEscape, id=esckey)
         seq.append((wx.ACCEL_NORMAL, wx.WXK_ESCAPE, esckey))

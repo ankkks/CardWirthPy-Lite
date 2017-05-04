@@ -205,7 +205,6 @@ class CardControl(wx.Dialog):
         self._proc = False
 
         self.toppanel.SetFocusIgnoringChildren()
-        #Focusを変えるとBACKキーが効かなくなってしまう
 
         if self.addctrlbtn:
             self.update_additionals()
@@ -257,12 +256,14 @@ class CardControl(wx.Dialog):
         self.downtargkeyid = wx.NewId()
         self.infokeyid = wx.NewId()
         self.deleteid = wx.NewId()
+        backid = wx.NewId()
         addctrl = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.leftkeyid)
         self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.rightkeyid)
         self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.returnkeyid)
         self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.infokeyid)
         self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.deleteid)
+        self.Bind(wx.EVT_MENU, self.OnCancel, id=backid)
         self.Bind(wx.EVT_MENU, self.OnUp, id=self.upid)
         self.Bind(wx.EVT_MENU, self.OnDown, id=self.downid)
         self.Bind(wx.EVT_MENU, self.OnClickLeftBtn, id=self.leftpagekeyid)
@@ -286,6 +287,7 @@ class CardControl(wx.Dialog):
         ]
         if self.addctrlbtn:
             seq.append((wx.ACCEL_CTRL, ord('F'), addctrl))
+
         self.narrowkeydown = []
         self.sortkeydown = []
         for i in xrange(0, 9):
@@ -298,6 +300,7 @@ class CardControl(wx.Dialog):
             seq.append((wx.ACCEL_ALT, ord('1')+i, sortkeydown))
             self.sortkeydown.append(sortkeydown)
         cw.util.set_acceleratortable(self, seq)
+
 
     def OnNumberKeyDown(self, event):
         """
@@ -484,13 +487,10 @@ class CardControl(wx.Dialog):
         cw.cwpy.play_sound("equipment")
         self._redraw = False
         self.update_additionals()
-        # GTKで表示・非表示状態の反映が遅延する事があるので、
-        # 再レイアウト以降の処理を遅延実行する
-        def func():
-            self._do_layout()
-            self._redraw = True
-            self.update_narrowcondition()
-        cw.cwpy.frame.exec_func(func)
+        # Lite：対応を諦めるためGTK遅延処理をコメントアウト
+        self._do_layout()
+        self._redraw = True
+        self.update_narrowcondition()
 
     def OnNarrowCondition(self, event):
         cw.cwpy.play_sound("page")
