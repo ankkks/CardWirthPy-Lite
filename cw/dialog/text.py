@@ -17,13 +17,13 @@ import cw
 class Text(wx.Dialog):
     def __init__(self, parent, name):
         # ダイアログボックス
-        wx.Dialog.__init__(self, parent, -1, name, size=cw.wins((550, 290)),
-                            style=wx.CAPTION|wx.SYSTEM_MENU|wx.CLOSE_BOX|wx.RESIZE_BORDER)
+        wx.Dialog.__init__(self, parent, -1, name, size=cw.wins((501, 290)),
+                            style=wx.CAPTION|wx.SYSTEM_MENU|wx.CLOSE_BOX)
         self.cwpy_debug = False
         # panel
-        self.toppanel = wx.Panel(self, -1, size=cw.wins((550, 245)))
+        self.toppanel = wx.Panel(self, -1, size=cw.wins((501, 254)))
         self.toppanel.SetBackgroundColour(wx.Colour(0, 0, 128))
-        self.panel = wx.Panel(self, -1, style=wx.RAISED_BORDER)
+        self.panel = wx.Panel(self, -1, size=(-1, cw.wins(29)))#style=wx.RAISED_BORDER)
 
         # rich text ctrl
         if self.list2:
@@ -41,7 +41,7 @@ class Text(wx.Dialog):
         self.richtextctrl.ShowPosition(0)
 
         # close
-        self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, cw.wins((85, 24)), cw.cwpy.msgs["close"])
+        self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, cw.wins((87, 21)), cw.cwpy.msgs["close"])
         # left
         bmp = cw.cwpy.rsrc.buttons["LMOVE"]
         self.leftbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_UP, cw.wins((30, 30)), bmp=bmp, chain=True)
@@ -88,6 +88,8 @@ class Text(wx.Dialog):
         self.rightpagekeyid = wx.NewId()
         self.upkeyid = wx.NewId()
         self.downkeyid = wx.NewId()
+        backid =wx.NewId()
+        self.Bind(wx.EVT_MENU, self.OnCancel, id=backid)
         self.Bind(wx.EVT_MENU, self.OnClickLeftBtn, id=self.leftpagekeyid)
         self.Bind(wx.EVT_MENU, self.OnClickRightBtn, id=self.rightpagekeyid)
         self.Bind(wx.EVT_MENU, self.OnUp, id=self.upkeyid)
@@ -97,10 +99,17 @@ class Text(wx.Dialog):
             (wx.ACCEL_CTRL, wx.WXK_RIGHT, self.rightpagekeyid),
             (wx.ACCEL_CTRL, wx.WXK_UP, self.upkeyid),
             (wx.ACCEL_CTRL, wx.WXK_DOWN, self.downkeyid),
+            (wx.ACCEL_NORMAL, wx.WXK_BACK, backid),
+            (wx.ACCEL_NORMAL, ord('_'), backid),
             (wx.ACCEL_CTRL, ord('C'), wx.ID_COPY),
             (wx.ACCEL_CTRL, ord('A'), wx.ID_SELECTALL),
         ]
         cw.util.set_acceleratortable(self, seq)
+
+    def OnCancel(self, event):
+        cw.cwpy.play_sound("click")
+        btnevent = wx.PyCommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, wx.ID_CANCEL)
+        self.ProcessEvent(btnevent)
 
     def _set_text(self, value):
         self.richtextctrl.set_text(value, linkurl=True)
