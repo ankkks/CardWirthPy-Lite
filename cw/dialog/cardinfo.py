@@ -80,7 +80,7 @@ class CardInfo(wx.Dialog):
             (wx.ACCEL_CTRL, wx.WXK_RIGHT, self.rightpagekeyid),
             (wx.ACCEL_CTRL, ord('C'), copyid),
         ]
-        cw.util.set_acceleratortable(self, seq)
+        cw.util.set_acceleratortable(self, seq, ignoreleftrightkeys=(wx.TextCtrl, wx.Dialog))
 
         if sys.platform <> "win32":
             # BUG: SetBackgroundColour()を呼ばないと色が変わってしまう(Gtk)

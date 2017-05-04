@@ -448,7 +448,6 @@ class AdventurerCreater(wx.Dialog):
                                                             cw.wins((btnwidth, 23)), cw.cwpy.msgs["entry_decide"])
         self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1,
                                                             cw.wins((btnwidth, 23)), cw.cwpy.msgs["entry_cancel"])
-        self._init_pages()
         self.enable_btn()
         self.nextbtn.Disable()
         self._do_layout()
