@@ -4802,7 +4802,7 @@ def post_pygameevent(event):
         pygame.event.post(event)
     except:
         # 入力イベントが輻輳している場合はクリアする
-        self.clear_inputevents()
+        cw.cwpy.clear_inputevents()
         pygame.event.post(event)
 
 
