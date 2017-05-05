@@ -2596,11 +2596,11 @@ class FontSettingPanel(wx.Panel):
 
         # フォント表示サンプル
         self.box_example = wx.StaticBox(self, -1, u"表示例")
-        self.st_example = wx.StaticText(self, -1, size=cw.ppis((100, 35)), style=wx.ALIGN_CENTER)
+        self.st_example = wx.StaticText(self, -1, size=cw.ppis((10, 25)), style=wx.ALIGN_CENTER)
         self.st_example.SetDoubleBuffered(True)
 
         # 描画オプション
-        self.box_gene = wx.StaticBox(self, -1, u"詳細")
+        self.box_gene = wx.StaticBox(self, -1, u"文字の補正")
         self.cb_bordering_cardname = wx.CheckBox(self, -1, u"カード名やタイトルを縁取りする")
         self.cb_decorationfont = wx.CheckBox(self, -1, u"メッセージで装飾フォントを使用する")
         self.cb_fontsmoothingmessage = wx.CheckBox(self, -1, u"メッセージの文字を滑らかにする")
@@ -2613,6 +2613,7 @@ class FontSettingPanel(wx.Panel):
             grid.SetSelectionMode(wx.grid.Grid.SelectRows)
             grid.SetRowLabelAlignment(wx.LEFT, wx.CENTER)
             grid.SetRowLabelSize(rowlblsize)
+            grid.SetColLabelSize( cw.ppis(20) )
             grid.SetColLabelValue(0, u"フォント名")
             grid.SetColSize(0, cw.ppis(150))
             editors = []
@@ -2634,12 +2635,12 @@ class FontSettingPanel(wx.Panel):
         self.type = wx.grid.Grid(self, -1, size=(1, 0), style=wx.BORDER)
         self.type.SetDoubleBuffered(True)
         self.choicetypes = create_grid(self.type, self.types, self._types, 5, cw.ppis(120))
-
+        self.type.SetColLabelSize( cw.ppis(20) )
         self.type.SetColLabelValue(1, u"サイズ")
         self.type.SetColSize(1, cw.ppis(80))
-        self.type.SetColLabelValue(2, u"太字\n(通常)")
+        self.type.SetColLabelValue(2, u"太字")
         self.type.SetColSize(2, cw.ppis(70))
-        self.type.SetColLabelValue(3, u"太字\n(拡大)")
+        self.type.SetColLabelValue(3, u"太字(拡大)")
         self.type.SetColSize(3, cw.ppis(70))
         self.type.SetColLabelValue(4, u"斜体")
         self.type.SetColSize(4, cw.ppis(70))
@@ -2702,12 +2703,12 @@ class FontSettingPanel(wx.Panel):
             self.base.SetCellValue(i, 0, str_font)
 
         create_grid(self.type, self.types)
-
+        self.type.SetColLabelSize( cw.ppis(20) )
         self.type.SetColLabelValue(1, u"サイズ")
         self.type.SetColSize(1, cw.ppis(80))
-        self.type.SetColLabelValue(2, u"太字\n(通常)")
+        self.type.SetColLabelValue(2, u"太字")
         self.type.SetColSize(2, cw.ppis(70))
-        self.type.SetColLabelValue(3, u"太字\n(拡大)")
+        self.type.SetColLabelValue(3, u"太字(拡大)")
         self.type.SetColSize(3, cw.ppis(70))
         self.type.SetColLabelValue(4, u"斜体")
         self.type.SetColSize(4, cw.ppis(70))
@@ -2746,7 +2747,7 @@ class FontSettingPanel(wx.Panel):
 
         self._select_base(self.base.GetGridCursorRow())
 
-        font = wx.Font(18, wx.DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL,
+        font = wx.Font(17, wx.DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL,
                        face=self.st_example.GetLabel())
         self.st_example.SetFont(font)
         self.st_example.SetLabel(self.get_basefontface(self.bases[0]))
@@ -2875,7 +2876,7 @@ class FontSettingPanel(wx.Panel):
         if 0 <= i:
             self.Freeze()
             self.st_example.SetLabel(self.get_basefontface(self.bases[i]))
-            font = wx.Font(18, wx.DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL,
+            font = wx.Font(17, wx.DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL,
                            face=self.st_example.GetLabel())
             self.st_example.SetFont(font)
             self.Layout()
@@ -2916,7 +2917,7 @@ class FontSettingPanel(wx.Panel):
         if 0 <= i:
             self.Freeze()
             self.st_example.SetLabel(self.get_typefontface(self.types[i]))
-            font = wx.Font(18, wx.DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL,
+            font = wx.Font(17, wx.DEFAULT, wx.FONTSTYLE_NORMAL, wx.FONTWEIGHT_NORMAL,
                            face=self.st_example.GetLabel())
             self.st_example.SetFont(font)
             self.Layout()

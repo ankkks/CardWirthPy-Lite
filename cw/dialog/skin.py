@@ -298,7 +298,7 @@ class SkinEditDialog(wx.Dialog):
                 self.local = cw.setting.LocalSetting()
                 self.local.load(e)
 
-        self.warning = wx.StaticText(self, -1, u"ここでの編集結果は、設定ダイアログでのOK・キャンセルの選択に関わらず即時に反映されます。")
+        self.warning = wx.StaticText(self, -1, u"ここでの編集結果はOKを押すと即時に反映されます。")
         font = self.warning.GetFont()
         font = wx.Font(font.GetPointSize(), font.GetFamily(), font.GetStyle(), wx.BOLD)
         self.warning.SetFont(font)
@@ -409,12 +409,13 @@ class SkinEditDialog(wx.Dialog):
         sizer_panel.Add(sizer_info, 1, wx.ALL|wx.EXPAND, cw.ppis(10))
         self.pane_info.SetSizer(sizer_panel)
 
+        sizer_btn.Add(self.warning, 0, wx.ALL, cw.ppis(3))
+        sizer_btn.AddStretchSpacer(1)
         sizer_btn.Add(self.btn_ok, 0, 0, cw.ppis(0))
-        sizer_btn.Add(self.btn_cncl, 0, wx.LEFT, cw.ppis(5))
+        sizer_btn.Add(self.btn_cncl, 0, wx.LEFT, cw.ppis(5))#|wx.ALIGN_RIGHT
 
-        sizer.Add(self.warning, 0, wx.ALL, cw.ppis(3))
         sizer.Add(self.note, 1, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
-        sizer.Add(sizer_btn, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.ALIGN_RIGHT, cw.ppis(3))
+        sizer.Add(sizer_btn, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
         self.SetSizer(sizer)
         sizer.Fit(self)
         self.Layout()
