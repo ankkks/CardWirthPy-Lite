@@ -303,7 +303,7 @@ class SkinEditDialog(wx.Dialog):
         font = wx.Font(font.GetPointSize(), font.GetFamily(), font.GetStyle(), wx.BOLD)
         self.warning.SetFont(font)
 
-        self.note = wx.Notebook(self)
+        self.note = wx.Notebook(self, style=wx.NB_FIXEDWIDTH)
         self.pane_info = wx.Panel(self.note, -1)
         self.box_info = wx.StaticBox(self.pane_info, -1, u"スキン情報")
         self.info = SkinInfoPanel(self.pane_info)

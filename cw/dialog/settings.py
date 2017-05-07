@@ -113,26 +113,6 @@ class SettingsDialog(wx.Dialog):
         self.Destroy()
         #ここで数秒応答不能になる(12.3でも確認)
 
-    def show_details(self):
-        simple = self.panel
-        self.panel = SettingsPanel(self)
-
-        self.panel.pane_gene.cb_debug.SetValue(simple.cb_debug.GetValue())
-        self.panel.pane_gene.skin.copy_values(simple.skin)
-        self.panel.pane_gene.expand.copy_values(simple.expand)
-        self.panel.pane_draw.speed.copy_values(simple.speed)
-        self.panel.pane_sound.cb_playbgm.SetValue(simple.cb_playbgm.GetValue())
-        self.panel.pane_sound.cb_playsound.SetValue(simple.cb_playsound.GetValue())
-
-        simple.Destroy()
-        self._do_layout()
-
-        self.SetTitle(cw.APP_NAME + u"の設定(詳細モード)")
-
-        # モニタ内に収める
-        cw.util.adjust_position(self)
-
-
 class SettingsPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent, pos=(-1024, -1024))
@@ -975,7 +955,7 @@ class GeneralSettingPanel(wx.Panel):
     def __init__(self, parent):
         wx.Panel.__init__(self, parent)
         # デバッグモード
-        self.box_gene = wx.StaticBox(self, -1, u"詳細")
+        self.box_gene = wx.StaticBox(self, -1, u"動作モード")
         self.cb_debug = wx.CheckBox(self, -1, u"デバッグモードでプレイする" + u"(Ctrl+D)")
         self.cb_debug.SetValue(cw.cwpy.debug)
         
@@ -2596,7 +2576,7 @@ class FontSettingPanel(wx.Panel):
 
         # フォント表示サンプル
         self.box_example = wx.StaticBox(self, -1, u"表示例")
-        self.st_example = wx.StaticText(self, -1, size=cw.ppis((10, 25)), style=wx.ALIGN_CENTER)
+        self.st_example = wx.StaticText(self, -1, size=cw.ppis((100, 32)), style=wx.ALIGN_CENTER)
         self.st_example.SetDoubleBuffered(True)
 
         # 描画オプション
@@ -2610,6 +2590,8 @@ class FontSettingPanel(wx.Panel):
         def create_grid(grid, seq, faces, cols, rowlblsize):
             grid.CreateGrid(len(seq), cols)
             grid.DisableDragRowSize()
+            #grid.SetLabelBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_3DLIGHT ) )
+            #grid.SetLabelTextColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_CAPTIONTEXT ) )
             grid.SetSelectionMode(wx.grid.Grid.SelectRows)
             grid.SetRowLabelAlignment(wx.LEFT, wx.CENTER)
             grid.SetRowLabelSize(rowlblsize)
@@ -2624,18 +2606,23 @@ class FontSettingPanel(wx.Panel):
             return editors
 
         # 基本フォント
-        self.box_base = wx.StaticBox(self, -1, u"基本フォント")
+        self.box_base = wx.StaticBox(self, -1, u"基本フォント(役割別の[同名]に反映)")
         self.base = wx.grid.Grid(self, -1, size=(-1, -1), style=wx.BORDER)
+        self.base.SetLabelTextColour(wx.Colour(30, 55, 240))
+        #self.base.SetLabelBackgroundColour(wx.Colour(230, 235, 240))
+        self.base.SetColLabelSize(cw.ppis(16))
+        self.base.SetDefaultCellFont(wx.Font(cw.ppis(8), 71, wx.NORMAL, wx.NORMAL))
+        #self.base.SetDefaultRowSize(cw.ppis(23))
         self.base.SetDoubleBuffered(True)
         self.choicebases = create_grid(self.base, self.bases, self._fontface_array, 1, cw.ppis(100))
-        self.base.SetMinSize(self.base.GetBestSize())
+        self.base.SetMinSize(self.base.GetBestSize())# (cw.ppis( (0, 4))))#余白を作らないとスクロールバーが出てしまう
 
         # 役割別フォント
         self.box_type = wx.StaticBox(self, -1, u"役割別フォント")
         self.type = wx.grid.Grid(self, -1, size=(1, 0), style=wx.BORDER)
+        #self.type.SetColLabelSize(cw.ppis(20))
         self.type.SetDoubleBuffered(True)
         self.choicetypes = create_grid(self.type, self.types, self._types, 5, cw.ppis(120))
-        self.type.SetColLabelSize( cw.ppis(20) )
         self.type.SetColLabelValue(1, u"サイズ")
         self.type.SetColSize(1, cw.ppis(80))
         self.type.SetColLabelValue(2, u"太字")
@@ -2968,7 +2955,6 @@ class FontSettingPanel(wx.Panel):
 
         bsizer_gene = wx.StaticBoxSizer(self.box_gene, wx.VERTICAL)
         bsizer_gene.Add(self.cb_bordering_cardname, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_gene.Add(self.cb_decorationfont, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.Add(self.cb_fontsmoothingmessage, 0, wx.LEFT|wx.BOTTOM|wx.RIGHT, cw.ppis(3))
         bsizer_gene.Add(self.cb_fontsmoothingcardname, 0, wx.LEFT|wx.BOTTOM|wx.RIGHT, cw.ppis(3))
         bsizer_gene.Add(self.cb_fontsmoothingstatusbar, 0, wx.LEFT|wx.BOTTOM|wx.RIGHT, cw.ppis(3))
@@ -2977,7 +2963,8 @@ class FontSettingPanel(wx.Panel):
         bsizer_left.Add(bsizer_gene, 0, wx.EXPAND, cw.ppis(3))
 
         bsizer_base = wx.StaticBoxSizer(self.box_base, wx.VERTICAL)
-        bsizer_base.Add(self.base, 1, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
+        bsizer_base.Add(self.base, 1, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))#|wx.EXPAND
+        bsizer_base.Add(self.cb_decorationfont, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, cw.ppis(3))
 
         bsizer_top.Add(bsizer_left, 1, wx.EXPAND|wx.RIGHT, cw.ppis(5))
         bsizer_top.Add(bsizer_base, 1, wx.EXPAND, cw.ppis(3))
