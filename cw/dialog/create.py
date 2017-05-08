@@ -458,6 +458,7 @@ class AdventurerCreater(wx.Dialog):
         self.shifttabkeyid = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnNUpKeyDown, id=nupkeyid)
         self.Bind(wx.EVT_MENU, self.OnNUpKeyDown, id=self.shifttabkeyid)
+
         seq = [
             (wx.ACCEL_NORMAL, wx.WXK_UP, nupkeyid),
             (wx.ACCEL_SHIFT, wx.WXK_TAB, self.shifttabkeyid),
@@ -1106,6 +1107,7 @@ class NamePage(AdventurerCreaterPage):
         # FIXME: アクセラレータに設定した上下左右キーがTextCtrl内で
         #        一切効かなくなるので、TextCtrlがフォーカスを得た時点で
         #        左右キーのアクセラレータを取り除いたテーブルに差し替える
+        # FIXME:LITE:BACKキーも上記に便乗させる　
         self.upkeyid = wx.NewId()
         self.downkeyid = wx.NewId()
         self.ctrlleftkeyid = wx.NewId()
@@ -1116,6 +1118,8 @@ class NamePage(AdventurerCreaterPage):
         self.ndownkeyid = wx.NewId()
         self.shifttabkeyid = wx.NewId()
         self.tabkeyid = wx.NewId()
+        self.backkeyid = wx.NewId()
+
         self.Bind(wx.EVT_MENU, self.OnUpKeyDown, id=self.upkeyid)
         self.Bind(wx.EVT_MENU, self.OnDownKeyDown, id=self.downkeyid)
         self.Bind(wx.EVT_MENU, self.OnCtrlLeftKeyDown, id=self.ctrlleftkeyid)
@@ -1123,6 +1127,7 @@ class NamePage(AdventurerCreaterPage):
         self.Bind(wx.EVT_MENU, self.OnNLeftKeyDown, id=self.nleftkeyid)
         self.Bind(wx.EVT_MENU, self.OnNRightKeyDown, id=self.nrightkeyid)
         self.Bind(wx.EVT_MENU, self.OnNUpKeyDown, id=self.nupkeyid)
+        self.Bind(wx.EVT_MENU, self.Parent.OnCancel, id=self.backkeyid)
         self.Bind(wx.EVT_MENU, self.OnNDownKeyDown, id=self.ndownkeyid)
         self.Bind(wx.EVT_MENU, self.OnNUpKeyDown, id=self.shifttabkeyid)
         self.Bind(wx.EVT_MENU, self.OnNDownKeyDown, id=self.tabkeyid)
@@ -1152,6 +1157,8 @@ class NamePage(AdventurerCreaterPage):
         if leftright:
             seq.append((wx.ACCEL_NORMAL, wx.WXK_LEFT, self.nleftkeyid))
             seq.append((wx.ACCEL_NORMAL, wx.WXK_RIGHT, self.nrightkeyid))
+            seq.append((wx.ACCEL_NORMAL, wx.WXK_BACK, self.backkeyid)),
+            seq.append((wx.ACCEL_NORMAL, ord('_'), self.backkeyid)),
         if updown:
             seq.append((wx.ACCEL_NORMAL, wx.WXK_UP, self.nupkeyid))
             seq.append((wx.ACCEL_NORMAL, wx.WXK_DOWN, self.ndownkeyid))
@@ -2516,6 +2523,7 @@ class DesignPanel(AdventurerCreaterPage):
         # FIXME: アクセラレータに設定した矢印キーがTextCtrl内で
         #        一切効かなくなるので、TextCtrlがフォーカスを得た時点で
         #        矢印キーのアクセラレータを取り除いたテーブルに差し替える
+        # FIXME:LITE:BACKキーも上記に便乗させる　
         self.upkeyid = wx.NewId()
         self.downkeyid = wx.NewId()
         self.ctrlleftkeyid = wx.NewId()
@@ -2526,6 +2534,7 @@ class DesignPanel(AdventurerCreaterPage):
         self.ndownkeyid = wx.NewId()
         self.shifttabkeyid = wx.NewId()
         self.tabkeyid = wx.NewId()
+        self.backkeyid = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnUpKeyDown, id=self.upkeyid)
         self.Bind(wx.EVT_MENU, self.OnDownKeyDown, id=self.downkeyid)
         self.Bind(wx.EVT_MENU, self.OnCtrlLeftKeyDown, id=self.ctrlleftkeyid)
@@ -2536,6 +2545,7 @@ class DesignPanel(AdventurerCreaterPage):
         self.Bind(wx.EVT_MENU, self.OnNDownKeyDown, id=self.ndownkeyid)
         self.Bind(wx.EVT_MENU, self.OnShiftTab, id=self.shifttabkeyid)
         self.Bind(wx.EVT_MENU, self.OnTab, id=self.tabkeyid)
+        self.Bind(wx.EVT_MENU, self.Parent.OnCancel, id=self.backkeyid)
         self._set_acceleratortable(False, True)
 
         def OnLeftRightSetFocus(event):
@@ -2569,6 +2579,8 @@ class DesignPanel(AdventurerCreaterPage):
         if leftright:
             seq.append((wx.ACCEL_NORMAL, wx.WXK_LEFT, self.nleftkeyid))
             seq.append((wx.ACCEL_NORMAL, wx.WXK_RIGHT, self.nrightkeyid))
+            seq.append((wx.ACCEL_NORMAL, wx.WXK_BACK, self.backkeyid))
+            seq.append((wx.ACCEL_NORMAL, ord('_'), self.backkeyid))
         if updown:
             seq.append((wx.ACCEL_NORMAL, wx.WXK_UP, self.nupkeyid))
             seq.append((wx.ACCEL_NORMAL, wx.WXK_DOWN, self.ndownkeyid))
