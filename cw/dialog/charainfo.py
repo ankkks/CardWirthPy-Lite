@@ -108,6 +108,22 @@ class CharaInfo(wx.Dialog):
         self._bind()
         cw.util.add_sideclickhandlers(self.toppanel, self.leftbtn, self.rightbtn)
 
+        for i in xrange(len(self.bottompanel)):
+            tabctrl = self.notebook.FindTab(self.notebook.GetPage(i))[0]
+            def onfocus(event):
+                self.closebtn.SetFocus()
+            tabctrl.Bind(wx.EVT_SET_FOCUS, onfocus)
+        for panel in self.bottompanel:
+            panel.AcceptsFocus = lambda: False
+            panel.AcceptsFocusFromKeyboard = lambda: False
+            panel.AcceptsFocusRecursively = lambda: False
+            panel.SetFocus = lambda: None
+            panel.SetFocusFromKeyboard = lambda: None
+            panel.SetCanFocus(False)
+            def onfocus(event):
+                self.closebtn.SetFocus()
+            panel.Bind(wx.EVT_SET_FOCUS, onfocus)
+
         self.closebtn.SetFocus()
 
         self.leftpagekeyid = wx.NewId()
