@@ -43,7 +43,7 @@ class CardControl(wx.Dialog):
         else:
             self.areaid = areaid
 
-        # panel #style=wx.RAISED_BORDERは詰めると見栄えが悪くなるので一旦止める
+        # panel #TODO style=wx.RAISED_BORDERは詰めると見栄えが悪くなるので一旦止める
         self.panel = wx.Panel(self, -1, size=(-1, cw.wins(29)))
         # close
         if self.callname in ("HANDVIEW", "CARDPOCKET_REPLACE"):
@@ -104,9 +104,10 @@ class CardControl(wx.Dialog):
         self.show = [None] * 3
         self._typeicon_e = [None] * 3
         self._typeicon_d = [None] * 3
-        for cardtype, bmp, msg in ((cw.POCKET_SKILL, cw.cwpy.rsrc.dialogs["STATUS8"], cw.cwpy.msgs["skillcard"]+u"を表示"),
-                                   (cw.POCKET_ITEM, cw.cwpy.rsrc.dialogs["STATUS9"], cw.cwpy.msgs["itemcard"]+u"を表示"),
-                                   (cw.POCKET_BEAST, cw.cwpy.rsrc.dialogs["STATUS10"], cw.cwpy.msgs["beastcard"]+u"を表示")):
+        show = (cw.cwpy.msgs["show_object"])
+        for cardtype, bmp, msg in ((cw.POCKET_SKILL, cw.cwpy.rsrc.dialogs["STATUS8"], (show % cw.cwpy.msgs["skillcard"])),
+                                   (cw.POCKET_ITEM, cw.cwpy.rsrc.dialogs["STATUS9"], (show % cw.cwpy.msgs["itemcard"])),
+                                   (cw.POCKET_BEAST, cw.cwpy.rsrc.dialogs["STATUS10"], (show % cw.cwpy.msgs["beastcard"]))):
             btn = wx.lib.buttons.ThemedGenBitmapToggleButton(self.toppanel, -1, None, size=cw.wins((24, 24)))
             self._typeicon_e[cardtype] = bmp
             dbmp = cw.imageretouch.to_disabledimage(bmp, maskpos=(bmp.GetWidth()-1, 0))
@@ -1515,6 +1516,7 @@ class CardHolder(CardControl):
 
         self.Bind(wx.EVT_BUTTON, self.OnClickUpBtn, self.upbtn)
         self.Bind(wx.EVT_BUTTON, self.OnClickDownBtn, self.downbtn)
+        #self.Bind(wx.EVT_TOGGLEBUTTON, self.OnClickDownBtn, self.downbtn)
 
         self.page.Bind(wx.lib.intctrl.EVT_INT, self.OnPageNum)
         self.page.Bind(wx.EVT_SET_FOCUS, self.OnPageSetFocus)
@@ -2024,7 +2026,6 @@ class CardHolder(CardControl):
                     header.negaflag = True
 
         self.page.SetValue(self.index+1)
-
         self.draw_cards()
 
     def OnPageNum(self, event):

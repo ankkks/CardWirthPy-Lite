@@ -741,6 +741,7 @@
     <Message key="beastcard">召喚獣カード</Message>
     <Message key="desc_base_money"></Message>
     <Message key="desc_party_money"></Message>
+    <Message key="install_scenario">シナリオの追加</Message>
     <Message key="create_directory">新規フォルダ</Message>
     <Message key="narrow_party_name">パーティ名</Message>
     <Message key="member_name">メンバー名</Message>
@@ -779,6 +780,7 @@
     <Message key="faceup">暴露状態</Message>
     <Message key="antimagic">完全魔法防御状態</Message>
     <Message key="all">全て</Message>
+    <Message key="show_object">%sを表示</Message>
     <!-- 2.0 ここまで -->
   </Messages>
   <Settings importantdrawing="False" importantfont="False" />
