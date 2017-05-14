@@ -330,12 +330,12 @@ class Setting(object):
         self.sort_cards = "None"
         self.sort_cardswithstar = True
         self.card_narrow = ""
-        self.card_narrowtype = 0
+        self.card_narrowtype = 1
         self.edit_star = False
-        self.yado_narrowtype = 0
-        self.standbys_narrowtype = 0
-        self.parties_narrowtype = 0
-        self.infoview_narrowtype = 0
+        self.yado_narrowtype = 1
+        self.standbys_narrowtype = 1
+        self.parties_narrowtype = 1
+        self.infoview_narrowtype = 1
         self.backlogmax = 100
         self.messagelog_type = LOG_COMPRESS
         self.showfps = False
@@ -358,7 +358,7 @@ class Setting(object):
         self.overwrite_partyrecord = True
         self.folderoftype = []
         self.scenario_narrow = ""
-        self.scenario_narrowtype = 0
+        self.scenario_narrowtype = 1
         self.scenario_sorttype = 0
         self.ssinfoformat = u"[%scenario%[(%author%)] - ][%party% at ]%yado%"
         self.ssfnameformat = u"ScreenShot/[%yado%/[%party%_]]%year%%month%%day%_%hour%%minute%%second%[_in_%scenario%].png"
@@ -397,7 +397,7 @@ class Setting(object):
         self.show_debuglogdialog = False
         self.write_playlog = False
         self.enable_oldf9 = False
-        self.move_repeat = 250 #移動ボタン押しっぱなしの速度
+        self.move_repeat = 240 #移動ボタン押しっぱなしの速度
         self.open_lastscenario = True
         # アップデートに伴うファイルの自動移動・削除を行う
         self.auto_update_files = True
@@ -1477,11 +1477,26 @@ class Resource(object):
     def create_wxbutton(self, parent, cid, size, name=None, bmp=None , chain=False):
         if name:
             button = wx.Button(parent, cid, name, size=size)
-            button.SetMinSize(size)
             button.SetFont(self.get_wxfont("button"))
+            button.SetMinSize(size)
         elif bmp:
             if chain:
-                button = wx.BitmapButton(parent, cid, bmp, style=wx.NO_BORDER)
+                #button = wx.BitmapButton(parent, cid, bmp, style=wx.BORDER_MASK)
+                import wx.lib.buttons  as  buttons
+                #button = buttons.GenBitmapButton(parent, cid, None, style=wx.BORDER_NONE)
+                #button.SetBitmapLabel(bmp)
+                if size[0] == cw.wins(30):
+                    button = buttons.GenBitmapToggleButton(parent, cid, bmp, style=wx.BORDER_NONE)
+                    #button = wx.lib.buttons.ThemedGenBitmapToggleButton(parent, cid, bmp,
+                    #                                                    style=wx.BORDER_NONE | wx.NO_BORDER)
+                else:
+                    button = buttons.GenBitmapToggleButton(parent, cid, bmp, style=0)
+                    button.SetBezelWidth(1)
+                button.SetUseFocusIndicator(False)
+                #button.InitColours()
+                #button.SetBitmapSelected(bmp)
+                #mask = wx.Mask(bmp, wx.BLUE)
+                #bmp.SetMask(mask)
             else:
                 button = wx.BitmapButton(parent, cid, bmp)
             button.SetMinSize(size)
@@ -1496,6 +1511,7 @@ class Resource(object):
             def starttimer(event):
                 if not timer.running:
                     timer.running = True
+                    button.SetToggle(True)
                     btnevent = wx.PyCommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, button.GetId())
                     button.ProcessEvent(btnevent)
 
@@ -1510,6 +1526,7 @@ class Resource(object):
                 timer.Stop()
                 event.Skip()
                 timer.running = False
+                button.SetToggle(False)
 
             def enterbutton(event):
                 button.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INACTIVEBORDER))
@@ -1520,8 +1537,10 @@ class Resource(object):
 
             button.Bind(wx.EVT_TIMER, timerfunc)
             button.Bind(wx.EVT_LEFT_DOWN, starttimer)
+            button.Bind(wx.EVT_LEFT_DCLICK, starttimer)
+            #button.Bind(wx.EVT_TOGGLEBUTTON, starttimer)
             button.Bind(wx.EVT_LEFT_UP, stoptimer)
-            button.Bind(wx.EVT_ENTER_WINDOW, enterbutton)
+            #button.Bind(wx.EVT_ENTER_WINDOW, enterbutton)
             button.Bind(wx.EVT_LEAVE_WINDOW, leavebutton)
 
         return button
