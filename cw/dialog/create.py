@@ -665,8 +665,8 @@ class AdventurerCreaterPage(wx.Panel):
         self.age = ""
         self._dropkey = (-1, u"<ドロップされたイメージ>", "/drop_files")
 
-        self.Bind(wx.EVT_SET_FOCUS, self.OnSetFocus)
-        self.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
+        #self.Bind(wx.EVT_SET_FOCUS, self.OnSetFocus)
+        #self.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
 
         if freeze:
             self.Freeze()
