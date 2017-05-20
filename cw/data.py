@@ -342,8 +342,6 @@ class SystemData(object):
             # イベント中に存在しないリソースを読み込もうとする
             # クラシックシナリオがいくつか確認されているため、
             # 読込失敗の警告ダイアログは出さないようにする。
-            ##s = u"%s の読込に失敗しました。" % (os.path.basename(fpath0))
-            ##cw.cwpy.call_modaldlg("ERROR", text=s)
             return None
         try:
             return xml2element(fpath, tag, nocache=nocache, rootattrs=rootattrs)
@@ -1202,7 +1200,7 @@ class ScenarioData(SystemData):
         # "font_*.*"のファイルパスの画像を特殊文字に指定
         if self._r_specialchar.match(fname.lower()):
             def load(dpath, fname):
-                path = cw.util.join_paths(dpath, fname)
+                path = cw.util.get_materialpath(fname, cw.M_IMG, scedir=dpath, findskin=False)
                 image = cw.util.load_image(path, True, can_loaded_scaledimage=can_loaded_scaledimage)
                 return image, True
             m = self._r_specialchar.match(fname.lower())
