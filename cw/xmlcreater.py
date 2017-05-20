@@ -343,6 +343,10 @@ def create_settings(setting, writeplayingdata=True, fpath="Settings_Lite.xml"):
     if setting.confirm_beforeusingcard <> setting.confirm_beforeusingcard_init:
         e = cw.data.make_element("ConfirmBeforeUsingCard", str(setting.confirm_beforeusingcard))
         element.append(e)
+    # カードの売却破棄時に確認ダイアログを表示
+    if setting.confirm_dumpcard <> setting.confirm_dumpcard_init:
+        e = cw.data.make_element("ConfirmDumpCard", str(setting.confirm_dumpcard))
+        element.append(e)
     # セーブ前に確認ダイアログを表示
     if setting.confirm_beforesaving <> setting.confirm_beforesaving_init:
         e = cw.data.make_element("ConfirmBeforeSaving", setting.confirm_beforesaving)

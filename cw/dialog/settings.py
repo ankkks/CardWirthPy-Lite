@@ -533,6 +533,8 @@ class SettingsPanel(wx.Panel):
         setting.show_savedmessage = value
         value = self.pane_ui.cb_confirmbeforeusingcard.GetValue()
         setting.confirm_beforeusingcard = value
+        value = self.pane_ui.cb_confirm_dumpcard.GetValue()
+        setting.confirm_dumpcard = value
         value = self.pane_ui.cb_noticeimpossibleaction.GetValue()
         setting.noticeimpossibleaction = value
         value = self.pane_ui.cb_showroundautostartbutton.GetValue()
@@ -2300,8 +2302,8 @@ class UISettingPanel(wx.Panel):
             self, -1, u"保存せずに終了しようとしたら警告を表示")
         self.cb_confirmbeforeusingcard = wx.CheckBox(
             self, -1, u"カード使用時に確認メッセージを表示")
-        #self.cb_confirm_dumpcard = wx.CheckBox(
-        #    self, -1, u"カードの売却破棄時に確認メッセージを表示")
+        self.cb_confirm_dumpcard = wx.CheckBox(
+            self, -1, u"カード売却・破棄時に確認メッセージを表示")
         self.cb_noticeimpossibleaction = wx.CheckBox(
             self, -1, u"不可能な行動を選択した時に警告を表示")
         self.cb_noticeimpossibleaction.SetToolTipString( u"Capを超えてカードを配ろうとした時など" )
@@ -2359,6 +2361,7 @@ class UISettingPanel(wx.Panel):
         self.cb_show_addctrlbtn.SetValue(setting.show_addctrlbtn)
         self.cb_show_experiencebar.SetValue(setting.show_experiencebar)
         self.cb_confirmbeforeusingcard.SetValue(setting.confirm_beforeusingcard)
+        self.cb_confirm_dumpcard.SetValue(setting.confirm_dumpcard)
         self.cb_noticeimpossibleaction.SetValue(setting.noticeimpossibleaction)
 
     def init_values(self, setting):
@@ -2411,6 +2414,8 @@ class UISettingPanel(wx.Panel):
         self.cb_revertcardpocket.SetValue(setting.revert_cardpocket_init)
         self.cb_showlogwithwheelup.SetValue(setting.wheelup_operation_init == cw.setting.WHEEL_SHOWLOG)
         self.cb_confirmbeforeusingcard.SetValue(setting.confirm_beforeusingcard_init)
+        self.cb_confirm_dumpcard.SetValue(setting.confirm_dumpcard_init)
+
         self.cb_noticeimpossibleaction.SetValue(setting.noticeimpossibleaction_init)
 
     def _do_layout(self):
@@ -2474,6 +2479,7 @@ class UISettingPanel(wx.Panel):
         bsizer_dlg.Add(bsizer_confirm_beforesaving, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.Add(self.cb_showsavedmessage, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.Add(self.cb_confirmbeforeusingcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_dlg.Add(self.cb_confirm_dumpcard, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.Add(self.cb_cautionbeforesaving, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.Add(self.cb_noticeimpossibleaction, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.SetMinSize((_settings_width(), -1))

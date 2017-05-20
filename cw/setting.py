@@ -345,6 +345,7 @@ class Setting(object):
         self.wheelup_operation = WHEEL_SHOWLOG
         self.show_allselectedcards = True
         self.confirm_beforeusingcard = True
+        self.confirm_dumpcard = True
         self.confirm_beforesaving = CONFIRM_BEFORESAVING_YES
         self.show_savedmessage = True
         self.show_backpackcard = True
@@ -601,6 +602,8 @@ class Setting(object):
         self.show_allselectedcards = data.getbool("ShowAllSelectedCards", self.show_allselectedcards)
         # カード使用時に確認ダイアログを表示
         self.confirm_beforeusingcard = data.getbool("ConfirmBeforeUsingCard", self.confirm_beforeusingcard)
+        # 売却・破棄時に確認ダイアログを表示
+        self.confirm_dumpcard = data.getbool("ConfirmDumpCard", self.confirm_dumpcard)
         # セーブ前に確認ダイアログを表示
         self.confirm_beforesaving = data.gettext("ConfirmBeforeSaving", self.confirm_beforesaving)
         # セーブ完了時に確認ダイアログを表示

@@ -4036,7 +4036,7 @@ class CWPy(_Singleton, threading.Thread):
                             price /=  header.maxuselimit
                 elif header.type == "BeastCard":
                     price = calc_price(header)
-                if not from_event:
+                if not from_event and self.setting.confirm_dumpcard:
                     if sound:
                         cw.cwpy.play_sound("page")
                     s = cw.cwpy.msgs["confirm_sell"] % (header.name, price)
@@ -4044,7 +4044,7 @@ class CWPy(_Singleton, threading.Thread):
                     if self.get_yesnoresult() <> wx.ID_OK:
                         return
             else:
-                if not from_event:
+                if not from_event and self.setting.confirm_dumpcard:
                     if sound:
                         cw.cwpy.play_sound("page")
                     s = cw.cwpy.msgs["confirm_dump"] % (header.name)
