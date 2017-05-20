@@ -246,20 +246,8 @@ class CWPy(_Singleton, threading.Thread):
     def set_clientsize(self, size):
         """wx側ウィンドウの表示域サイズを設定する。"""
         def func():
-            if sys.platform <> "win32":
-                self.frame.SetMaxSize((-1, -1))
-                self.frame.SetMinSize((-1, -1))
             self.frame.SetClientSize(size)
             self.frame.panel.SetSize(size)
-            if sys.platform <> "win32":
-                if self.frame.IsFullScreen():
-                    dsize = self.frame.get_displaysize()
-                    self.frame.SetMaxSize(dsize)
-                    self.frame.SetMinSize(dsize)
-                else:
-                    self.frame.SetMaxSize(self.frame.GetBestSize())
-                    self.frame.SetMinSize(self.frame.GetBestSize())
-                self.exec_func(self.draw)
 
         self.frame.exec_func(func)
 
@@ -355,7 +343,7 @@ class CWPy(_Singleton, threading.Thread):
         except cw.setting.NoFontError:
             def func():
                 s = (u"CardWirthPyの実行に必要なフォントがありません。\n"
-                     u"Data/Font以下にIPAフォントをインストールしてください。")
+                     u"Data/Font以下にフォントをインストールしてください。")
                 wx.MessageBox(s, u"メッセージ", wx.OK|wx.ICON_ERROR, cw.cwpy.frame)
                 cw.cwpy.frame.Destroy()
             cw.cwpy.frame.exec_func(func)
@@ -383,12 +371,12 @@ class CWPy(_Singleton, threading.Thread):
             self.background.bgs = []
 
         changed = self.ydata and self.ydata.is_changed()
-        if self.ydata and self.setting.skindirname <> skindirname:
-            self.ydata.set_skinname(skindirname)
         scedir = self.setting.get_scedir()
         oldskindirname = self.setting.skindirname
         self.setting.skindirname = skindirname
         self.setting.init_skin()
+        if self.ydata:
+            self.ydata.set_skinname(skindirname, self.setting.skintype)
         self.skindir = self.setting.skindir
         oldskindir = cw.util.join_paths("Data/Skin", oldskindirname)
         newskindir = cw.util.join_paths("Data/Skin", skindirname)
@@ -949,10 +937,7 @@ class CWPy(_Singleton, threading.Thread):
         return cw.s(290-5) <= mousepos[1] and mousepos[1] < cw.s(cw.SIZE_AREA[1])
 
     def update_mousepos(self):
-        if sys.platform <> "win32":
-            self.mousepos = self.wxmousepos
-            return True
-        if pygame.mouse.get_focused() or sys.platform <> "win32":
+        if pygame.mouse.get_focused():
             if self.scr_fullscreen:
                 mousepos = pygame.mouse.get_pos()
                 x = int((mousepos[0] - self.scr_pos[0]) / self.scr_scale)
@@ -1902,7 +1887,7 @@ class CWPy(_Singleton, threading.Thread):
             self.change_area(areaid)
             self.is_pcardsselectable = self.ydata and self.ydata.party
 
-        if self.setting.store_skinoneachbase and self.ydata.skindirname <> cw.cwpy.setting.skindirname:
+        if self.ydata.skindirname <> cw.cwpy.setting.skindirname:
             self.update_skin(self.ydata.skindirname, changearea=False, afterfunc=change_area)
         else:
             change_area()
@@ -1924,7 +1909,7 @@ class CWPy(_Singleton, threading.Thread):
         self.set_status("Scenario")
         self.battle = None
 
-        if self.setting.store_skinoneachbase and self.ydata.skindirname <> cw.cwpy.setting.skindirname:
+        if self.ydata.skindirname <> cw.cwpy.setting.skindirname:
             def func():
                 self._set_scenario_impl(header, lastscenario, lastscenariopath, resume, manualstart)
             self.update_skin(self.ydata.skindirname, changearea=False, afterfunc=func)

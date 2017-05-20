@@ -65,7 +65,7 @@ class SkinConversionDialog(wx.Dialog):
         self.pane_font = cw.dialog.settings.FontSettingPanel(self.note, for_local=True,
                                                              get_localsettings=get_localsettings,
                                                              use_copybase=use_copybase)
-        self.pane_font.load(None, self.local)
+        self.pane_font.load(cw.cwpy.setting, self.local)
         self.note.AddPage(self.pane_base, u"基本")
         self.note.AddPage(self.pane_feature, u"特性")
         self.note.AddPage(self.pane_sound, u"サウンド")

@@ -510,8 +510,6 @@ class SettingsPanel(wx.Panel):
         value = self.pane_ui.cb_cautionbeforesaving.GetValue()
         setting.caution_beforesaving = value
 
-        #value = self.pane_ui.cb_store_skinoneachbase.GetValue()
-        #setting.store_skinoneachbase = value
         value = self.pane_ui.ch_showbackpackcard.GetSelection()
         if value == 2:
             setting.show_backpackcard = setting.show_backpackcardatend = False
@@ -2286,8 +2284,6 @@ class UISettingPanel(wx.Panel):
         self.cb_blink_partymoney = wx.CheckBox(
             self, -1, u"所持金が増減した時に所持金欄を点滅させる")
 
-        #self.cb_store_skinoneachbase = wx.CheckBox(
-        #    self, -1, u"拠点ごとにスキンを記憶する")
         #self.cb_protect_staredcard = wx.CheckBox(
         #    self, -1, u"スター付きのカードの売却や破棄を禁止する")
 
@@ -2304,6 +2300,8 @@ class UISettingPanel(wx.Panel):
             self, -1, u"保存せずに終了しようとしたら警告を表示")
         self.cb_confirmbeforeusingcard = wx.CheckBox(
             self, -1, u"カード使用時に確認メッセージを表示")
+        #self.cb_confirm_dumpcard = wx.CheckBox(
+        #    self, -1, u"カードの売却破棄時に確認メッセージを表示")
         self.cb_noticeimpossibleaction = wx.CheckBox(
             self, -1, u"不可能な行動を選択した時に警告を表示")
         self.cb_noticeimpossibleaction.SetToolTipString( u"Capを超えてカードを配ろうとした時など" )
@@ -2357,7 +2355,6 @@ class UISettingPanel(wx.Panel):
             self.ch_confirm_beforesaving.SetSelection(0)
         self.cb_cautionbeforesaving.SetValue(setting.caution_beforesaving)
         self.cb_showsavedmessage.SetValue(setting.show_savedmessage)
-        #self.cb_store_skinoneachbase.SetValue(setting.store_skinoneachbase)
 
         self.cb_show_addctrlbtn.SetValue(setting.show_addctrlbtn)
         self.cb_show_experiencebar.SetValue(setting.show_experiencebar)
@@ -2403,7 +2400,6 @@ class UISettingPanel(wx.Panel):
             self.ch_confirm_beforesaving.SetSelection(0)
         self.cb_showsavedmessage.SetValue(setting.show_savedmessage_init)
         self.cb_cautionbeforesaving.SetValue(setting.caution_beforesaving_init)
-        #self.cb_store_skinoneachbase.SetValue(setting.store_skinoneachbase_init)
 
         if setting.show_backpackcardatend_init:
             self.ch_showbackpackcard.SetSelection(1)
@@ -2480,7 +2476,6 @@ class UISettingPanel(wx.Panel):
         bsizer_dlg.Add(self.cb_confirmbeforeusingcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.Add(self.cb_cautionbeforesaving, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.Add(self.cb_noticeimpossibleaction, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        #bsizer_dlg.Add(self.cb_store_skinoneachbase, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, 3)
         bsizer_dlg.SetMinSize((_settings_width(), -1))
 
         sizer_v1.Add(bsizer_wait, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
