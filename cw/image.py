@@ -1451,10 +1451,10 @@ def get_bmpdepth(data):
         biBitCount = s[10]
     return biBitCount
 
-def get_pngdepth(data):
+def has_pngalpha(data):
     """
-    PNGデータのビット深度値を返す。
-    正常なPNGデータでない場合は0を返す。
+    PNGデータがα値を持つかを返す。
+    正常なPNGデータでない場合はFalseを返す。
     """
     if len(data) < 8 + 25:
         return 0
@@ -1466,7 +1466,8 @@ def get_pngdepth(data):
         return 0
     if s[9] <> ord('I') or s[10] <> ord('H') or s[11] <> ord('D') or s[12] <> ord('R'):
         return 0
-    return s[15]
+    colortype = s[16]
+    return colortype in (4, 6)
 
 def get_1bitpalette(data):
     s = struct.unpack("<BBIhhII", data[0:14+4])

@@ -639,14 +639,11 @@ def load_image(path, mask=False, maskpos=(0, 0), f=None, retry=True, isback=Fals
             if ext == ".bmp":
                 data = cw.image.patch_rle4bitmap(data)
                 bmpdepth = cw.image.get_bmpdepth(data)
-            elif ispng:
-                # PNGイメージを読み込むと全てα値ありになる
-                bmpdepth = cw.image.get_pngdepth(data)
             with io.BytesIO(data) as f2:
                 image = pygame.image.load(f2)
                 f2.close()
             if ext == ".bmp":
-                image = cw.imageretouch.patch_alphadata(image)
+                image = cw.imageretouch.patch_alphadata(image, ext)
         else:
             if not os.path.isfile(path):
                 return pygame.Surface((0, 0)).convert()
@@ -661,17 +658,15 @@ def load_image(path, mask=False, maskpos=(0, 0), f=None, retry=True, isback=Fals
                 with io.BytesIO(data) as f2:
                     image = pygame.image.load(f2)
                     f2.close()
-                if ext == ".bmp":
-                    image = cw.imageretouch.patch_alphadata(image)
             else:
                 with open(path, "rb") as f2:
                     data = f2.read()
                     f2.close()
-                if ispng:
-                    bmpdepth = cw.image.get_pngdepth(data)
                 with io.BytesIO(data) as f2:
                     image = pygame.image.load(f2)
                     f2.close()
+            if ext == ".bmp":
+                image = cw.imageretouch.patch_alphadata(image, ext)
     except:
         print_ex()
         #print u"画像が読み込めません(load_image)。リトライします", path
@@ -688,9 +683,7 @@ def load_image(path, mask=False, maskpos=(0, 0), f=None, retry=True, isback=Fals
                     with open(path, "rb") as f2:
                         data = f2.read()
                         f2.close()
-                if ispng:
-                    bmpdepth = cw.image.get_pngdepth(data)
-                else:
+                if not ispng:
                     bmpdepth = cw.image.get_bmpdepth(data)
                 data, _ok = cw.image.fix_cwnext16bitbitmap(data)
                 with io.BytesIO(data) as f2:
@@ -2951,6 +2944,8 @@ def load_wxbmp(name="", mask=False, image=None, maskpos=(0, 0), f=None, retry=Tr
         up_scr = cw.UP_SCR # ゲーム画面と合わせるため、ダイアログなどでも描画サイズのイメージを使用する
     name, up_scr = find_scaledimagepath(name, up_scr, can_loaded_scaledimage, noscale)
 
+    ext = ""
+    haspngalpha = False
     bmpdepth = 0
     maskcolour = None
     if mask:
@@ -2970,6 +2965,9 @@ def load_wxbmp(name="", mask=False, image=None, maskpos=(0, 0), f=None, retry=Tr
                 if not data:
                     return wx.EmptyBitmap(0, 0)
 
+                ext = get_imageext(data)
+                if ext == ".png":
+                    haspngalpha = cw.image.has_pngalpha(data)
                 bmpdepth = cw.image.get_bmpdepth(data)
                 data, ok = cw.image.fix_cwnext16bitbitmap(data)
                 if isinstance(data, wx.Image):
@@ -2995,7 +2993,7 @@ def load_wxbmp(name="", mask=False, image=None, maskpos=(0, 0), f=None, retry=Tr
             image.SetMaskColour(r, g, b)
             return (r, g, b)
 
-        if not image.HasAlpha() and not image.HasMask():
+        if not haspngalpha and not image.HasAlpha() and not image.HasMask():
             maskcolour = set_mask(image, maskpos)
 
         wxbmp = image.ConvertToBitmap()
