@@ -426,6 +426,11 @@ def create_settings(setting, writeplayingdata=True, fpath="Settings_Lite.xml"):
         e = cw.data.make_element("ScreenShotInformationBackgroundColor", "", d)
         element.append(e)
 
+    # スクリーンショット情報の背景イメージ
+    if setting.ssinfobackimage <> setting.ssinfobackimage_init:
+        e = cw.data.make_element("ScreenShotInformationBackgroundImage", setting.ssinfobackimage)
+        element.append(e)
+
     # スクリーンショットのファイル名
     if setting.ssfnameformat <> setting.ssfnameformat_init:
         e = cw.data.make_element("ScreenShotFileNameFormat", setting.ssfnameformat)
