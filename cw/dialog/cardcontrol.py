@@ -257,14 +257,14 @@ class CardControl(wx.Dialog):
         self.downtargkeyid = wx.NewId()
         self.infokeyid = wx.NewId()
         self.deleteid = wx.NewId()
-        backid = wx.NewId()
-        addctrl = wx.NewId()
+        self.backid = wx.NewId()
+        self.addctrl = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.leftkeyid)
         self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.rightkeyid)
         self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.returnkeyid)
         self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.infokeyid)
         self.Bind(wx.EVT_MENU, self.OnKeyDown, id=self.deleteid)
-        self.Bind(wx.EVT_MENU, self.OnCancel, id=backid)
+        self.Bind(wx.EVT_MENU, self.OnCancel, id=self.backid)
         self.Bind(wx.EVT_MENU, self.OnUp, id=self.upid)
         self.Bind(wx.EVT_MENU, self.OnDown, id=self.downid)
         self.Bind(wx.EVT_MENU, self.OnClickLeftBtn, id=self.leftpagekeyid)
@@ -272,7 +272,22 @@ class CardControl(wx.Dialog):
         self.Bind(wx.EVT_MENU, self.OnClickLeftBtn2, id=self.uptargkeyid)
         self.Bind(wx.EVT_MENU, self.OnClickRightBtn2, id=self.downtargkeyid)
         if self.addctrlbtn:
-            self.Bind(wx.EVT_MENU, self.OnToggleAdditionalControls, id=addctrl)
+            self.Bind(wx.EVT_MENU, self.OnToggleAdditionalControls, id=self.addctrl)
+        # FIXME:Lite アクセラレータに設定したBACKキーをTextCtrlでは無効にしなければならないため
+        # Reboot登録ダイアログを参考に、TextCtrlのフォーカスで切り替える
+        self._set_acceleratortable(True)
+
+        def OnTextCtrlSetFocus(event):
+            self._set_acceleratortable(False)
+            event.Skip(True)
+        self.narrow.Bind(wx.EVT_SET_FOCUS, OnTextCtrlSetFocus)
+
+        def OnTextCtrlKillFocus(event):
+            self._set_acceleratortable(True)
+            event.Skip(True)
+        self.narrow.Bind(wx.EVT_KILL_FOCUS, OnTextCtrlKillFocus)
+
+    def _set_acceleratortable(self, leftright):
         seq = [
             (wx.ACCEL_NORMAL, wx.WXK_LEFT, self.leftkeyid),
             (wx.ACCEL_NORMAL, wx.WXK_RIGHT, self.rightkeyid),
@@ -287,7 +302,11 @@ class CardControl(wx.Dialog):
             (wx.ACCEL_CTRL, wx.WXK_RETURN, self.infokeyid),
         ]
         if self.addctrlbtn:
-            seq.append((wx.ACCEL_CTRL, ord('F'), addctrl))
+            seq.append((wx.ACCEL_CTRL, ord('F'), self.addctrl))
+
+        if leftright:
+            seq.append((wx.ACCEL_NORMAL, wx.WXK_BACK, self.backid))
+            seq.append((wx.ACCEL_NORMAL, ord('_'), self.backid))
 
         self.narrowkeydown = []
         self.sortkeydown = []
@@ -300,8 +319,8 @@ class CardControl(wx.Dialog):
             self.Bind(wx.EVT_MENU, self.OnNumberKeyDown, id=sortkeydown)
             seq.append((wx.ACCEL_ALT, ord('1')+i, sortkeydown))
             self.sortkeydown.append(sortkeydown)
-        cw.util.set_acceleratortable(self, seq)
-
+        #cw.util.set_acceleratortable(self, seq)
+        cw.util.set_acceleratortable(self, seq, ignoreleftrightkeys=(wx.TextCtrl, wx.Dialog))
 
     def OnNumberKeyDown(self, event):
         """
@@ -1516,7 +1535,6 @@ class CardHolder(CardControl):
 
         self.Bind(wx.EVT_BUTTON, self.OnClickUpBtn, self.upbtn)
         self.Bind(wx.EVT_BUTTON, self.OnClickDownBtn, self.downbtn)
-        #self.Bind(wx.EVT_TOGGLEBUTTON, self.OnClickDownBtn, self.downbtn)
 
         self.page.Bind(wx.lib.intctrl.EVT_INT, self.OnPageNum)
         self.page.Bind(wx.EVT_SET_FOCUS, self.OnPageSetFocus)

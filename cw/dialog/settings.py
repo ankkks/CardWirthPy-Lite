@@ -266,8 +266,8 @@ class SettingsPanel(wx.Panel):
         setting.initmoneyisinitialcash = value
         value = self.pane_gene.cb_autosavepartyrecord.GetValue()
         setting.autosave_partyrecord = value
-        value = self.pane_gene.cb_overwritepartyrecord.GetValue()
-        setting.overwrite_partyrecord = value
+        #value = self.pane_gene.cb_overwritepartyrecord.GetValue()
+        #setting.overwrite_partyrecord = value
         value = self.pane_gene.tx_ssinfoformat.GetValue()
         setting.ssinfoformat = value
         value = self.pane_gene.tx_ssfnameformat.GetValue()
@@ -281,6 +281,8 @@ class SettingsPanel(wx.Panel):
         else:
             setting.ssinfofontcolor = (0, 0, 0)
             setting.ssinfobackcolor = (255, 255, 255)
+        value = self.pane_gene.tx_ssinfobackimage.GetValue()
+        setting.ssinfobackimage = value
         value = self.pane_gene.ch_messagelog_type.GetSelection()
         if value == 0:
             value = cw.setting.LOG_SINGLE
@@ -984,15 +986,23 @@ class GeneralSettingPanel(wx.Panel):
 
         self.cb_autosavepartyrecord = wx.CheckBox(
             self, -1, u"解散時、自動的にパーティ情報を記録する")
-        self.cb_overwritepartyrecord = wx.CheckBox(
-            self, -1, u"自動記録時、同名のパーティ記録へ上書きする")
+        #self.cb_overwritepartyrecord = wx.CheckBox(
+        #    self, -1, u"自動記録時、同名のパーティ記録へ上書きする")
 
         # スクリーンショット情報
-        self.box_ss = wx.StaticBox(self, -1, u"スクリーンショット情報(画像上部に表示)")
+        self.box_ss = wx.StaticBox(self, -1, u"スクリーンショット情報(PrtScrキーで撮影)")
         self.tx_ssinfoformat = wx.TextCtrl(self, -1, size=(cw.ppis(150), -1), style=wx.SIMPLE_BORDER)
         # スクリーンショット情報の色
         choices = [u"黒文字", u"白文字"]
         self.ch_ssinfocolor = wx.Choice(self, -1, size=(-1, -1), choices=choices)
+
+        # 背景イメージ
+        self.st_ssinfobackimage = wx.StaticText(self, -1, u"背景画像:")
+        self.tx_ssinfobackimage = wx.TextCtrl(self, -1, size=(-1, -1), style=wx.SIMPLE_BORDER)
+        self.ref_ssinfobackimage = cw.util.create_fileselection(self,
+                                                                target=self.tx_ssinfobackimage,
+                                                                message=u"スクリーンショット情報の背景にするファイルを選択",
+                                                                wildcard=u"画像ファイル (*.jpg;*.png;*.gif;*.bmp;*.tiff;*.xpm)|*.jpg;*.png;*.gif;*.bmp;*.tiff;*.xpm|全てのファイル (*.*)|*.*")
 
         # スクリーンショットのファイル名
         self.st_ssfnameformat = wx.StaticText(self, -1, u"ファイル名:")
@@ -1000,19 +1010,20 @@ class GeneralSettingPanel(wx.Panel):
         # 所持カード撮影情報のファイル名
         self.st_cardssfnameformat = wx.StaticText(self, -1, u"所持カード:")
         self.tx_cardssfnameformat = wx.TextCtrl(self, -1, size=(cw.ppis(150), -1), style=wx.SIMPLE_BORDER)
+        self.st_cardssfnameformat.SetToolTipString(u"パーティ全員の所持カード一覧のファイル名。\nshift+PrtScrで撮影。")
 
         self.ss_tx = set()
         self.ss_tx.add(self.tx_ssinfoformat)
         self.ss_tx.add(self.tx_ssfnameformat)
         self.ss_tx.add(self.tx_cardssfnameformat)
 
-        self.st_ssinfo_brackets = wx.StaticText(self, -1, u"[ ] 内は、各種情報がある場合のみ挿入されます")
+        #self.st_ssinfo_brackets = wx.StaticText(self, -1, u"[ ] 内は、各種情報がある場合のみ")
 
         self.sstoolbar = wx.ToolBar(self, -1, style=wx.TB_FLAT|wx.TB_NODIVIDER|wx.TB_HORZ_TEXT|wx.TB_NOICONS)
         self.sstoolbar.SetToolBitmapSize(wx.Size(cw.ppis(0), cw.ppis(0)))
         self.ti_ssins = self.sstoolbar.AddLabelTool(
             -1, u"各種情報の挿入", wx.EmptyBitmap(cw.ppis(0), cw.ppis(0)),
-            shortHelp=u"状況によって動的に変化する情報を挿入します。")
+            shortHelp=u"利用可能な環境変数一覧。手動でも入力できます。\n[ ] 内は、情報がない場合出力されません。")
         self.sstoolbar.Realize()
 
         ssdic = [
@@ -1069,8 +1080,8 @@ class GeneralSettingPanel(wx.Panel):
         self.cb_initmoneyisinitialcash.SetValue(setting.initmoneyisinitialcash)
         self.sc_initmoneyamount.Enable(not self.cb_initmoneyisinitialcash.GetValue())
         self.cb_autosavepartyrecord.SetValue(setting.autosave_partyrecord)
-        self.cb_overwritepartyrecord.SetValue(setting.overwrite_partyrecord)
-        self.cb_overwritepartyrecord.Enable(setting.autosave_partyrecord)
+        #self.cb_overwritepartyrecord.SetValue(setting.overwrite_partyrecord)
+        #self.cb_overwritepartyrecord.Enable(setting.autosave_partyrecord)
         self.tx_ssinfoformat.SetValue(setting.ssinfoformat)
         self.tx_ssfnameformat.SetValue(setting.ssfnameformat)
         self.tx_cardssfnameformat.SetValue(setting.cardssfnameformat)
@@ -1078,6 +1089,7 @@ class GeneralSettingPanel(wx.Panel):
             self.ch_ssinfocolor.Select(1)
         else:
             self.ch_ssinfocolor.Select(0)
+        self.tx_ssinfobackimage.SetValue(setting.ssinfobackimage)
         self.expand.load(setting)
 
     def init_values(self, setting):
@@ -1105,12 +1117,13 @@ class GeneralSettingPanel(wx.Panel):
         self.cb_initmoneyisinitialcash.SetValue(setting.initmoneyisinitialcash_init)
         self.sc_initmoneyamount.Enable(not self.cb_initmoneyisinitialcash.GetValue())
         self.cb_autosavepartyrecord.SetValue(setting.autosave_partyrecord_init)
-        self.cb_overwritepartyrecord.SetValue(setting.overwrite_partyrecord_init)
-        self.cb_overwritepartyrecord.Enable(self.cb_autosavepartyrecord.GetValue())
+        #self.cb_overwritepartyrecord.SetValue(setting.overwrite_partyrecord_init)
+        #self.cb_overwritepartyrecord.Enable(self.cb_autosavepartyrecord.GetValue())
         self.tx_ssinfoformat.SetValue(setting.ssinfoformat_init)
         self.tx_ssfnameformat.SetValue(setting.ssfnameformat_init)
         self.tx_cardssfnameformat.SetValue(setting.cardssfnameformat_init)
         self.ch_ssinfocolor.Select(1 if setting.ssinfofontcolor_init[:3] == (255, 255, 255) else 0)
+        self.tx_ssinfobackimage.SetValue(setting.ssinfobackimage_init)
 
     def OnSSTool(self, event):
         if self.ti_ssins.GetId() == event.GetId():
@@ -1134,7 +1147,8 @@ class GeneralSettingPanel(wx.Panel):
         self.sstoolbar.Enable(enable)
 
     def OnAutoSavePartyRecord(self, event):
-        self.cb_overwritepartyrecord.Enable(self.cb_autosavepartyrecord.GetValue())
+        pass
+        #self.cb_overwritepartyrecord.Enable(self.cb_autosavepartyrecord.GetValue())
 
     def OnInitMoneyIsInitialCash(self, event):
         self.sc_initmoneyamount.Enable(not self.cb_initmoneyisinitialcash.GetValue())
@@ -1179,24 +1193,38 @@ class GeneralSettingPanel(wx.Panel):
         bsizer_partymoney.Add(self.cb_initmoneyisinitialcash, 0, wx.CENTER, cw.ppis(3))
         bsizer_party.Add(bsizer_partymoney, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_party.Add(self.cb_autosavepartyrecord, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_party.Add(self.cb_overwritepartyrecord, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        #bsizer_party.Add(self.cb_overwritepartyrecord, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
 
         bsizer_ss = wx.StaticBoxSizer(self.box_ss, wx.VERTICAL)
         bsizer_ssl = wx.BoxSizer(wx.HORIZONTAL)
         bsizer_ssl.Add(self.tx_ssinfoformat, 1, wx.RIGHT|wx.CENTER, cw.ppis(3))
         bsizer_ssl.Add(self.ch_ssinfocolor, 0, wx.CENTER, cw.ppis(3))
         bsizer_ss.Add(bsizer_ssl, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
+        ssinfobackimage_sizer = wx.BoxSizer(wx.HORIZONTAL)
+        ssinfobackimage_sizer.Add(self.tx_ssinfobackimage, 1, wx.RIGHT | wx.CENTER, cw.ppis(3))
+        ssinfobackimage_sizer.Add(self.ref_ssinfobackimage, 0, wx.CENTER, cw.ppis(0))
 
         gsizer_fname = wx.GridBagSizer()
-        gsizer_fname.Add(self.st_ssfnameformat, pos=(0, 0), flag=wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, border=cw.ppis(3))
-        gsizer_fname.Add(self.tx_ssfnameformat, pos=(0, 1), flag=wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border=cw.ppis(3))
-        gsizer_fname.Add(self.st_cardssfnameformat, pos=(1, 0), flag=wx.TOP|wx.RIGHT|wx.ALIGN_CENTER_VERTICAL, border=cw.ppis(3))
-        gsizer_fname.Add(self.tx_cardssfnameformat, pos=(1, 1), flag=wx.TOP|wx.ALIGN_CENTER_VERTICAL|wx.EXPAND, border=cw.ppis(3))
-        gsizer_fname.AddGrowableCol(1, 1)
+        gsizer_fname.Add(self.st_ssinfobackimage, pos=(0, 0), flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+                                  border=cw.ppis(3))
+        gsizer_fname.Add(ssinfobackimage_sizer, pos=(0, 1), flag=wx.ALIGN_CENTER_VERTICAL | wx.EXPAND,
+                                  border=cw.ppis(3))
+        gsizer_fname.Add((0, cw.ppis(3)), pos=(1, 0))
+        gsizer_fname.Add(self.st_ssfnameformat, pos=(2, 0), flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
+                                  border=cw.ppis(3))
+        gsizer_fname.Add(self.tx_ssfnameformat, pos=(2, 1), flag=wx.ALIGN_CENTER_VERTICAL | wx.EXPAND,
+                                  border=cw.ppis(3))
+        gsizer_fname.Add(self.st_cardssfnameformat, pos=(3, 0),
+                                  flag=wx.TOP | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=cw.ppis(3))
+        gsizer_fname.Add(self.tx_cardssfnameformat, pos=(3, 1),
+                                  flag=wx.TOP | wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, border=cw.ppis(3))
+        gsizer_fname.AddGrowableCol(1, 4)
 
-        bsizer_ss.Add(gsizer_fname, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
-        bsizer_ss.Add(self.st_ssinfo_brackets, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.ALIGN_RIGHT, cw.ppis(3))
-        bsizer_ss.Add(self.sstoolbar, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.ALIGN_RIGHT, cw.ppis(3))
+        bsizer_ss.Add(gsizer_fname, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, cw.ppis(1) - 1)
+        #bsizer_ss2 = wx.BoxSizer(wx.HORIZONTAL)
+        #bsizer_ss2.Add(self.st_ssinfo_brackets, 0, wx.TOP |wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.ALIGN_LEFT, cw.ppis(3))
+        bsizer_ss.Add(self.sstoolbar, 0, wx.TOP |wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.ALIGN_RIGHT, cw.ppis(8))
+        #bsizer_ss.Add(bsizer_ss2, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, cw.ppis(1) - 1)
 
         sizer_left.Add(bsizer_gene, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
         sizer_left.Add(bsizer_log, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
@@ -2303,7 +2331,7 @@ class UISettingPanel(wx.Panel):
         self.cb_confirmbeforeusingcard = wx.CheckBox(
             self, -1, u"カード使用時に確認メッセージを表示")
         self.cb_confirm_dumpcard = wx.CheckBox(
-            self, -1, u"カード売却・破棄時に確認メッセージを表示")
+            self, -1, u"カードの売却・破棄時に確認メッセージを表示")
         self.cb_noticeimpossibleaction = wx.CheckBox(
             self, -1, u"不可能な行動を選択した時に警告を表示")
         self.cb_noticeimpossibleaction.SetToolTipString( u"Capを超えてカードを配ろうとした時など" )
@@ -2455,7 +2483,7 @@ class UISettingPanel(wx.Panel):
         bsizer_showbackpackcard.Add(self.st_showbackpackcard, 0, wx.ALIGN_CENTER|wx.RIGHT, cw.ppis(3))
         bsizer_showbackpackcard.Add(self.ch_showbackpackcard, 0, wx.ALIGN_CENTER, cw.ppis(3))
         
-        bsizer_gene.Add(bsizer_showbackpackcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_gene.Add(bsizer_showbackpackcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(1))
         bsizer_gene.Add(self.cb_revertcardpocket, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.Add(self.cb_show_addctrlbtn, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.Add(self.cb_showautobuttoninentrydialog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
@@ -2476,7 +2504,7 @@ class UISettingPanel(wx.Panel):
         bsizer_confirm_beforesaving.Add(self.st_confirm_beforesaving, 0, wx.ALIGN_CENTER|wx.RIGHT, cw.ppis(3))
         bsizer_confirm_beforesaving.Add(self.ch_confirm_beforesaving, 0, wx.ALIGN_CENTER, cw.ppis(3))
 
-        bsizer_dlg.Add(bsizer_confirm_beforesaving, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_dlg.Add(bsizer_confirm_beforesaving, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(1))
         bsizer_dlg.Add(self.cb_showsavedmessage, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.Add(self.cb_confirmbeforeusingcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.Add(self.cb_confirm_dumpcard, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, cw.ppis(3))
