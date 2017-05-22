@@ -137,6 +137,7 @@ class CharaInfo(wx.Dialog):
         self.enter = wx.NewId()
         self.openinfo = wx.NewId()
         copyid = wx.NewId()
+        backid = wx.NewId() # 効果音を鳴らすためIDCANCELではなく別定義
         leftkeyid = wx.NewId()
         rightkeyid = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnClickLeftBtn, id=self.leftpagekeyid)
@@ -149,6 +150,7 @@ class CharaInfo(wx.Dialog):
         self.Bind(wx.EVT_MENU, self.OnEnd, id=self.endkeyid)
         self.Bind(wx.EVT_MENU, self.OnEnter, id=self.enter)
         self.Bind(wx.EVT_MENU, self.OnOpenInfo, id=self.openinfo)
+        self.Bind(wx.EVT_MENU, self.OnCancel, id=backid)
         self.Bind(wx.EVT_MENU, self.OnCopyDetail, id=copyid)
         self.Bind(wx.EVT_MENU, self.OnLeftKey, id=leftkeyid)
         self.Bind(wx.EVT_MENU, self.OnRightKey, id=rightkeyid)
@@ -162,8 +164,8 @@ class CharaInfo(wx.Dialog):
             (wx.ACCEL_NORMAL, wx.WXK_HOME, self.homekeyid),
             (wx.ACCEL_NORMAL, wx.WXK_END, self.endkeyid),
             (wx.ACCEL_NORMAL, wx.WXK_RETURN, self.enter),
-            (wx.ACCEL_NORMAL, wx.WXK_BACK, wx.ID_CANCEL),
-            (wx.ACCEL_NORMAL, ord('_'), wx.ID_CANCEL),
+            (wx.ACCEL_NORMAL, wx.WXK_BACK, backid),
+            (wx.ACCEL_NORMAL, ord('_'), backid),
             (wx.ACCEL_NORMAL, wx.WXK_LEFT, leftkeyid),
             (wx.ACCEL_NORMAL, wx.WXK_RIGHT, rightkeyid),
             (wx.ACCEL_CTRL, wx.WXK_RETURN, self.openinfo),

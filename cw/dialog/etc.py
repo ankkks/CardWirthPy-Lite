@@ -356,11 +356,11 @@ class ExtensionDialog(wx.Dialog):
         for ctrl in itertools.chain(self.GetChildren(), self.panel.GetChildren()):
             ctrl.Bind(wx.EVT_RIGHT_UP, self.OnCancel)
 
-        self.escid = wx.NewId()
-        self.Bind(wx.EVT_MENU, self.OnCancel, id=self.escid)
+        backid = wx.NewId()  # 効果音を鳴らすためIDCANCELではなく別定義
+        self.Bind(wx.EVT_MENU, self.OnCancel, id=backid)
         seq = [
-            (wx.ACCEL_NORMAL, wx.WXK_BACK, self.escid),
-            (wx.ACCEL_NORMAL, ord('_'), self.escid)]
+            (wx.ACCEL_NORMAL, wx.WXK_BACK, backid),
+            (wx.ACCEL_NORMAL, ord('_'), backid)]
         accel = wx.AcceleratorTable(seq)
         self.SetAcceleratorTable(accel)
 

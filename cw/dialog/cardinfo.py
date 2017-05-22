@@ -66,24 +66,21 @@ class CardInfo(wx.Dialog):
         self.leftpagekeyid = wx.NewId()
         self.rightpagekeyid = wx.NewId()
         copyid = wx.NewId()
+        backid = wx.NewId()#効果音を鳴らすためIDCANCELではなく別定義
         self.Bind(wx.EVT_MENU, self.OnClickLeftBtn, id=self.leftpagekeyid)
         self.Bind(wx.EVT_MENU, self.OnClickRightBtn, id=self.rightpagekeyid)
         self.Bind(wx.EVT_MENU, self.OnCopyDetail, id=copyid)
+        self.Bind(wx.EVT_MENU, self.OnCancel, id=backid)
         seq = [
             (wx.ACCEL_NORMAL, wx.WXK_LEFT, self.leftpagekeyid),
             (wx.ACCEL_NORMAL, wx.WXK_RIGHT, self.rightpagekeyid),
-            (wx.ACCEL_NORMAL, wx.WXK_BACK, wx.ID_CANCEL),
-            (wx.ACCEL_NORMAL, ord('_'), wx.ID_CANCEL),
+            (wx.ACCEL_NORMAL, wx.WXK_BACK, backid),
+            (wx.ACCEL_NORMAL, ord('_'), backid),
             (wx.ACCEL_CTRL, wx.WXK_LEFT, self.leftpagekeyid),
             (wx.ACCEL_CTRL, wx.WXK_RIGHT, self.rightpagekeyid),
             (wx.ACCEL_CTRL, ord('C'), copyid),
         ]
         cw.util.set_acceleratortable(self, seq, ignoreleftrightkeys=(wx.TextCtrl, wx.Dialog))
-
-        if sys.platform <> "win32":
-            # BUG: SetBackgroundColour()を呼ばないと色が変わってしまう(Gtk)
-            self.toppanel.SetBackgroundColour(self.toppanel.GetBackgroundColour())
-            self.SetBackgroundColour(self.GetBackgroundColour())
 
     def OnCopyDetail(self, event):
         if not self.selection:
