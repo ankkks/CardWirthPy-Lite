@@ -1274,6 +1274,10 @@ class CardControl(wx.Dialog):
         self.Enable(False)
         self.Show(False)
 
+        if event.GetId() == self.backid:
+            #FIXME:Lite キーで閉じた時のみ効果音が鳴る
+            cw.cwpy.play_sound("click")
+
         if not self.callname in ("CARDPOCKET_REPLACE", "INFOVIEW"):
             cw.cwpy.exec_func(cw.cwpy.clear_specialarea)
         cw.cwpy.frame.kill_dlg(None)
