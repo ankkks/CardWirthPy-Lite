@@ -348,11 +348,11 @@ class CardControl(wx.Dialog):
         cheight = cw.wins(274)
         #本来は283,501
 
-        # 表示有無を切り替えた時に多少綺麗に再配置されるように、
+        # 表示有無を切り替えた時に綺麗に再配置されるように、
         # 非表示のコントロールは画面外へ出しておく
-        for ctrl in self.toppanel.GetChildren():
-            if not ctrl.IsShown():
-                ctrl.SetPosition((cwidth, cw.wins(0)))
+        #for ctrl in self.toppanel.GetChildren():
+        #    if not ctrl.IsShown():
+        #        ctrl.SetPosition((cwidth, cw.wins(0)))
 
         # toppanelはSizerを使わず自前で座標を計算
         if self.callname == "CARDPOCKET":
@@ -431,11 +431,10 @@ class CardControl(wx.Dialog):
             self.rightbtn2.SetSize(cw.wins((20, 20)))
             x -= cw.wins(140)
             self.combo.SetSize(cw.wins((140, 22)))
-            #切り替え時に一瞬はみ出る
-            #if sys.platform == "win32":
-            #    import win32api
-            #    CB_SETITEMHEIGHT = 0x153
-            #    win32api.SendMessage(self.combo.Handle, CB_SETITEMHEIGHT, -1, cw.wins(22))
+            if sys.platform == "win32":
+                import win32api
+                CB_SETITEMHEIGHT = 0x153
+                win32api.SendMessage(self.combo.Handle, CB_SETITEMHEIGHT, -1, cw.wins(22))
             yc = y + (cw.wins(22)-self.combo.GetSize()[1]) / 2
             self.combo.SetPosition((x, yc))
 
@@ -505,12 +504,14 @@ class CardControl(wx.Dialog):
 
     def _additional_controls(self):
         cw.cwpy.play_sound("equipment")
+        self.Freeze()
         self._redraw = False
         self.update_additionals()
         # Lite：対応を諦めるためGTK遅延処理をコメントアウト
         self._do_layout()
         self._redraw = True
         self.update_narrowcondition()
+        self.Thaw()
 
     def OnNarrowCondition(self, event):
         cw.cwpy.play_sound("page")
@@ -1789,6 +1790,7 @@ class CardHolder(CardControl):
             CardControl.OnCancel(self, event)
 
     def _change_callname(self, old_callname):
+        self.Freeze()
         self._load_index()
 
         if self.callname == "CARDPOCKET":
@@ -1821,6 +1823,7 @@ class CardHolder(CardControl):
             self.closebtn.SetLabel(cw.cwpy.msgs["return"])
         else:
             self.closebtn.SetLabel(cw.cwpy.msgs["close"])
+        self.Thaw()
 
     def _enable_updown(self):
         # リストが空か1ページ分しかなかったら上下ボタンを無効化
