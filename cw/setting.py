@@ -286,7 +286,6 @@ class Setting(object):
         # "Settings_Lite.xml"がなかったら新しく作る
         self.local = LocalSetting()
 
-        self.show_advancedsettings = True
         self.editor = "cwxeditor"
         self.startupscene = OPEN_TITLE
         self.lastyado = ""
@@ -343,6 +342,7 @@ class Setting(object):
         self.show_completedscenario = True
         self.show_invisiblescenario = False
         self.wheelup_operation = WHEEL_SHOWLOG
+        self.wheel_movefocus = True
         self.show_allselectedcards = True
         self.confirm_beforeusingcard = True
         self.confirm_dumpcard = True
@@ -463,9 +463,6 @@ class Setting(object):
         settings_version = data.getattr(".", "dataVersion", "0")
 
         self.local.load(data)
-
-        # 最初から詳細モードで設定を行う
-        self.show_advancedsettings = data.getbool("ShowAdvancedSettings", self.show_advancedsettings)
 
         # シナリオエディタ
         self.editor = data.gettext("ScenarioEditor", self.editor)
@@ -597,6 +594,8 @@ class Setting(object):
         # 終了済シナリオを表示する
         self.show_invisiblescenario = data.getbool("ShowInvisibleScenario", self.show_invisiblescenario)
 
+        # マウスホイールによるフォーカス移動
+        self.wheel_movefocus = data.getbool("WheelMoveFocus", self.wheel_movefocus)
         # マウスホイールを上回転させた時の挙動
         self.wheelup_operation = data.gettext("WheelUpOperation", self.wheelup_operation)
         # 戦闘行動を全員分表示する

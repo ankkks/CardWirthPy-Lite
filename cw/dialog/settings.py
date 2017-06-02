@@ -459,6 +459,8 @@ class SettingsPanel(wx.Panel):
         setting.can_skipwait_with_wheel = value
         value = self.pane_ui.cb_can_forwardmessage_with_wheel.GetValue()
         setting.can_forwardmessage_with_wheel = value
+        value = self.pane_ui.cb_wheel_movefocus.GetValue()
+        setting.wheel_movefocus = value
 
         value = self.pane_ui.cb_can_repeatlclick.GetValue()
         setting.can_repeatlclick = value
@@ -2256,12 +2258,17 @@ class UISettingPanel(wx.Panel):
             self, -1, u"連打状態の時、カードなどの選択を自動的に決定")
         self.cb_can_clicksidesofcardcontrol = wx.CheckBox(
             self, -1, u"カード選択ダイアログの背景クリックで左右移動を行う")
-        self.cb_can_skipwait_with_wheel = wx.CheckBox(
-            self, -1, u"ホイール下で空白時間とアニメーションをスキップ")
-        self.cb_can_forwardmessage_with_wheel = wx.CheckBox(
-            self, -1, u"ホイール下でメッセージ送りを行う")
+        self.cb_wheel_movefocus = wx.CheckBox(
+            self, -1, u"ホイールでカード選択と選択肢のフォーカス移動を行う")
+        self.cb_wheel_movefocus.SetToolTipString(u"ホイール上でのログ表示が有効な場合はログ表示が優先")
         self.cb_showlogwithwheelup = wx.CheckBox(
             self, -1, u"ホイールを上に回すとログを表示")
+        self.st_wheel_down = wx.StaticText(self, -1,
+                                                     u"ホイール下の動作:")
+        self.cb_can_skipwait_with_wheel = wx.CheckBox(
+            self, -1, u"スキップ")
+        self.cb_can_forwardmessage_with_wheel = wx.CheckBox(
+            self, -1, u"メッセージ送り")
 
         # 描画オプション
         self.box_draw = wx.StaticBox(self, -1, u"カード")
@@ -2306,7 +2313,7 @@ class UISettingPanel(wx.Panel):
         self.cb_show_experiencebar = wx.CheckBox(
             self, -1, u"キャラクター情報に次のレベルアップまでの割合を表示")
         self.cb_show_btndesc = wx.CheckBox(
-            self, -1, u"ステータスバーのボタンの解説を表示する")
+            self, -1, u"ステータスバーで解説を表示する")
         self.cb_statusbarmask = wx.CheckBox(
             self, -1, u"イベント中にステータスバーの色を変える")
         self.cb_blink_statusbutton = wx.CheckBox(
@@ -2326,15 +2333,17 @@ class UISettingPanel(wx.Panel):
         self.ch_confirm_beforesaving = wx.Choice(self, -1, choices=choices)
         self.cb_showsavedmessage = wx.CheckBox(
             self, -1, u"セーブ完了時に確認メッセージを表示")
-        self.cb_cautionbeforesaving = wx.CheckBox(
-            self, -1, u"保存せずに終了しようとしたら警告を表示")
+        self.st_confirm_card = wx.StaticText(self, -1,
+                                                     u"カード操作の確認:")
         self.cb_confirmbeforeusingcard = wx.CheckBox(
-            self, -1, u"カード使用時に確認メッセージを表示")
+            self, -1, u"カード使用時")
         self.cb_confirm_dumpcard = wx.CheckBox(
-            self, -1, u"カードの売却・破棄時に確認メッセージを表示")
+            self, -1, u"売却・破棄時")
         self.cb_noticeimpossibleaction = wx.CheckBox(
             self, -1, u"不可能な行動を選択した時に警告を表示")
-        self.cb_noticeimpossibleaction.SetToolTipString( u"Capを超えてカードを配ろうとした時など" )
+        self.cb_noticeimpossibleaction.SetToolTipString( u"Capを超えてカードを配ろうとしたり、戦闘中に行動不能キャストをクリックした時など" )
+        self.cb_cautionbeforesaving = wx.CheckBox(
+            self, -1, u"保存せずに終了しようとしたら警告を表示")
 
         self._do_layout()
         #self._bind()
@@ -2346,6 +2355,7 @@ class UISettingPanel(wx.Panel):
         self.cb_can_forwardmessage_with_wheel.SetValue(setting.can_forwardmessage_with_wheel)
         self.cb_can_repeatlclick.SetValue(setting.can_repeatlclick)
         self.cb_autoenter_on_sprite.SetValue(setting.autoenter_on_sprite)
+        self.cb_wheel_movefocus.SetValue(setting.wheel_movefocus)
 
         if setting.all_quickdeal:
             self.ch_quickdeal.SetSelection(0)
@@ -2399,6 +2409,7 @@ class UISettingPanel(wx.Panel):
         self.cb_can_forwardmessage_with_wheel.SetValue(setting.can_forwardmessage_with_wheel_init)
         self.cb_can_repeatlclick.SetValue(setting.can_repeatlclick_init)
         self.cb_autoenter_on_sprite.SetValue(setting.autoenter_on_sprite_init)
+        self.cb_wheel_movefocus.SetValue(setting.wheel_movefocus_init)
 
         if setting.all_quickdeal_init:
             self.ch_quickdeal.SetSelection(0)
@@ -2463,9 +2474,14 @@ class UISettingPanel(wx.Panel):
         bsizer_wait.Add(self.cb_can_repeatlclick, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.Add(self.cb_autoenter_on_sprite, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.Add(self.cb_can_clicksidesofcardcontrol, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_wait.Add(self.cb_can_skipwait_with_wheel, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_wait.Add(self.cb_can_forwardmessage_with_wheel, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_wait.Add(self.cb_wheel_movefocus, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.Add(self.cb_showlogwithwheelup, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_wheeldown = wx.BoxSizer(wx.HORIZONTAL)
+        bsizer_wheeldown.Add(self.st_wheel_down, 0, wx.LEFT|wx.RIGHT, cw.ppis(3))
+        bsizer_wheeldown.Add(self.cb_can_skipwait_with_wheel, 0, wx.LEFT|wx.RIGHT, cw.ppis(3))
+        bsizer_wheeldown.Add(self.cb_can_forwardmessage_with_wheel, 0, wx.LEFT|wx.RIGHT, cw.ppis(3))
+
+        bsizer_wait.Add(bsizer_wheeldown, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_wait.SetMinSize((_settings_width(), -1))
 
         bsizer_quickdeal = wx.BoxSizer(wx.HORIZONTAL)
@@ -2504,12 +2520,16 @@ class UISettingPanel(wx.Panel):
         bsizer_confirm_beforesaving.Add(self.st_confirm_beforesaving, 0, wx.ALIGN_CENTER|wx.RIGHT, cw.ppis(3))
         bsizer_confirm_beforesaving.Add(self.ch_confirm_beforesaving, 0, wx.ALIGN_CENTER, cw.ppis(3))
 
-        bsizer_dlg.Add(bsizer_confirm_beforesaving, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(1))
+        bsizer_confirm_card = wx.BoxSizer(wx.HORIZONTAL)
+        bsizer_confirm_card.Add(self.st_confirm_card, 0, wx.RIGHT, cw.ppis(3))
+        bsizer_confirm_card.Add(self.cb_confirmbeforeusingcard, 0, wx.LEFT|wx.RIGHT, cw.ppis(3))
+        bsizer_confirm_card.Add(self.cb_confirm_dumpcard, 0, wx.LEFT|wx.RIGHT, cw.ppis(3))
+
+        bsizer_dlg.Add(bsizer_confirm_beforesaving, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.Add(self.cb_showsavedmessage, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_dlg.Add(self.cb_confirmbeforeusingcard, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_dlg.Add(self.cb_confirm_dumpcard, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.Add(self.cb_cautionbeforesaving, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.Add(self.cb_noticeimpossibleaction, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_dlg.Add(bsizer_confirm_card, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_dlg.SetMinSize((_settings_width(), -1))
 
         sizer_v1.Add(bsizer_wait, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))

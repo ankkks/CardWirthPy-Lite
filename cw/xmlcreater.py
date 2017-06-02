@@ -126,10 +126,6 @@ def create_settings(setting, writeplayingdata=True, fpath="Settings_Lite.xml"):
 
     create_localsettings(element, setting.local)
 
-    # 最初から詳細モードで設定を行う
-    if setting.show_advancedsettings <> setting.show_advancedsettings_init:
-        e = cw.data.make_element("ShowAdvancedSettings", str(setting.show_advancedsettings))
-        element.append(e)
     # シナリオエディタ
     if setting.editor <> setting.editor_init:
         e = cw.data.make_element("ScenarioEditor", setting.editor)
@@ -334,6 +330,10 @@ def create_settings(setting, writeplayingdata=True, fpath="Settings_Lite.xml"):
     # マウスホイールを上回転させた時の挙動
     if setting.wheelup_operation <> setting.wheelup_operation_init:
         e = cw.data.make_element("WheelUpOperation", setting.wheelup_operation)
+        element.append(e)
+    # マウスホイールによるフォーカス移動
+    if setting.wheel_movefocus <> setting.wheel_movefocus_init:
+        e = cw.data.make_element("WheelMoveFocus", str(setting.wheel_movefocus))
         element.append(e)
     # 戦闘行動を全員分表示する
     if setting.show_allselectedcards <> setting.show_allselectedcards_init:

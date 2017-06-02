@@ -673,6 +673,8 @@ class CardControl(wx.Dialog):
         return rect.x + rect.width / 4 * 3 < x and self.rightbtn.IsEnabled()
 
     def OnMouseWheel(self, event):
+        #if not cw.cwpy.setting.wheel_movefocus:
+        #    return
         if cw.util.get_wheelrotation(event) > 0:
             if self.leftbtn.IsEnabled():
                 btnevent = wx.PyCommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, self.leftbtn.GetId())
