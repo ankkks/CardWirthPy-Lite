@@ -1204,6 +1204,8 @@ class CardControl(wx.Dialog):
                     pcard.update_image()
                 # 枚数表示
                 cw.cwpy.show_numberofcards(header.type)
+                # 中止ボタン
+                cw.cwpy.statusbar.change(cancelbtn=True)#TODO:Lite:明示することで妥協(デバッグモード切替時に消える)
             cw.cwpy.exec_func(test_aptitude, header)
         # OKボタンイベント
         btnevent = wx.PyCommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, wx.ID_OK)
@@ -1320,6 +1322,7 @@ class CardHolder(CardControl):
                     pcard.test_aptitude = None
                     pcard.update_image()
                 cw.cwpy.clear_numberofcards()
+            cw.cwpy.statusbar.change()#Lite:キャンセルボタンを除去
             cw.cwpy.draw()
         cw.cwpy.exec_func(func)
 

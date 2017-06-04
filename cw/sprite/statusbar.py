@@ -57,7 +57,7 @@ class StatusBar(base.CWPySprite):
         self.clear_volumebar()
         self.change(self.showbuttons)
 
-    def change(self, showbuttons=True, encounter=False):
+    def change(self, showbuttons=True, encounter=False, cancelbtn=False):
         self.clear()
         if showbuttons and (pygame.event.peek(pygame.locals.USEREVENT) or cw.cwpy.expanding):
             showbuttons = False
@@ -97,15 +97,17 @@ class StatusBar(base.CWPySprite):
             EncounterPanel(self, (cw.s(474) - rmargin, cw.s(6)))
         elif (cw.cwpy.is_curtained() and cw.cwpy.areaid <> cw.AREA_CAMP) or cw.cwpy.selectedheader:
             if cw.cwpy.status == "Yado":
-                if not cw.cwpy.expanding:
+                if cancelbtn or cw.cwpy.areaid == -3:
+                    CancelButton(self, cw.s((255, 6)))
+                elif not cw.cwpy.expanding:
                     self._create_yadomoney(cw.s((10, 6)))
-                    CancelButton(self, cw.s((133, 6)))
+                    #CancelButton(self, cw.s((133, 6)))
                     if cw.cwpy.ydata.party:
                         self._create_partymoney((cw.s(474) - rmargin, cw.s(6)))
             else:
-                if showbuttons:
-                    CancelButton(self, cw.s((10, 6)))
-                if cw.cwpy.status == "Scenario":
+                if cancelbtn or (showbuttons and cw.cwpy.areaid <> -5):#TODO:Lite:面倒なので妥協
+                    CancelButton(self, cw.s((255, 6)))
+                elif cw.cwpy.status == "Scenario":
                     self._create_partymoney((cw.s(474) - rmargin, cw.s(6)))
                 elif cw.cwpy.is_battlestatus():
                     RoundCounterPanel(self, (cw.s(474) - rmargin, cw.s(6)))
@@ -145,7 +147,8 @@ class StatusBar(base.CWPySprite):
         if self.infocards and not cw.cwpy.is_playingscenario():
             self.infocards.notice = False
 
-        self.loading = False
+        if showbuttons:
+            self.loading = False
 
         if not cw.cwpy.sdata or not cw.cwpy.sdata.in_f9:
             # デバッガのツールが使用可能かどうかを更新
@@ -193,15 +196,14 @@ class StatusBar(base.CWPySprite):
             self.partymoney = PartyMoneyPanel(self, pos)
 
     def _create_infocards(self, pos):
-        is_camp = cw.cwpy.areaid in (-4, -5)
         if self.infocards:
             notice = self.infocards.notice
             self.infocards.reset(pos)
-            if not self.loading and notice <> self.infocards.notice and self.infocards.notice and not is_camp:
+            if not self.loading and notice <> self.infocards.notice and self.infocards.notice:
                 cw.animation.start_animation(self.infocards, "blink")
         else:
             self.infocards = InfoCardsButton(self, pos)
-            if not self.loading and self.infocards.notice and not is_camp:
+            if not self.loading and self.infocards.notice:
                 cw.animation.start_animation(self.infocards, "blink")
 
     def _create_friendcards(self, pos):
@@ -1091,7 +1093,11 @@ class RunAwayButton(StatusBarButton):
 
 class CancelButton(StatusBarButton):
     def __init__(self, parent, pos):
-        StatusBarButton.__init__(self, parent, cw.cwpy.msgs["entry_cancel"], pos)
+        if cw.cwpy.areaid == -3:
+            msg = "complete"
+        else:
+            msg = "entry_cancel"
+        StatusBarButton.__init__(self, parent, cw.cwpy.msgs[msg], pos)
         self.selectable_on_event = False
 
     def lclick_event(self):
