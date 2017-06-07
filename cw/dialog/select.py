@@ -1685,7 +1685,7 @@ class YadoSelect(MultiViewSelect):
 
 class PartySelect(MultiViewSelect):
     """
-    パーティ選択ダイアログ。
+    冒険の再開。
     """
     def __init__(self, parent):
         # ダイアログボックス作成
