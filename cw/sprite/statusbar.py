@@ -44,8 +44,7 @@ class StatusBar(base.CWPySprite):
         self.image = pygame.Surface(cw.s((633, 33))).convert()
         #ステータスバー スケーリング時
         subimg = cw.cwpy.rsrc.get_statusbtnbmp(2, 0)
-        
-        if not self.showbuttons and self._statusbarmask:
+        if not self.showbuttons and self._statusbarmask and cw.cwpy.is_statusbarmask():
             subimg.fill((64, 64, 64), special_flags=pygame.locals.BLEND_RGB_SUB)
         self.image.fill((240, 240, 240))
         self.image.blit(subimg, cw.s((0, 0)))
@@ -62,7 +61,7 @@ class StatusBar(base.CWPySprite):
         if showbuttons and (pygame.event.peek(pygame.locals.USEREVENT) or cw.cwpy.expanding):
             showbuttons = False
 
-        statusbarmask = cw.cwpy.setting.statusbarmask and cw.cwpy.is_playingscenario()
+        statusbarmask = cw.cwpy.is_statusbarmask()
 
         if self.showbuttons <> showbuttons or self._statusbarmask <> statusbarmask:
             self.showbuttons = showbuttons
@@ -97,11 +96,10 @@ class StatusBar(base.CWPySprite):
             EncounterPanel(self, (cw.s(474) - rmargin, cw.s(6)))
         elif (cw.cwpy.is_curtained() and cw.cwpy.areaid <> cw.AREA_CAMP) or cw.cwpy.selectedheader:
             if cw.cwpy.status == "Yado":
-                if cancelbtn or cw.cwpy.areaid == -3:
+                if cancelbtn or cw.cwpy.areaid == cw.AREA_BREAKUP:
                     CancelButton(self, cw.s((255, 6)))
                 elif not cw.cwpy.expanding:
                     self._create_yadomoney(cw.s((10, 6)))
-                    #CancelButton(self, cw.s((133, 6)))
                     if cw.cwpy.ydata.party:
                         self._create_partymoney((cw.s(474) - rmargin, cw.s(6)))
             else:
@@ -572,6 +570,7 @@ class PartyMoneyPanel(YadoMoneyPanel):
         self.update(None)
 
     def reset(self, parent, pos, size):
+        self.text = self.get_money()
         self.desc = cw.cwpy.msgs["desc_party_money"]
         StatusBarPanel.reset(self, parent, pos, size)
 
@@ -684,8 +683,7 @@ class StatusBarButton(base.SelectableSprite):
     def _create_paneimg(self, pos, icon):
         # ボタン画像
         self.btnimg = {}
-        self._statusbarmask = (cw.cwpy.setting.statusbarmask and cw.cwpy.is_playingscenario()) or\
-                              cw.cwpy.statusbar._statusbarmask
+        self._statusbarmask = cw.cwpy.statusbar._statusbarmask
 
         # ボタンアイコン・ラベル
         if icon:
@@ -726,8 +724,7 @@ class StatusBarButton(base.SelectableSprite):
             return self.notice
 
     def get_btnimg(self, flags):
-        statusbarmask = (cw.cwpy.setting.statusbarmask and cw.cwpy.is_playingscenario()) or\
-                        cw.cwpy.statusbar._statusbarmask
+        statusbarmask = cw.cwpy.statusbar._statusbarmask
 
         if self._statusbarmask <> statusbarmask:
             self._statusbarmask = statusbarmask
@@ -1093,7 +1090,7 @@ class RunAwayButton(StatusBarButton):
 
 class CancelButton(StatusBarButton):
     def __init__(self, parent, pos):
-        if cw.cwpy.areaid == -3:
+        if cw.cwpy.areaid == cw.AREA_BREAKUP:
             msg = "complete"
         else:
             msg = "entry_cancel"

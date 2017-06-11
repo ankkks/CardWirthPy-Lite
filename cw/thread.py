@@ -2583,6 +2583,7 @@ class CWPy(_Singleton, threading.Thread):
         # プレイヤカードを下げる
         if self.ydata and hideparty:
             if not self.ydata.party or self.ydata.party.is_loading():
+                self.draw(clip=self.statusbar.rect)
                 self.hide_party()
 
         # list, indexセット
@@ -2756,7 +2757,7 @@ class CWPy(_Singleton, threading.Thread):
 
         # 特殊エリア(キャンプ・メンバー解散)だったら背景にカーテンを追加。
         if self.areaid in (cw.AREA_CAMP, cw.AREA_BREAKUP):
-            self.set_curtain(move_bgcells=True)
+            self.set_curtain(curtain_all=True)
 
         # メニューカードスプライト作成
         self.set_mcards(self.sdata.get_mcarddata(data=data), dealanime)
@@ -3176,7 +3177,7 @@ class CWPy(_Singleton, threading.Thread):
 
                 self.list = self.get_mcards("visible")
                 self.index = -1
-                self.set_curtain(move_bgcells=True)
+                self.set_curtain(curtain_all=True)
             self.lock_menucards = False
 
         # ターゲット選択エリア
@@ -3253,7 +3254,7 @@ class CWPy(_Singleton, threading.Thread):
                 self.topgrp.empty() # TODO: layer
                 for i, pcard in enumerate(self.get_pcards()):
                     pcard.index = i
-                    pcard.layer = (cw.LAYER_PCARDS, cw.LTYPE_PCARDS, i, 0)
+                    pcard.layer = (pcard.layer[0], pcard.layer[1], i, pcard.layer[3])
                     self.cardgrp.change_layer(pcard, pcard.layer)
 
             # カード移動操作エリアを解除の場合
@@ -3647,7 +3648,7 @@ class CWPy(_Singleton, threading.Thread):
             self.list = []
         self.index = -1
 
-    def set_curtain(self, target="Both", move_bgcells=False):
+    def set_curtain(self, target="Both", curtain_all=False):
         """Curtainスプライトをセットする。"""
         if not self.is_curtained():
             self.is_pcardsselectable = target in ("Both", "Party")
@@ -3666,7 +3667,7 @@ class CWPy(_Singleton, threading.Thread):
                     cw.sprite.background.Curtain(card, self.cardgrp)
 
             # 背景上のカーテン
-            self.background.set_curtain(move_bgcells=move_bgcells)
+            self.background.set_curtain(curtain_all=curtain_all)
 
             self._curtained = True
 
@@ -4625,6 +4626,10 @@ class CWPy(_Singleton, threading.Thread):
             pygame.event.peek(USEREVENT) or\
             (self.is_battlestatus() and not (self.battle and self.battle.is_ready())) or\
             self.is_decompressing
+
+    def is_statusbarmask(self):
+        return cw.cwpy.setting.statusbarmask and cw.cwpy.is_playingscenario() and \
+               not self.is_processing and self.ydata and self.ydata.party and not self.ydata.party.is_loading()
 
     def is_showingdlg(self):
         return 0 < self._showingdlg
