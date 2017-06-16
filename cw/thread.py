@@ -1986,7 +1986,7 @@ class CWPy(_Singleton, threading.Thread):
                                 if music.path <> music.get_path(musicpath, inusecard):
                                     music.stop()
 
-                        self.change_area(areaid, not loaded, loaded, quickdeal=quickdeal, doanime=not resume)
+                        self.change_area(areaid, not loaded, loaded, quickdeal=quickdeal, doanime=not resume, resume=True)
 
                         if musicpaths:
                             for i, (musicpath, subvolume, loopcount, inusecard) in enumerate(musicpaths):
@@ -2946,7 +2946,7 @@ class CWPy(_Singleton, threading.Thread):
     def change_area(self, areaid, eventstarting=True,
                           bginhrt=False, ttype=("Default", "Default"),
                           quickdeal=False, specialarea=False, startbattle=False,
-                          doanime=True, data=None, nocheckvisible=False):
+                          doanime=True, data=None, nocheckvisible=False, resume=False):
         """ゲームエリアチェンジ。
         eventstarting: Falseならエリアイベントは起動しない。
         bginhrt: 背景継承を行うかどうかのbool値。
@@ -2988,6 +2988,9 @@ class CWPy(_Singleton, threading.Thread):
         if 0 <= oldareaid and self.ydata and self.is_playingscenario():
             self.ydata.changed()
 
+        #冒険の再開のみ先にPCをアニメーションさせる
+        if resume:
+            self.show_party()
         # エリアイベントを開始(特殊エリアからの帰還だったら開始しない)
         if eventstarting and oldareaid >= 0:
             if not self.wait_showcards:
@@ -3755,7 +3758,7 @@ class CWPy(_Singleton, threading.Thread):
                 areaid = 2
             else:
                 areaid = 1
-            self.change_area(areaid, bginhrt=False)
+            self.change_area(areaid, bginhrt=False, resume=True)
         elif newparty:
             self.cardgrp.remove(self.pcards)
             self.pcards = []
@@ -3908,6 +3911,8 @@ class CWPy(_Singleton, threading.Thread):
         self.sounds[name].play(from_scenario, subvolume=subvolume, loopcount=loopcount, channel=channel, fade=fade)
 
     def _play_sound_with(self, path, from_scenario, inusecard=None, subvolume=100, loopcount=1, channel=0, fade=0):
+        if not path:
+            return True
         inusesoundpath = cw.util.get_inusecardmaterialpath(path, cw.M_SND, inusecard)
         if os.path.isfile(inusesoundpath):
             path = inusesoundpath
@@ -3922,6 +3927,8 @@ class CWPy(_Singleton, threading.Thread):
         """効果音を再生する。
         シナリオ効果音・スキン効果音を適宜使い分ける。
         """
+        if not path:
+            return
         if channel < 0 or cw.bassplayer.MAX_SOUND_CHANNELS <= channel:
             return
         if self._play_sound_with(path, True, inusecard, subvolume=subvolume, loopcount=loopcount, channel=channel, fade=fade):
@@ -3933,6 +3940,9 @@ class CWPy(_Singleton, threading.Thread):
             self.skinsounds[name].play(True, subvolume=subvolume, loopcount=loopcount, channel=channel, fade=fade)
 
     def has_sound(self, path):
+        if not path:
+            return False
+
         path = cw.util.get_materialpath(path, cw.M_SND, system=self.areaid < 0)
 
         if os.path.isfile(path):
