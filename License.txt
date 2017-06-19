@@ -55,23 +55,10 @@ https://ja.osdn.net/projects/ume-font/
 >これらのフォントはフリー（自由な）ソフトウエアです。あらゆる改変の有無に関わらず、
 >また商業的な利用であっても、自由にご利用、複製、再配布することができますが、全て無保証とさせていただきます。 
 
-
-
->「TimGM6mb.sf2」 は Public Domain です。
->一切の条件を設けず自由に使用する事ができます。
->また、オリジナルのファイルにハルキゲニア(@tekitoudesu)さん、みしかさんによる若干の修正が加わっています。
----
-
-http://musescore.org/en/node/1463#comment-9161 より引用:
-
-> Some terrific news from the TimGM6mb.sf2 soundfont creator (Tim Brechbill):
-> "Yes the soundfont is mine and public domain.
-> You are entitled to use it as you please."
-> 
-> We could use the CC public domain (http://creativecommons.org/licenses/publicdomain/)
-> certification to correctly include the soundfont and I'm communicating further with
-> Tim to find out how to attribute him in the release notes.
-
+Data/SoundFont以下にある
+>TimGM_A320_Mix.sf2
+「TimGM_A320_Mix.sf2」は「TimGM6mb.sf2」をベースに一部「A320.sf2」の音色に差し替えた合成サウンドフォントです。
+> license:GNU GPL v2
 
 
 ----------------------------------------------------------------------------------

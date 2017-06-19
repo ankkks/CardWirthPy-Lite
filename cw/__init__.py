@@ -114,7 +114,7 @@ HINT_AREA = 2       # エリア・バトル・パッケージ
 HINT_SCENARIO = 3   # シナリオ本体
 
 # 標準のサウンドフォント
-DEFAULT_SOUNDFONT = "Data/SoundFont/TimGM6mb.sf2"
+DEFAULT_SOUNDFONT = "Data/SoundFont/TimGM_A320_Mix.sf2"
 
 # 表示レイヤ
 LTYPE_MESSAGE = 1

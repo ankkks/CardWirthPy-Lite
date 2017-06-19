@@ -3259,6 +3259,7 @@ class CWPy(_Singleton, threading.Thread):
                     pcard.index = i
                     pcard.layer = (pcard.layer[0], pcard.layer[1], i, pcard.layer[3])
                     self.cardgrp.change_layer(pcard, pcard.layer)
+                self.disposition_pcards()
 
             # カード移動操作エリアを解除の場合
             if oldareaid in cw.AREAS_TRADE:
@@ -3912,7 +3913,7 @@ class CWPy(_Singleton, threading.Thread):
 
     def _play_sound_with(self, path, from_scenario, inusecard=None, subvolume=100, loopcount=1, channel=0, fade=0):
         if not path:
-            return True
+            return False
         inusesoundpath = cw.util.get_inusecardmaterialpath(path, cw.M_SND, inusecard)
         if os.path.isfile(inusesoundpath):
             path = inusesoundpath
