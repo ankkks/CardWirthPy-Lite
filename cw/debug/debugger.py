@@ -5,6 +5,7 @@ import os
 import sys
 import threading
 import subprocess
+import itertools
 import wx
 import wx.aui
 import wx.lib.mixins.listctrl
@@ -99,6 +100,7 @@ class Debugger(wx.Frame):
         file_menu.AppendSeparator()
         self.mi_save = wx.MenuItem(file_menu, ID_SAVE, u"セーブ(&S)\tCtrl+S")
         self.mi_save.SetBitmap(rsrc["SAVE"])
+        self.mi_save.SetText(u"シナリオをエディタで開きます。")
         file_menu.AppendItem(self.mi_save)
         self.mi_load = wx.MenuItem(file_menu, ID_LOAD, u"ロード(&L)\tCtrl+O")
         self.mi_load.SetBitmap(rsrc["LOAD"])
@@ -179,7 +181,7 @@ class Debugger(wx.Frame):
         scenario_menu.AppendItem(self.mi_round)
         scenario_menu.AppendSeparator()
         self.mi_initvars = wx.MenuItem(scenario_menu, ID_INIT_VARIABLES, u"状態変数の初期化(&V)")
-        self.mi_initvars.SetBitmap(rsrc["INIT_VARIABLES"])
+        self.mi_initvars.SetBitmap(rsrc["EVT_SET_STEP"])
         scenario_menu.AppendItem(self.mi_initvars)
 
         self.mi_startevent = wx.MenuItem(run_menu, ID_STARTEVENT, u"イベントの実行(&E)")
@@ -1396,10 +1398,7 @@ class Debugger(wx.Frame):
     def _refresh_areaname(self, force=False):
         assert threading.currentThread() <> cw.cwpy
         s = cw.cwpy.sdata.get_currentareaname()
-        if sys.platform.startswith("linux"):
-            dc = wx.ClientDC(self)
-        else:
-            dc = wx.ClientDC(self.st_area)
+        dc = wx.ClientDC(self.st_area)
         sep = s.rfind("\\")
         w = self.st_area.GetClientSize()[0]
         if sep == -1:
@@ -1443,10 +1442,7 @@ class Debugger(wx.Frame):
         if cw.cwpy.frame.debugger is None:
             return
         s = cw.cwpy.event.get_selectedmembername()
-        if sys.platform.startswith("linux"):
-            dc = wx.ClientDC(self)
-        else:
-            dc = wx.ClientDC(self.st_select)
+        dc = wx.ClientDC(self.st_select)
         s2 = cw.util.abbr_longstr(dc, s, self.st_select.GetClientSize()[0])
         self.st_select.SetLabel(s2)
         if s == s2:
@@ -1639,7 +1635,7 @@ class VariableListCtrl(wx.ListCtrl):
         self.list = []
         self.imglist = wx.ImageList(cw.ppis(16), cw.ppis(16))
         self.imgidx_flag = self.imglist.Add(cw.cwpy.rsrc.debugs["EVT_SET_FLAG"])
-        self.imgidx_step = self.imglist.Add(cw.cwpy.rsrc.debugs["EVT_BRANCH_STEPVALUE"])
+        self.imgidx_step = self.imglist.Add(cw.cwpy.rsrc.debugs["EVT_SET_STEP"])
         self.SetImageList(self.imglist, wx.IMAGE_LIST_SMALL)
         self.InsertColumn(0, u"名称")
         self.InsertColumn(1, u"現在値")
@@ -1648,7 +1644,7 @@ class VariableListCtrl(wx.ListCtrl):
 
         self.popup_menu = wx.Menu()
         self.mi_initvars = wx.MenuItem(self.popup_menu, ID_INIT_VARIABLES, u"状態変数の初期化(&V)")
-        self.mi_initvars.SetBitmap(cw.cwpy.rsrc.debugs["INIT_VARIABLES"])
+        self.mi_initvars.SetBitmap(cw.cwpy.rsrc.debugs["EVT_SET_STEP"])
         self.popup_menu.AppendItem(self.mi_initvars)
 
         self._refresh_variablelist()
