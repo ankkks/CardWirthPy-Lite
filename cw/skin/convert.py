@@ -820,10 +820,11 @@ class Converter(threading.Thread):
             removelist = set(e_message)
             for e in e_message:
                 key = e.get("key")
-                if e.text <> msgtable[key]:
-                        # ベースからメッセージを変更
-                        e.text = msgtable[key]
-                        removelist.discard(e)
+                if key in msgtable:
+                    if e.text <> msgtable[key]:
+                            # ベースからメッセージを変更
+                            e.text = msgtable[key]
+                            removelist.discard(e)
             # ベースと同じメッセージは定義不要
             for e in removelist:
                 e_message.remove(e)
