@@ -854,20 +854,23 @@ class Character(object):
             cw.animation.animate_sprite(inusecardimg, "deal", battlespeed=battlespeed)
             # 効果音を鳴らす
             cw.cwpy.play_sound_with(soundpath, header, subvolume=volume, loopcount=loopcount, channel=channel, fade=fade)
+
             if cw.cwpy.setting.wait_usecard:
                 cw.animation.animate_sprite(inusecardimg, "zoomin_slow", battlespeed=battlespeed)
-                waitrate = cw.cwpy.setting.get_dealspeed(cw.cwpy.is_battlestatus())+1
-                skipped = cw.cwpy.wait_frame(waitrate, cw.cwpy.setting.can_skipanimation)
-                if not skipped:
-                    waitrate = cw.cwpy.setting.get_dealspeed(cw.cwpy.is_battlestatus())
-                    cw.cwpy.wait_frame(waitrate, cw.cwpy.setting.can_skipanimation)
-                cw.animation.animate_sprite(inusecardimg, "zoomout_slow", battlespeed=battlespeed)
+
             else:
                 cw.animation.animate_sprite(inusecardimg, "zoomin", battlespeed=battlespeed)
+
+            if cw.cwpy.setting.wait_usecard:
+                waitrate = cw.cwpy.setting.get_dealspeed(cw.cwpy.is_battlestatus())*2+1
+                cw.cwpy.wait_frame(waitrate, cw.cwpy.setting.can_skipanimation)
+            else:
                 waitrate = cw.cwpy.setting.get_dealspeed(cw.cwpy.is_battlestatus())+1
-                skipped = cw.cwpy.wait_frame(waitrate, cw.cwpy.setting.can_skipanimation)
-                cw.animation.animate_sprite(inusecardimg, "zoomout", battlespeed=battlespeed)
+                cw.cwpy.wait_frame(waitrate, cw.cwpy.setting.can_skipanimation)
+
+            cw.animation.animate_sprite(inusecardimg, "zoomout", battlespeed=battlespeed)
             cw.animation.animate_sprite(inusecardimg, "hide", battlespeed=battlespeed)
+
         elif isinstance(self, cw.character.Friend):
             self.set_pos_noscale(center_noscale=(316, 142))
             # NPC表示
@@ -878,13 +881,18 @@ class Character(object):
             cw.animation.animate_sprite(self, "zoomin", battlespeed=battlespeed)
             # カード表示
             inusecardimg = cw.cwpy.set_inusecardimg(self, header, center=True)
-            cw.cwpy.draw()
-            waitrate = cw.cwpy.setting.get_dealspeed(cw.cwpy.is_battlestatus())+1
-            cw.cwpy.wait_frame(waitrate, cw.cwpy.setting.can_skipanimation)
+            cw.cwpy.draw(clip=inusecardimg.rect)
+            if cw.cwpy.setting.wait_usecard:
+                waitrate = cw.cwpy.setting.get_dealspeed(cw.cwpy.is_battlestatus())*2+1
+                cw.cwpy.wait_frame(waitrate, cw.cwpy.setting.can_skipanimation)
+            else:
+                waitrate = cw.cwpy.setting.get_dealspeed(cw.cwpy.is_battlestatus())+1
+                cw.cwpy.wait_frame(waitrate, cw.cwpy.setting.can_skipanimation)
             # カード消去
             cw.cwpy.clear_inusecardimg(self)
             # 自分が対象の時でなければNPC消去
             if not self in targets:
+                cw.animation.animate_sprite(self, "zoomout", battlespeed=battlespeed)
                 cw.animation.animate_sprite(self, "hide", battlespeed=battlespeed)
                 cw.cwpy.cardgrp.remove(self)
             else:
@@ -917,8 +925,9 @@ class Character(object):
         finally:
             if removeafter:
                 # NPC消去
-                cw.animation.animate_sprite(self, "hide", battlespeed=cw.cwpy.is_battlestatus())
-                cw.cwpy.cardgrp.remove(self)
+                battlespeed = cw.cwpy.is_battlestatus()
+                cw.animation.animate_sprite(self, "zoomout", battlespeed=battlespeed)
+                cw.animation.animate_sprite(self, "hide", battlespeed=battlespeed)
             # 特殊文字を元に戻す
             cw.cwpy.rsrc.specialchars = specialchars
             cw.cwpy.rsrc.specialchars_is_changed = specialchars_is_changed
