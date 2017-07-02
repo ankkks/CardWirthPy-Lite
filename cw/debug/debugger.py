@@ -100,7 +100,6 @@ class Debugger(wx.Frame):
         file_menu.AppendSeparator()
         self.mi_save = wx.MenuItem(file_menu, ID_SAVE, u"セーブ(&S)\tCtrl+S")
         self.mi_save.SetBitmap(rsrc["SAVE"])
-        self.mi_save.SetText(u"シナリオをエディタで開きます。")
         file_menu.AppendItem(self.mi_save)
         self.mi_load = wx.MenuItem(file_menu, ID_LOAD, u"ロード(&L)\tCtrl+O")
         self.mi_load.SetBitmap(rsrc["LOAD"])
