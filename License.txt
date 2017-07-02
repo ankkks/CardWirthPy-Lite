@@ -2,12 +2,15 @@
 
 ----ソースコードについて----
 CardWirthPy/Reboot/Lite ソースコードのライセンス
-"src.zip"に同梱しているプログラミングコードの著作権は作者および各貢献者が保持し、MITライセンスで提供されます。
+実行ファイルに含まれるプログラミングコードの著作権は作者および各貢献者が保持し、MITライセンスで提供されます。
 (CardWirthPy.icoについても同様とのこと)
 
   : License: [The MIT License](http://www.opensource.org/licenses/mit-license.php)
 Copyright (c) 2016 logの中の人ならびにコントリビューター一同
 コーディング貢献者(敬称略)：logの中の人,k4nagatsuki,takuto_cw,TachiGigas,暗黒騎士,Iraka.T,name.req,HAND
+
+以下から入手して下さい。
+https://bitbucket.org/akkw/cardwirthpy-lite
 
 ----実行ファイル----
 CardWirthPy は プログラミング言語Pythonで書かれました。実行ファイルの作成にはpy2exeを使用しています。
@@ -33,7 +36,7 @@ msvcp90.dll, msvcr90.dll
  : [Download](http://www.microsoft.com/japan/msdn/vstudio/)
  : License: Visual Studio 2008 Redistributable Code(後述)
 
-音声再生用に以下のライブラリを同梱しています。(ソフトウェアを無償配布する限りは自由)
+音声再生用に以下のライブラリを同梱しています。
 bass.dll, bassmidi.dll, bass32.so, bassmidi32.so, bass64.so, bassmidi64.so
  : [Web Site](http://www.un4seen.com/)
  : License: BASS Audioのライセンス
