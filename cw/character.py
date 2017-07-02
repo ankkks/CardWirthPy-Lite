@@ -868,7 +868,7 @@ class Character(object):
                 waitrate = cw.cwpy.setting.get_dealspeed(cw.cwpy.is_battlestatus())+1
                 cw.cwpy.wait_frame(waitrate, cw.cwpy.setting.can_skipanimation)
 
-            cw.animation.animate_sprite(inusecardimg, "zoomout", battlespeed=battlespeed)
+            cw.animation.animate_sprite(inusecardimg, "zoomout_slow", battlespeed=battlespeed)
             cw.animation.animate_sprite(inusecardimg, "hide", battlespeed=battlespeed)
 
         elif isinstance(self, cw.character.Friend):
@@ -925,9 +925,8 @@ class Character(object):
         finally:
             if removeafter:
                 # NPC消去
-                battlespeed = cw.cwpy.is_battlestatus()
-                cw.animation.animate_sprite(self, "zoomout", battlespeed=battlespeed)
-                cw.animation.animate_sprite(self, "hide", battlespeed=battlespeed)
+                cw.animation.animate_sprite(self, "hide", battlespeed=cw.cwpy.is_battlestatus())
+                cw.cwpy.cardgrp.remove(self)
             # 特殊文字を元に戻す
             cw.cwpy.rsrc.specialchars = specialchars
             cw.cwpy.rsrc.specialchars_is_changed = specialchars_is_changed
