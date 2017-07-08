@@ -276,11 +276,8 @@ class ScenarioSelect(select.Select):
         self.Bind(wx.EVT_BUTTON, self.OnCancel2, id=wx.ID_CANCEL)
         self.Bind(wx.EVT_CLOSE, self.OnCancel2)
 
-        if cw.cwpy.setting.open_lastscenario:
-            if lastscenario or lastscenariopath:
-                self.set_selected(lastscenario, lastscenariopath)
-            else:
-                self.draw(True)
+        if cw.cwpy.setting.open_lastscenario and (lastscenario or lastscenariopath):
+            self.set_selected(lastscenario, lastscenariopath)
         else:
             self.draw(True)
 
@@ -1285,8 +1282,8 @@ class ScenarioSelect(select.Select):
                 self.list.pop(self.index)
                 if self.list and len(self.list) <= self.index:
                     self.index = len(self.list)-1
-                self.scetable[self.nowdir] = self.list
-                self.scetable[dstdir] = self._get_nowlist(dstdir, update=True)
+                self.scetable[self._get_linktarget(self.nowdir)] = self.list
+                self.scetable[self._get_linktarget(dstdir)] = self._get_nowlist(dstdir, update=True)
                 self._update_narrowcondition_impl()
                 lastscenario = dirstack
                 lastscenario.append(os.path.basename(dst))
@@ -1351,7 +1348,7 @@ class ScenarioSelect(select.Select):
             self.list.pop(self.index)
             if self.list and len(self.list) <= self.index:
                 self.index = len(self.list)-1
-            self.scetable[self.nowdir] = self.list
+            self.scetable[self._get_linktarget(self.nowdir)] = self.list
             self._update_narrowcondition_impl()
         except:
             cw.util.print_ex()
@@ -2769,6 +2766,7 @@ class ScenarioSelect(select.Select):
         if self.editorbtn:
             self.editorbtn.Enable(self._can_editor())
 
+        self.Freeze()
         # リストが空だったらボタンを無効化
         if not self.list:
             self.yesbtn.Enable(False)
@@ -2787,6 +2785,7 @@ class ScenarioSelect(select.Select):
             else:
                 self.nobtn.SetLabel(cw.cwpy.msgs["entry_cancel"])
 
+            self.Thaw()
             return
 
         self.texts = self.get_texts()
@@ -2869,6 +2868,7 @@ class ScenarioSelect(select.Select):
         if author:
             name = u"%s (%s)" % (name, author)
         self.SetTitle(name)
+        self.Thaw()
 
     def get_texts(self):
         """
