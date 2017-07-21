@@ -51,6 +51,10 @@ class CardControl(wx.Dialog):
         else:
             s = cw.cwpy.msgs["close"]
         self.closebtn = cw.cwpy.rsrc.create_wxbutton(self.panel, wx.ID_CANCEL, cw.wins((90, 23)), s)
+        bmp = cw.cwpy.rsrc.buttons["UP"]
+        self.closebtn2 = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((24, 24)), bmp=bmp)
+        self.closebtn2.Hide()
+
         # left
         bmp = cw.cwpy.rsrc.buttons["LMOVE"]
         self.leftbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((30, 30)), bmp=bmp, chain=True)
@@ -226,6 +230,7 @@ class CardControl(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.OnShowSkill, self.show[cw.POCKET_SKILL])
         self.Bind(wx.EVT_BUTTON, self.OnShowItem, self.show[cw.POCKET_ITEM])
         self.Bind(wx.EVT_BUTTON, self.OnShowBeast, self.show[cw.POCKET_BEAST])
+        self.Bind(wx.EVT_BUTTON, self.OnReturn, self.closebtn2)
         self.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseWheel)
         self.Bind(wx.EVT_COMBOBOX, self.OnSort, self.sort)
         self.toppanel.Bind(wx.EVT_MOTION, self.OnMove)
@@ -557,6 +562,9 @@ class CardControl(wx.Dialog):
         pass
 
     def OnShowBeast(self, event):
+        pass
+
+    def OnReturn(self, event):
         pass
 
     def _update_sortwithstar(self):
@@ -1785,14 +1793,16 @@ class CardHolder(CardControl):
         self.draw_cards()
 
     def OnCancel(self, event):
-        if self.callname == "CARDPOCKETB":
-            cw.cwpy.play_sound("page")
-            old_callname = self.callname
-            self.callname = "CARDPOCKET"
-            self._change_callname(old_callname)
-            self.draw_cards()
-        else:
-            CardControl.OnCancel(self, event)
+        #if self.callname == "CARDPOCKETB":
+        #else:
+        CardControl.OnCancel(self, event)
+
+    def OnReturn(self, event):
+        cw.cwpy.play_sound("page")
+        old_callname = self.callname
+        self.callname = "CARDPOCKET"
+        self._change_callname(old_callname)
+        self.draw_cards()
 
     def _change_callname(self, old_callname):
         self.Freeze()
@@ -1823,11 +1833,14 @@ class CardHolder(CardControl):
             self._do_layout()
 
         self._enable_updown()
-
         if self.callname == "CARDPOCKETB":
-            self.closebtn.SetLabel(cw.cwpy.msgs["return"])
+            s = self.closebtn.GetPosition()
+            self.closebtn2.SetPosition(s + (cw.wins((90,0))))
+            self.closebtn2.SetSize(cw.wins((23, 23)))
+            self.closebtn2.Show()
         else:
-            self.closebtn.SetLabel(cw.cwpy.msgs["close"])
+            self.closebtn2.Hide()
+
         self.Thaw()
 
     def _enable_updown(self):
