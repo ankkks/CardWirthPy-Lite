@@ -1158,7 +1158,7 @@ import warnings
 warnings.filterwarnings("ignore", category=UnicodeWarning)
 
 def relpath(path, start):
-    if len(start) < len(path) and path.startswith(start):
+    if len(start) < len(path) and path.startswith(start) and start <> "":
         path2 = path[len(start):]
         if path2[0] == '/' or (sys.platform == "win32" and path2[0] == '\\'):
             return path2[1:]
@@ -2581,17 +2581,17 @@ def txtwrap(s, mode, width=30, wrapschars="", encodedtext=True, spcharinfo=None)
             if r_spchar.match(chars.lower()):
                 if spcharinfo and index in spcharinfo:
                     spcharinfo2.append(seqlen)
-                if not chars.startswith("#") or\
-                   not chars[:2].lower() in cw.cwpy.rsrc.specialchars or\
-                   cw.cwpy.rsrc.specialchars[chars[:2].lower()][1]:
-                    seq.append(char)
-                    seqlen += len(char)
-                    skip = True
-                    continue
-                spchar = True
-                if not chars.startswith("&"):
-                    wrapafter = False
-                    defspchar = True
+                    if not chars.startswith("#") or\
+                       not chars[:2].lower() in cw.cwpy.rsrc.specialchars or\
+                       cw.cwpy.rsrc.specialchars[chars[:2].lower()][1]:
+                        seq.append(char)
+                        seqlen += len(char)
+                        skip = True
+                        continue
+                    spchar = True
+                    if not chars.startswith("&"):
+                        wrapafter = False
+                        defspchar = True
 
         # 行頭禁止文字
         if cnt == 0 and not wraped and r_wchar and r_wchar.match(char):
