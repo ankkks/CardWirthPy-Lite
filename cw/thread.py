@@ -3450,8 +3450,12 @@ class CWPy(_Singleton, threading.Thread):
         for pcard in pcards:
             if pcard.is_reversed():
                 continue
-            if not pcard.get_pocketcards(cardtype):
-                continue
+            if type == "BeastCard":
+                if not filter(lambda c: c.attachment, pcard.get_pocketcards(cardtype)):
+                    continue
+            else:
+                if not pcard.get_pocketcards(cardtype):
+                    continue
             replace = ReplaceCards(self, pcard)
             pos_noscale = pcard.get_pos_noscale()
             x_noscale = pos_noscale[0] + cw.setting.get_resourcesize("CardBg/LARGE")[0] - size_noscale[0] - 2
@@ -4480,6 +4484,7 @@ class CWPy(_Singleton, threading.Thread):
             scedir = self.sdata.scedir
 
         for e in data.iter():
+            e.content = None  # イベントコンテントのキャッシュは削除しておく
             if e.tag == "ImagePath" and importimage:
                 # ImagePathはcarddata無しでの表示に必要となるので取り込んでおく
                 if e.text and not cw.binary.image.path_is_code(e.text):
