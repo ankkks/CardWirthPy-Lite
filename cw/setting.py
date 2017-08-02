@@ -286,7 +286,7 @@ class Setting(object):
         # "Settings_Lite.xml"がなかったら新しく作る
         self.local = LocalSetting()
 
-        self.editor = "cwxeditor"
+        self.editor = "cwxeditor-classic"
         self.startupscene = OPEN_TITLE
         self.lastyado = ""
         self.lastscenario = []

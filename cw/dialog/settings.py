@@ -2260,7 +2260,7 @@ class UISettingPanel(wx.Panel):
             self, -1, u"カード選択ダイアログの背景クリックで左右移動を行う")
         self.cb_wheel_movefocus = wx.CheckBox(
             self, -1, u"ホイールでカード選択と選択肢のフォーカス移動を行う")
-        self.cb_wheel_movefocus.SetToolTipString(u"ホイール上でのログ表示が有効な場合はログ表示が優先")
+        self.cb_wheel_movefocus.SetToolTipString(u"「ホイールを上に回すとログを表示」が有効な場合はログ表示優先")
         self.cb_showlogwithwheelup = wx.CheckBox(
             self, -1, u"ホイールを上に回すとログを表示")
         self.st_wheel_down = wx.StaticText(self, -1,
@@ -2319,7 +2319,7 @@ class UISettingPanel(wx.Panel):
         self.cb_blink_statusbutton = wx.CheckBox(
             self, -1, u"通知のあるステータスボタンを点滅させる")
         self.cb_blink_partymoney = wx.CheckBox(
-            self, -1, u"所持金が増減した時に所持金欄を点滅させる")
+            self, -1, u"所持金変更時の視覚効果")
 
         #self.cb_protect_staredcard = wx.CheckBox(
         #    self, -1, u"スター付きのカードの売却や破棄を禁止する")

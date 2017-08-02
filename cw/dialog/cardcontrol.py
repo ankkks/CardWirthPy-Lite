@@ -1292,7 +1292,7 @@ class CardControl(wx.Dialog):
             cw.cwpy.play_sound("click")
 
         if not self.callname in ("CARDPOCKET_REPLACE", "INFOVIEW"):
-            cw.cwpy.exec_func(cw.cwpy.clear_specialarea)
+            cw.cwpy.exec_func(cw.cwpy.clear_specialarea, redraw=False)
         cw.cwpy.frame.kill_dlg(None)
         cw.cwpy.frame.append_killlist(self)
 
@@ -2500,6 +2500,8 @@ class ReplCardHolder(CardControl):
         CardControl.draw_cards(self, update, mode)
 
     def get_headers(self):
+        if self.cardtype == cw.POCKET_BEAST:
+            return filter(lambda c: c.attachment, self.list)
         return self.list
 
     def lclick_event(self, header):
