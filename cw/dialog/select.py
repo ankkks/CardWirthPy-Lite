@@ -31,6 +31,8 @@ class Select(wx.Dialog):
 
         self.additionals = []
         self.addctrlbtn = None
+        self._paperslide = False
+        self._paperslide2 = False
 
         # panel
         self.panel = wx.Panel(self, -1, size=(-1,cw.wins(30)))
@@ -133,8 +135,12 @@ class Select(wx.Dialog):
                 buttonlist[0].SetFocus()
 
     def OnMotion(self, evt):
-        self._update_mousepos()
-        #貼り紙バグ再現
+        if not self._paperslide:
+            self._update_mousepos()
+            self._paperslide2 = False
+            self._paperslide3 = False
+            self._paperslide_d = False
+            #貼り紙バグ再現
         self._paperslide = False
 
     def _update_mousepos(self):
@@ -162,6 +168,10 @@ class Select(wx.Dialog):
             self.clickmode = 0
 
     def OnClickLeftBtn(self, evt):
+        if not (self._paperslide or self._paperslide2) and not self.can_clickcenter():
+            self._paperslide_d = True
+            self._paperslide3 = True
+
         if self.index == 0:
             self.index = len(self.list) -1
         else:
@@ -169,6 +179,7 @@ class Select(wx.Dialog):
 
         cw.cwpy.play_sound("page")
         self.draw(True)
+
         self.index_changed()
 
     def OnClickLeft2Btn(self, evt):
@@ -184,6 +195,10 @@ class Select(wx.Dialog):
         self.index_changed()
 
     def OnClickRightBtn(self, evt):
+        if not (self._paperslide or self._paperslide2) and not self.can_clickcenter():
+            self._paperslide_d = True
+            self._paperslide3 = True
+
         if self.index == len(self.list) -1:
             self.index = 0
         else:
@@ -2745,6 +2760,11 @@ class PlayerSelect(MultiViewSelect):
         header = self.list[self.index]
         age = header.age
         index = cw.cwpy.setting.periodcoupons.index(age)
+        #TODO 成長禁止処理
+        #ccard = cw.character.Character(header)
+        #if ccard.has_coupon(u"＿成長禁止"):
+        #    cw.cwpy.play_sound("error")
+        #    return
 
         if index < 0:
             # 年代が不正。スキンが違う場合は発生しうる

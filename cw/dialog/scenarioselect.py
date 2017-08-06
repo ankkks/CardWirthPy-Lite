@@ -49,6 +49,9 @@ class ScenarioSelect(select.Select):
         self._last_narrowparams = None
         # 貼り紙バグの再現
         self._paperslide = False
+        self._paperslide2 = False
+        self._paperslide3 = False
+        self._paperslide_d = False
 
         # ディレクトリとシナリオリストの対応
         self.scetable = {}
@@ -470,6 +473,11 @@ class ScenarioSelect(select.Select):
         elif select.change_combo(self.sort, event):
             return
         else:
+            if not self.can_clickcenter() and not self._paperslide2:
+                self._paperslide_d = True
+                self._paperslide3 = True
+            if self.can_clickcenter() and not self._paperslide3:
+                self._paperslide2 = True
             select.Select.OnMouseWheel(self, event)
 
     def OnUpKeyDown(self, event):
@@ -1736,10 +1744,20 @@ class ScenarioSelect(select.Select):
         self.conv_scenario(fpath)
 
     def OnSelect(self, event):
-        #貼り紙バグ
+        #TODO:貼り紙バグ
+        #表示されているカーソルを正しく判定できないので、
+        #1.50のホイール対応のため現状仕方なくフラグを三段階作っている
         if not self.list or not self.yesbtn.Enabled:
-            if not self._paperslide:
+            if self._paperslide_d:
+                print 66
                 return
+            elif not self._paperslide and not self._paperslide2:
+                return
+        elif self.yesbtn.Enabled and self._paperslide3:
+            self._paperslide_d = False
+            self._paperslide3 = False
+            self._paperslide2 = True
+            return
         #if not self.list or not self.can_clickcenter():
         #if not self.list or not self.toppanel.SetCursor(cw.cwpy.rsrc.cursors["CURSOR_ARROW"]):
 
