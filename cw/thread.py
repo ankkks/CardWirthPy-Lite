@@ -1092,6 +1092,9 @@ class CWPy(_Singleton, threading.Thread):
         if self._lazy_draw:
             self.draw()
 
+    def set_lazydraw(self):
+        self._lazy_draw = True
+
     def add_lazydraw(self, clip):
         if self._lazy_clip:
             self._lazy_clip.union_ip(clip)
@@ -1670,18 +1673,23 @@ class CWPy(_Singleton, threading.Thread):
         self.list = self.get_mcards("visible")
         self.index = -1
         # スプライト削除
-        self.cardgrp.remove_sprites_of_layer(cw.LAYER_MESSAGE)
-        self.cardgrp.remove_sprites_of_layer(cw.LAYER_SPMESSAGE)
-        self.cardgrp.remove_sprites_of_layer(cw.LAYER_SELECTIONBAR_1)
-        self.cardgrp.remove_sprites_of_layer(cw.LAYER_SELECTIONBAR_2)
-        self.sbargrp.remove_sprites_of_layer(cw.sprite.statusbar.LAYER_MESSAGE)
+        seq = []
+        seq.extend(self.cardgrp.remove_sprites_of_layer(cw.LAYER_MESSAGE))
+        seq.extend(self.cardgrp.remove_sprites_of_layer(cw.LAYER_SPMESSAGE))
+        seq.extend(self.cardgrp.remove_sprites_of_layer(cw.LAYER_SELECTIONBAR_1))
+        seq.extend(self.cardgrp.remove_sprites_of_layer(cw.LAYER_SPSELECTIONBAR_1))
+        seq.extend(self.cardgrp.remove_sprites_of_layer(cw.LAYER_SELECTIONBAR_2))
+        seq.extend(self.cardgrp.remove_sprites_of_layer(cw.LAYER_SPSELECTIONBAR_2))
+        seq.extend(self.sbargrp.remove_sprites_of_layer(cw.sprite.statusbar.LAYER_MESSAGE))
 
         # 互換性マーク削除
         if self.is_playingscenario():
             self.sdata.set_versionhint(cw.HINT_MESSAGE, None)
 
         # 次のアニメーションの前に再描画を行う
-        self._lazy_draw = True
+        for sprite in seq:
+            self.add_lazydraw(sprite.rect)
+        self.set_lazydraw()
 
         # メッセージ表示中にシナリオ強制終了(F9)などを行った場合、
         # イベント強制終了用のエラーを送出する。
@@ -1860,6 +1868,8 @@ class CWPy(_Singleton, threading.Thread):
         self.setting.scenario_narrow = ""
         self.setting.lastscenario = []
         self.setting.lastscenariopath = ""
+        self.setting.last_storehousepage = 0
+        self.setting.last_backpackpage = 0
         self.ydata = None
         self.sdata = cw.data.SystemData()
         cw.tempdir = cw.tempdir_init
@@ -2104,6 +2114,8 @@ class CWPy(_Singleton, threading.Thread):
 
         self.clear_inusecardimg()
         self.clear_guardcardimg()
+        self.statusbar.change(False)
+        self.draw(clip=self.statusbar.rect)
         self.return_takenoutcard(checkevent=False)
 
         # 対象選択画面でF9しても、中止ボタンを宿まで持ち越さないように

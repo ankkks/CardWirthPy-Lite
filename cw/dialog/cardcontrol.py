@@ -1373,8 +1373,9 @@ class CardHolder(CardControl):
             for i in xrange(len(cw.cwpy.setting.show_cardtype)):
                 cw.cwpy.setting.show_cardtype[i] = True
                 cw.cwpy.setting.last_cardpocketbpage[i] = 0
-            cw.cwpy.setting.last_storehousepage = 0
-            cw.cwpy.setting.last_backpackpage = 0
+            #PyLite:Rebootでは初期化しているがCWでは初期化しない
+            #cw.cwpy.setting.last_storehousepage = 0
+            #cw.cwpy.setting.last_backpackpage = 0
             cw.cwpy.setting.last_sendto = 0
 
             cw.cwpy.setting.card_narrow = ""

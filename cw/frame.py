@@ -584,6 +584,7 @@ class Frame(wx.Frame):
         if dlg.ShowModal() == wx.ID_OK:
             header = dlg.list[dlg.index]
             sceheader = header.get_sceheader()
+            cw.cwpy.setting.last_backpackpage = 0
 
             # シナリオプレイ途中から再開
             if sceheader:
