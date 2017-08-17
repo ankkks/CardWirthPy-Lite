@@ -1363,12 +1363,18 @@ class CardEvent(Event, Targeting):
         # 特殊エリア解除・カード選択ダイアログを開く
         cw.cwpy.clear_specialarea()
 
+    def _exit_event(self):
+        if not (isinstance(self.error, AreaChangeError) or \
+                isinstance(self.error, ScenarioBadEndError)):
+            if not cw.cwpy.is_gameover() and not cw.cwpy.event.is_stoped():
+                cw.cwpy.show_party()
+
     def run_areaevent(self):
         keycodes = self.inusecard.get_keycodes()
         self._store_inusedata(selectuser=True)
         cw.cwpy.sdata.events.start(keycodes=keycodes, isinsideevent=True)
         self._restore_inusedata()
-        cw.cwpy.show_party()
+        self._exit_event()
 
     def run_characterevent(self, target, can_unconscious):
         keycodes = self.inusecard.get_keycodes()
@@ -1376,7 +1382,7 @@ class CardEvent(Event, Targeting):
             self._store_inusedata(selectuser=True)
             self.get_events(target).start(keycodes=keycodes, isinsideevent=True)
             self._restore_inusedata()
-            cw.cwpy.show_party()
+            self._exit_event()
 
     def run_deadevent(self, target):
         """targetの死亡イベントが発生可能であれば発生させる。"""
@@ -1384,7 +1390,7 @@ class CardEvent(Event, Targeting):
             self._store_inusedata(selectuser=True)
             r = self.get_events(target).start(1, isinsideevent=True)
             self._restore_inusedata()
-            cw.cwpy.show_party()
+            self._exit_event()
             return r
 
     def run_menucardevent(self, target):
@@ -1401,7 +1407,7 @@ class CardEvent(Event, Targeting):
                 self._store_inusedata(selectuser=True)
                 events.start(keycodes=keycodes)
                 self._restore_inusedata()
-                cw.cwpy.show_party()
+                self._exit_event()
             finally:
                 cw.cwpy.lock_menucards = lock
         else:
@@ -1415,7 +1421,7 @@ class CardEvent(Event, Targeting):
             self._store_inusedata(selectuser=True)
             self.get_events(target).start(keycodes=keycodes, isinsideevent=True, successevent=True)
             self._restore_inusedata()
-            cw.cwpy.show_party()
+            self._exit_event()
 
     def effect_cardmotion(self):
         """カード効果発動。イベント実行の最後に行う。"""
