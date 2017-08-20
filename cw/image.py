@@ -497,6 +497,9 @@ class CardImage(Image):
                 path = cw.util.get_materialpath(info.path, cw.M_IMG, system=not self.is_scenariocard,
                                                 scedir=self.scedir)
 
+            if not pisc and os.path.isfile(path):
+                self.image_mtime[path] = os.path.getmtime(path)
+
             if pisc or os.path.isfile(path):
                 if isinstance(self.can_loaded_scaledimage, (list, tuple)):
                     can_loaded_scaledimage = self.can_loaded_scaledimage[i]
@@ -702,6 +705,9 @@ class LargeCardImage(CardImage):
                 path = cw.util.get_materialpath(info.path, cw.M_IMG, system=not self.is_scenariocard,
                                                 scedir=self.scedir)
 
+            if not pisc and os.path.isfile(path):
+                self.image_mtime[path] = os.path.getmtime(path)
+
             if pisc or os.path.isfile(path):
                 if isinstance(self.can_loaded_scaledimage, (list, tuple)):
                     can_loaded_scaledimage = self.can_loaded_scaledimage[i]
@@ -768,6 +774,9 @@ class LargeCardImage(CardImage):
             if (not path or self.is_scenariocard) and not info.pcnumber:
                 path = cw.util.get_materialpath(info.path, cw.M_IMG, system=not self.is_scenariocard,
                                                 scedir=self.scedir)
+
+            if not pisc and os.path.isfile(path):
+                self.image_mtime[path] = os.path.getmtime(path)
 
             if pisc or os.path.isfile(path):
                 if isinstance(self.can_loaded_scaledimage, (list, tuple)):
