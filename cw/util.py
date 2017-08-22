@@ -761,6 +761,13 @@ def calc_imagesize(image):
     return image.get_bitsize() * image.get_width() * image.get_height() // 8
 
 
+def calc_wxbmpsize(wxbmp):
+    """wx.Bitmapのデータサイズを概算する。
+    結果は正確ではない。
+    """
+    return wxbmp.GetDepth() * wxbmp.GetWidth() * wxbmp.GetHeight() // 8
+
+
 def put_number(image, num):
     """アイコンサイズの画像imageの上に
     numの値を表示する。
@@ -1295,6 +1302,14 @@ def get_md5(path):
 
     return m.hexdigest()
 
+def get_md5_from_data(data):
+    """MD5を使ったハッシュ値を返す。
+    path: ハッシュ値を求めるファイルのパス。
+    """
+    m = hashlib.md5()
+    m.update(data)
+    return m.hexdigest()
+
 def number_normalization(value, fromvalue, tovalue):
     """数値を範囲内の値に正規化する。
     value: 正規化対象の数値。
@@ -1458,6 +1473,11 @@ def create_cardscreenshot(titledic):
             h += lh
         bmp = pygame.Surface((w, h)).convert()
         bmp.fill(cw.cwpy.setting.ssinfobackcolor, rect=pygame.Rect(cw.s(0), cw.s(0), w, h))
+
+        # 背景画像
+        if title and cw.cwpy.setting.ssinfobackimage and os.path.isfile(cw.cwpy.setting.ssinfobackimage):
+            subimg3 = load_image(cw.cwpy.setting.ssinfobackimage, False)
+            fill_image(bmp, cw.s(subimg3), (w, lh))
 
         # イメージの作成
         sy = cw.s(0)
