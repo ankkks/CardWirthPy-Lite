@@ -478,6 +478,11 @@ class CardControl(wx.Dialog):
         sizer_1.Add(self.panel, 0, wx.EXPAND, 0)
         self.SetSizer(sizer_1)
         sizer_1.Fit(self)
+        if self.callname == "CARDPOCKETB":
+            s = self.closebtn.GetPosition()
+            self.closebtn2.SetPosition(s + (cw.wins((90, 0))))
+            self.closebtn2.SetSize(cw.wins((23, 23)))
+            self.closebtn2.Show()
         self.Layout()
 
     def update_additionals(self):
@@ -1426,8 +1431,6 @@ class CardHolder(CardControl):
         # ダイアログ作成
         sort = self.callname in ("STOREHOUSE", "BACKPACK", "CARDPOCKETB")
         CardControl.__init__(self, parent, name, sendto, sort, areaid=areaid, drawcards=False)
-        if self.callname == "CARDPOCKETB":
-            self.closebtn.SetLabel(cw.cwpy.msgs["return"])
 
         self.list = self._narrow(self.list)
         # カード移動等でページ数が減っていた場合はself.indexを補正
@@ -1526,7 +1529,6 @@ class CardHolder(CardControl):
             # キャストの手札カード
             # 選択中カード色反転
             self.Parent.change_selection(self.selection)
-
         else:
             # カード置き場、荷物袋、情報カード
             if self.callname <> "INFOVIEW":
