@@ -1439,7 +1439,7 @@ class StatusPanel(wx.ScrolledWindow):
         if 10 <= value:
             colour = wx.Colour(255, 0, 0)
             bmp = cw.cwpy.rsrc.wxstatuses[enhimage]
-            msg = u"%s (%d)" % (enhname + cw.cwpy.msgs["maximum_bonus"], dur)
+            msg = (cw.cwpy.msgs["maximum_bonus"] + u" (%s)") % (enhname, dur)
         elif 7 <= value:
             colour = wx.Colour(175, 0, 0)
             bmp = cw.cwpy.rsrc.wxstatuses[enhimage]
