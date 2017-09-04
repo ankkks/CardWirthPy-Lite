@@ -665,8 +665,8 @@ class AdventurerCreaterPage(wx.Panel):
         self.age = ""
         self._dropkey = (-1, u"<ドロップされたイメージ>", "/drop_files")
 
-        #self.Bind(wx.EVT_SET_FOCUS, self.OnSetFocus)
-        #self.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
+        self.Bind(wx.EVT_SET_FOCUS, self.OnSetFocus)
+        self.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
 
         if freeze:
             self.Freeze()
@@ -683,6 +683,7 @@ class AdventurerCreaterPage(wx.Panel):
     def _bind(self):
         self.Bind(wx.EVT_PAINT, self.OnPaint2)
         self.Bind(wx.EVT_LEFT_UP, self.OnLeftUp)
+        self.Bind(wx.EVT_LEFT_DOWN, self.OnLeftDown)
         self.Bind(wx.EVT_MOUSEWHEEL, self.OnMouseWheel)
         self.Bind(wx.EVT_RIGHT_UP, self.Parent.OnCancel)
         self.Bind(wx.EVT_ERASE_BACKGROUND, self.OnEraseBackground)
@@ -910,6 +911,9 @@ class AdventurerCreaterPage(wx.Panel):
             dc.SetBrush(wx.TRANSPARENT_BRUSH)
             dc.DrawRectangle(rect[0], rect[1], rect[2], rect[3])
 
+    def OnLeftDown(self, event):
+        pass
+
     def OnLeftUp(self, event):
         mousepos = event.GetPosition()
 
@@ -918,6 +922,7 @@ class AdventurerCreaterPage(wx.Panel):
 
             if method and rect.collidepoint(mousepos):
                 method(key)
+                break
 
     def OnKeyDown(self, event):
         keycode = event.GetKeyCode()
@@ -986,6 +991,7 @@ class AdventurerCreaterPage(wx.Panel):
         return False
 
     def set_imgpathlist(self, reset=True):
+        self.Freeze()
         drop = self.imgpathlist.get(self._dropkey, None)
         if reset or not self.imgpaths:
             self.imgpathlist = {}
@@ -999,7 +1005,7 @@ class AdventurerCreaterPage(wx.Panel):
 
         adddefaults = reset or not self.imgpaths
         imgpathlist = cw.util.get_facepaths(self.sex, self.age, adddefaults=adddefaults)
-        if 1 == len(imgpathlist):
+        if 1 == len(imgpathlist) and not drop:
             if self.imgpathlist:
                 self.imgpathlist[None].extend(imgpathlist.values()[0])
             else:
@@ -1020,6 +1026,7 @@ class AdventurerCreaterPage(wx.Panel):
                 self.imgdpath = 0
 
         self._update_imgdpaths()
+        self.Thaw()
 
     def _update_imgdpaths(self):
         self.Freeze()

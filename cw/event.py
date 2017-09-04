@@ -726,7 +726,7 @@ class Event(object):
         self.starttree = event.starttree
 
     def _store_inusedata(self, selectuser):
-        if selectuser:
+        if selectuser and isinstance(self, CardEvent):
             cw.cwpy.event.set_selectedmember(self.user)
         self._stored_in_cardeffectmotion = cw.cwpy.event.in_cardeffectmotion
         cw.cwpy.event.in_cardeffectmotion = False
@@ -1456,7 +1456,7 @@ class CardEvent(Event, Targeting):
         # ターゲット色反転＆ウェイト
         self.update_targets()
         skipped = False
-        if not d["allrange"]:
+        if not d["allrange"] and self.targets:
             self.targets[0].set_cardtarget()
             cw.cwpy.draw()
             if eff.check_enabledtarget(self.targets[0], False):
@@ -1573,7 +1573,8 @@ class CardEvent(Event, Targeting):
 
                 target.clear_cardtarget()
 
-                cw.cwpy.play_sound_with(eff.soundpath)
+                cw.cwpy.play_sound_with(eff.soundpath, subvolume=self.eff.volume, loopcount=self.eff.loopcount,
+                                        channel=self.eff.channel, fade=self.eff.fade)
                 eff.animate(target)
                 cw.cwpy.draw(clip=target.rect)
                 self.mcards.discard(target)

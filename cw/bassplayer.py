@@ -134,7 +134,6 @@ def _loop(handle, channel, data, streamindex):
                 _fadeoutstreams[streamindex] = (channel, loops - 1, pos)
             else:
                 _loopcounts[streamindex] = loops - 1
-        pos = _loopstarts[streamindex]
         _bass.BASS_ChannelSetPosition(c_long(channel), c_longlong(pos), c_long(BASS_POS_BYTE))
 
 def is_alivable():
@@ -305,7 +304,7 @@ def _get_attribute(stream, flag):
     class ATTR(ctypes.Structure):
         _fields_ = [("value", ctypes.c_float)]
     attr = ATTR()
-    _bass.BASS_ChannelGetAttribute(stream, BASS_ATTRIB_TEMPO, ctypes.byref(attr))
+    _bass.BASS_ChannelGetAttribute(stream, flag, ctypes.byref(attr))
     return attr.value
 
 class BASS_CHANNELINFO(ctypes.Structure):
