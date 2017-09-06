@@ -2504,7 +2504,7 @@ class GetContent(EventContentBase):
 
 def get_card(etree, target, notscenariocard=False, toindex=-1, insertorder=-1, party=None,
              copymaterialfrom="", fromdebugger=False, from_getcontent=False, attachment=False,
-             update_image=True):
+             update_image=True, anotherscenariocard=False):
     """対象インスタンスにカードを配布する。cwpy.trade()参照。
     etree: ElementTree or Element
     target: Character or list(Backpack, Storehouse)
@@ -2520,6 +2520,8 @@ def get_card(etree, target, notscenariocard=False, toindex=-1, insertorder=-1, p
     else:
         from_scenario = True
         etree.getroot().attrib["scenariocard"] = "True"
+        if anotherscenariocard:
+            etree.edit(".", "True", "anotherscenariocard")
 
     # 召喚獣カードの場合、付帯属性を操作する
     # 召喚獣獲得コンテントないしデバッガからの配布であれば、必ず付帯能力に
@@ -2554,7 +2556,7 @@ def get_card(etree, target, notscenariocard=False, toindex=-1, insertorder=-1, p
         dstdir = cw.util.join_paths(cw.cwpy.ydata.yadodir,
                                     "Material", header.type, name if name else "noname")
         dstdir = cw.util.dupcheck_plus(dstdir)
-        cw.cwpy.copy_materials(etree, dstdir, True, copymaterialfrom, importimage=from_scenario,
+        cw.cwpy.copy_materials(etree, dstdir, True, copymaterialfrom, importimage=False,
                                can_loaded_scaledimage=etree.getbool(".", "scaledimage", False))
         header.imgpaths = cw.image.get_imageinfos(etree.find("Property"))
 
