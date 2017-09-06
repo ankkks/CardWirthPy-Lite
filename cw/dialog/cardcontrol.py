@@ -436,10 +436,11 @@ class CardControl(wx.Dialog):
             self.rightbtn2.SetSize(cw.wins((20, 20)))
             x -= cw.wins(140)
             self.combo.SetSize(cw.wins((140, 22)))
-            if sys.platform == "win32":
-                import win32api
-                CB_SETITEMHEIGHT = 0x153
-                win32api.SendMessage(self.combo.Handle, CB_SETITEMHEIGHT, -1, cw.wins(22))
+            #TODO:Lite:切り替え時に一瞬はみ出るのでFreeze併用しない場合は諦める
+            #if sys.platform == "win32":
+            #    import win32api
+            #    CB_SETITEMHEIGHT = 0x153
+            #    win32api.SendMessage(self.combo.Handle, CB_SETITEMHEIGHT, -1, cw.wins(22))
             yc = y + (cw.wins(22)-self.combo.GetSize()[1]) / 2
             self.combo.SetPosition((x, yc))
 
@@ -1809,7 +1810,7 @@ class CardHolder(CardControl):
         self.draw_cards()
 
     def _change_callname(self, old_callname):
-        self.Freeze()
+        #self.Freeze() TODO:Lite 高速でホイールを回すと描画が追いつかないのでフリーズさせては駄目
         self._load_index()
 
         if self.callname == "CARDPOCKET":
@@ -1845,7 +1846,7 @@ class CardHolder(CardControl):
         else:
             self.closebtn2.Hide()
 
-        self.Thaw()
+        #self.Thaw()
 
     def _enable_updown(self):
         # リストが空か1ページ分しかなかったら上下ボタンを無効化
