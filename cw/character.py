@@ -2643,7 +2643,7 @@ class Character(object):
                 else:
                     self.set_paralyze(-1)
 
-    def set_timeelapse(self, time=1):
+    def set_timeelapse(self, time=1, fromevent=False):
         """時間経過。"""
         if cw.cwpy.ydata:
             cw.cwpy.ydata.changed()
@@ -2814,6 +2814,7 @@ class Character(object):
                     self.update_image()
             else:
                 self.update_image()
+            cw.cwpy.draw(clip=self.rect)
 
         # エネミーまたはプレイヤー(Wsn.2)が中毒効果で死亡していたら、死亡イベント開始
         if isinstance(self, (Player, Enemy)) and self.is_dead() and oldalive:
@@ -2823,11 +2824,30 @@ class Character(object):
             else:
                 events = self.events
             if events:
-                if cw.cwpy.sdata.is_wsnversion('2'):
-                    # イベント所持者を示すシステムクーポン(Wsn.2)
-                    self.set_coupon(u"＠イベント対象", 0)
-                events.start(1, isinsideevent=False)
-                self.remove_coupon(u"＠イベント対象")
+                e_eventtarget = None
+                if fromevent:
+                    for t in itertools.chain(cw.cwpy.get_pcards(), cw.cwpy.get_ecards(), cw.cwpy.get_fcards()):
+                        if isinstance(t, cw.character.Character):
+                            if t.has_coupon(u"＠イベント対象"):
+                                e_eventtarget = t
+                                t.remove_coupon(u"＠イベント対象")
+                                break
+
+                try:
+                    if cw.cwpy.sdata.is_wsnversion('2'):
+                        # イベント所持者を示すシステムクーポン(Wsn.2)
+                        self.set_coupon(u"＠イベント対象", 0)
+                    if fromevent:
+                        event = events.check_keynum(1)
+                        if event:
+                            event.run_scenarioevent()
+                        else:
+                            events.start(1, isinsideevent=False)
+                finally:
+                    self.remove_coupon(u"＠イベント対象")
+
+                    if e_eventtarget:
+                        e_eventtarget.set_coupon(u"＠イベント対象", 0)
 
     def set_hold_all(self, pocket, value):
         self.hold_all[pocket] = value

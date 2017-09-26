@@ -371,6 +371,8 @@ class CWPy(_Singleton, threading.Thread):
             changearea = False
             self.cardgrp.remove(self.mcards)
             self.background.bgs = []
+        elif self.status == "GameOver":
+            changearea = False
 
         changed = self.ydata and self.ydata.is_changed()
         scedir = self.setting.get_scedir()
@@ -2067,6 +2069,14 @@ class CWPy(_Singleton, threading.Thread):
         self.ydata.party.lost()
         del self.sdata.friendcards[:]
         self.sdata.end()
+
+        for music in self.music:
+            music.stop()
+        for i in xrange(len(self.lastsound_scenario)):
+            if self.lastsound_scenario[i]:
+                self.lastsound_scenario[i].stop(True)
+                self.lastsound_scenario[i] = None
+
         self.ydata.load_party(None)
         msglog = self.sdata.backlog
         self.sdata = cw.data.SystemData()
@@ -2319,8 +2329,8 @@ class CWPy(_Singleton, threading.Thread):
         if not self.is_showparty:
             self._show_party()
 
-        if not startotherscenario:
-            self.set_yado()
+        for music in self.music:
+            music.stop()
 
         for i in xrange(len(self.lastsound_scenario)):
             if self.lastsound_scenario[i]:
@@ -2329,6 +2339,9 @@ class CWPy(_Singleton, threading.Thread):
         if self.lastsound_system:
             self.lastsound_system.stop(False)
             self.lastsound_system = None
+
+        if not startotherscenario:
+            self.set_yado()
 
     def reload_yado(self):
         """現在の宿をロード。"""
@@ -3087,7 +3100,7 @@ class CWPy(_Singleton, threading.Thread):
         sprite.remove(cw.cwpy.cardgrp)
 
         self.sdata.pre_battleareadata = (oldareaid, oldbgmpath, (music.path, music.subvolume, music.loopcount, music.channel))
-        self.battle = cw.battle.BattleEngine()
+        cw.battle.BattleEngine()
         self.lock_menucards = False
 
     def clear_battlearea(self, areachange=True, eventkeynum=0, startnextbattle=False, is_battlestarting=False):
@@ -3113,14 +3126,12 @@ class CWPy(_Singleton, threading.Thread):
             for pcard in self.get_pcards():
                 pcard.deck.clear(pcard)
 
-                if not pcard.is_reversed():
-                    pcard.remove_timedcoupons(True)
+                pcard.remove_timedcoupons(True)
 
             for fcard in self.get_fcards():
                 fcard.deck.clear(fcard)
 
-                if not fcard.is_reversed():
-                    fcard.remove_timedcoupons(True)
+                fcard.remove_timedcoupons(True)
 
             areaid, bgmpath, _battlebgmpath = self.sdata.pre_battleareadata
             if not startnextbattle:
@@ -3168,6 +3179,7 @@ class CWPy(_Singleton, threading.Thread):
 
     def change_specialarea(self, areaid):
         """特殊エリア(エリアIDが負の数)に移動する。"""
+        updatestatusbar = True
         if areaid < 0:
             self.pre_areaids.append((self.areaid, self.sdata.data))
 
@@ -3241,19 +3253,26 @@ class CWPy(_Singleton, threading.Thread):
 
                 self.lock_menucards = False
 
-            elif cardtarget == "User" or cardtarget == "None":
+            elif cardtarget in ("User", "None"):
                 if self.status == "Scenario":
-                    self.change_selection(owner)
-                    self.call_modaldlg("USECARD")
+                    if cw.cwpy.setting.confirm_beforeusingcard:
+                        owner.image = owner.get_selectedimage()
+                    def func(owner):
+                        if cw.cwpy.setting.confirm_beforeusingcard:
+                            self.change_selection(owner)
+                        self.call_modaldlg("USECARD")
+                    self.exec_func(func, owner)
                 elif self.is_battlestatus():
                     owner.set_action(owner, header)
                     self.clear_specialarea()
                     self.lock_menucards = False
+                updatestatusbar = False
 
             else:
                 self.lock_menucards = False
 
-        self.exec_func(self.statusbar.change, True)
+        if updatestatusbar:
+            self.exec_func(self.statusbar.change, True)
         self.disposition_pcards()
 
     def clear_specialarea(self, redraw=True):
@@ -3584,9 +3603,7 @@ class CWPy(_Singleton, threading.Thread):
                     elif targets:
                         self.set_targetarrow(targets)
                 elif self.setting.show_allselectedcards or selowner:
-                    alpha = 210
-                    if not sprite.alpha is None:
-                        alpha = min(alpha, sprite.alpha)
+                    alpha = cw.cwpy.setting.get_inusecardalpha(sprite)
                     self.set_inusecardimg(sprite, header, alpha=alpha)
 
                 if self.setting.show_allselectedcards and isinstance(sprite, cw.sprite.card.PlayerCard):
@@ -3748,7 +3765,7 @@ class CWPy(_Singleton, threading.Thread):
 # プレイ用メソッド
 #-------------------------------------------------------------------------------
 
-    def elapse_time(self, playeronly=False):
+    def elapse_time(self, playeronly=False, fromevent=False):
         """時間経過。"""
         cw.cwpy.advlog.start_timeelapse()
 
@@ -3757,15 +3774,19 @@ class CWPy(_Singleton, threading.Thread):
             ccards.extend(self.get_ecards("unreversed"))
             ccards.extend(self.get_fcards())
 
-        for ccard in ccards:
-            try:
-                ccard.set_timeelapse()
-            except cw.event.EffectBreakError:
-                # 効果中断されても以降のキャラクターの処理は継続
-                pass
-
-        if ccards:
-            self.draw()
+        try:
+            for ccard in ccards:
+                try:
+                    ccard.set_timeelapse(fromevent=fromevent)
+                except cw.event.EffectBreakError:
+                    if fromevent:
+                        raise
+                    else:
+                        # 時間経過コンテント以外で時間経過が起きている場合、
+                        # 効果中断されても以降のキャラクターの処理は継続
+                        pass
+        finally:
+            self._elapse_time = False
 
     def interrupt_adventure(self):
         """冒険の中断。宿画面に遷移する。"""
