@@ -3777,7 +3777,17 @@ class CWPy(_Singleton, threading.Thread):
         try:
             for ccard in ccards:
                 try:
+                    if fromevent:
+                        if cw.cwpy.event.has_selectedmember():
+                            selmember = cw.cwpy.event.get_selectedmember()
+                            cw.cwpy.event.set_selectedmember(None)
+                        else:
+                            selmember = None
+
                     ccard.set_timeelapse(fromevent=fromevent)
+                    if fromevent:
+                        cw.cwpy.event.set_selectedmember(selmember)
+
                 except cw.event.EffectBreakError:
                     if fromevent:
                         raise
