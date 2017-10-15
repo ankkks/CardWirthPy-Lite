@@ -604,12 +604,14 @@ class ScenarioSelect(select.Select):
             ftypes.add(cw.scenariodb.DATA_FNAME)
         else:
             assert False
+        self._no_treechangedsound = True
         headers = self.db.find_headers(ftypes, value, skintype=cw.cwpy.setting.skintype)
         cw.cwpy.play_sound("harvest")
         self._set_findresult(headers, False)
 
         if cw.cwpy.setting.show_paperandtree or not (self.tree and self.tree.IsShown()):
             self.draw(True)
+        self._no_treechangedsound = False
 
     def _set_findresult(self, headers, selfirstheader):
         list = self.scetable[self._get_linktarget(self.scedir)]
@@ -1364,6 +1366,7 @@ class ScenarioSelect(select.Select):
                 self.index = len(self.list)-1
             self.scetable[self._get_linktarget(self.nowdir)] = self.list
             self._update_narrowcondition_impl()
+            self.draw(True)
         except:
             cw.util.print_ex()
             s = u"%sの削除に失敗しました。" % fpath

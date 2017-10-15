@@ -354,10 +354,12 @@ class Select(wx.Dialog):
         font = cw.cwpy.rsrc.get_wxfont("paneltitle2", pixelsize=cw.wins(13))
         self.narrow_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["narrow_condition"])
         self.narrow_label.SetFont(font)
-        self.narrow = wx.TextCtrl(self, -1, size=(cw.wins(0), -1), style= wx.TE_PROCESS_ENTER|wx.SIMPLE_BORDER)
         self.narrow.SetFont(font)
         self.narrow.SetValue(narrowtext)
-        #if tworows:
+        if tworows:
+            self.narrow = wx.TextCtrl(self, -1, size=(cw.wins(0), -1), style=wx.TE_PROCESS_ENTER | wx.SIMPLE_BORDER)
+        else:
+            self.narrow = wx.TextCtrl(self, -1, size=(cw.wins(0), -1), style=wx.SIMPLE_BORDER)
         #    self.narrow_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["narrow_condition2"])
         #    self.narrow_label.SetFont(font)
         cfont = cw.cwpy.rsrc.get_wxfont("combo", pixelsize=cw.wins(13))
