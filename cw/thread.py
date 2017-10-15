@@ -1453,14 +1453,17 @@ class CWPy(_Singleton, threading.Thread):
         if threading.currentThread() == self:
             self.draw()
             def func():
-                self.frame.app.SetCallFilterEvent(True)
-            self.frame.exec_func(func)
+                # BUG: シナリオインストールダイアログを開いた後で
+                #      フィルタイベントの挙動がおかしくなる
+                # self.frame.app.SetCallFilterEvent(True)
+                pass
+            #self.frame.exec_func(func)
             self.frame.AddPendingEvent(event)
             if sys.platform == "win32":
                 while self.is_running() and self.frame.IsEnabled() and stack < self._showingdlg:
                     pass
         else:
-            self.frame.app.SetCallFilterEvent(True)
+            #self.frame.app.SetCallFilterEvent(True)
             self.frame.ProcessEvent(event)
 
     def call_modaldlg(self, name, **kwargs):
@@ -1504,7 +1507,8 @@ class CWPy(_Singleton, threading.Thread):
     def kill_showingdlg(self):
         self._showingdlg -= 1
         if self._showingdlg <= 0:
-            self.frame.app.SetCallFilterEvent(False)
+            # BUG: シナリオインストールダイアログ関連
+            # self.frame.app.SetCallFilterEvent(False)
             if not self.is_runningevent():
                 self.exec_func(self.clear_selection)
 
@@ -1909,7 +1913,7 @@ class CWPy(_Singleton, threading.Thread):
             areaid = 3
 
         def change_area():
-            self.change_area(areaid)
+            self.change_area(areaid, force_updatebg=True)
             self.is_pcardsselectable = self.ydata and self.ydata.party
 
         if self.ydata.skindirname <> cw.cwpy.setting.skindirname:
@@ -2983,7 +2987,8 @@ class CWPy(_Singleton, threading.Thread):
     def change_area(self, areaid, eventstarting=True,
                           bginhrt=False, ttype=("Default", "Default"),
                           quickdeal=False, specialarea=False, startbattle=False,
-                          doanime=True, data=None, nocheckvisible=False, resume=False):
+                          doanime=True, data=None, nocheckvisible=False, resume=False,
+                          force_updatebg=False):
         """ゲームエリアチェンジ。
         eventstarting: Falseならエリアイベントは起動しない。
         bginhrt: 背景継承を行うかどうかのbool値。
@@ -3004,11 +3009,13 @@ class CWPy(_Singleton, threading.Thread):
 
         # 背景継承を行うかどうかのbool値
         bginhrt |= bool(self.areaid < 0 and self.areaid <> cw.AREA_BREAKUP)
+        bginhrt &= not force_updatebg
         oldareaid = self.areaid
         self.areaid = areaid
         if not self.sdata.change_data(areaid, data=data):
             raise cw.event.EffectBreakError()
         bginhrt |= bool(self.areaid < 0)
+        bginhrt &= not force_updatebg
         self.hide_cards(True, quickhide=quickdeal)
         self.set_sprites(bginhrt=bginhrt, ttype=ttype, doanime=doanime, data=data,
                          nocheckvisible=nocheckvisible)
@@ -3081,6 +3088,7 @@ class CWPy(_Singleton, threading.Thread):
         fade = data.getint("Property/MusicPath", "fadein", 0)
 
         music = self.music[channel]
+        self.set_battle()
 
         # 戦闘開始アニメーション
         sprite = cw.sprite.background.BattleCardImage()
@@ -3094,7 +3102,6 @@ class CWPy(_Singleton, threading.Thread):
         # 戦闘音楽を流す
         music.play(path, subvolume=volume, loopcount=loopcount, fade=fade)
 
-        self.set_battle()
         self.change_area(areaid, False, bginhrt=True, ttype=("None", "Default"), startbattle=True)
         cw.animation.animate_sprite(sprite, "hide")
         sprite.remove(cw.cwpy.cardgrp)

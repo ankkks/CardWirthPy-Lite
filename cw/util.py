@@ -73,6 +73,10 @@ class MusicInterface(object):
             self._movie.set_display(self.movie_scr, rect)
 
     def play(self, path, updatepredata=True, restart=False, inusecard=False, subvolume=100, loopcount=0, fade=0):
+        if not updatepredata:
+            # サウンドフォントやスキンの変更等で鳴らし直す場合
+            subvolume = self.subvolume
+            loopcount = self.loopcount
         self._play(path, updatepredata, restart, inusecard, subvolume, loopcount, fade)
 
     def _play(self, path, updatepredata=True, restart=False, inusecard=False, subvolume=100, loopcount=0, fade=0):
@@ -579,6 +583,10 @@ def find_scaledimagepath(path, up_scr, can_loaded_scaledimage, noscale):
     例えば"file.bmp"に対する"file.x2.bmp"を探す。
     """
     scale = 1
+
+    if cw.binary.image.path_is_code(path):
+        return path, scale
+
     path = cw.util.join_paths(path)
     if not noscale and (can_loaded_scaledimage or\
                         path.startswith(cw.util.join_paths(cw.tempdir, u"ScenarioLog/TempFile") + u"/") or\
@@ -1499,6 +1507,8 @@ def create_cardscreenshot(titledic):
 
             def blit_card(headers, x, sy):
                 for header in headers:
+                    if header.negaflag:
+                        header.negaflag = False
                     bmp.blit(header.cardimg.get_cardimg(header), (cw.s(x), sy + cw.s(10 + margin)))
                     x += 80 + margin
 
@@ -2635,9 +2645,9 @@ def txtwrap(s, mode, width=30, wrapschars="", encodedtext=True, spcharinfo=None)
             seq.append(char)
             seqlen += len(char)
             cnt += 1
-            if not (mode in (2, 3)) and not (mode == 1 and index+1 < len(s) and not is_hw(s[index+1])):
+            if not (mode in (2, 3) or (mode in (1, 4) and char == ' ')) and not (mode == 1 and index + 1 < len(s) and not is_hw(s[index + 1])):
                 asciicnt += 1
-            if spchar2 or not (mode in (2, 3)) or len(s) <= index+1 or is_hw(s[index+1]):
+            if spchar2 or not (mode in (2, 3) or (mode in (1, 4) and char == ' ')) or len(s) <= index + 1 or is_hw(s[index + 1]):
                 width2 += 1
             wrapafter = False
 
@@ -2653,8 +2663,8 @@ def txtwrap(s, mode, width=30, wrapschars="", encodedtext=True, spcharinfo=None)
 
         # 互換動作: 1.28以降は行末に半角スペースがあると折り返し位置が変わる
         #           (イベントによるメッセージのみ)
-        if cw.cwpy.sdata and not cw.cwpy.sct.lessthan("1.20", cw.cwpy.sdata.get_versionhint()):
-            if not wrapafter2 and index+1 < len(s) and s[index+1] == " " and mode in (2, 3):
+        if mode in (3, 4) or cw.cwpy.sdata and not cw.cwpy.sct.lessthan("1.20", cw.cwpy.sdata.get_versionhint()):
+            if not wrapafter2 and index + 1 < len(s) and s[index + 1] == " " and mode in (1, 2, 3, 4):
                 width2 += 1
                 asciicnt = 0
 
@@ -3609,6 +3619,8 @@ def adjust_dropdownwidth(choice):
         win32api.SendMessage(choice.GetHandle(), win32con.CB_SETDROPPEDWIDTH, w, 0)
 
 class CWPyRichTextCtrl(wx.richtext.RichTextCtrl):
+    _search_engines = None
+
     def __init__(self, parent, id, text="", size=(-1, -1), style=0, searchmenu=False):
         wx.richtext.RichTextCtrl.__init__(self, parent, id, text, size=size, style=style)
 
@@ -3630,11 +3642,21 @@ class CWPyRichTextCtrl(wx.richtext.RichTextCtrl):
         if searchmenu:
             if os.path.isfile(u"Data/SearchEngines.xml"):
                 try:
+                    if CWPyRichTextCtrl._search_engines is None:
+                        CWPyRichTextCtrl._search_engines = []
+                        data = cw.data.xml2element(u"Data/SearchEngines.xml")
+                        for e in data:
+                            if e.tag == u"SearchEngine":
+                                url = e.getattr(".", "url", "")
+                                name = e.text
+                                if url and name:
+                                    menuid = wx.NewId()
+                                    CWPyRichTextCtrl._search_engines.append((url, name, menuid))
+
                     class SearchEngine(object):
-                        def __init__(self, parent, url, name):
+                        def __init__(self, parent, url, name, menuid):
                             self.parent = parent
                             self.url = url
-                            menuid = wx.NewId()
                             self.mi = wx.MenuItem(self.parent.popup_menu, menuid, name)
                             self.parent.popup_menu.AppendItem(self.mi)
                             self.parent.Bind(wx.EVT_MENU, self.OnSearch, id=menuid)
@@ -3645,17 +3667,12 @@ class CWPyRichTextCtrl(wx.richtext.RichTextCtrl):
                             except:
                                 cw.util.print_ex(file=sys.stderr)
 
-                    data = cw.data.xml2element(u"Data/SearchEngines.xml")
                     separator = False
-                    for e in data:
-                        if e.tag == u"SearchEngine":
-                            if not separator:
-                                separator = True
-                                self.popup_menu.AppendSeparator()
-                            url = e.getattr(".", "url", "")
-                            name = e.text
-                            if url and name:
-                                self.search_engines.append(SearchEngine(self, url, name))
+                    for url, name, menuid in CWPyRichTextCtrl._search_engines:
+                        if not separator:
+                            separator = True
+                            self.popup_menu.AppendSeparator()
+                        self.search_engines.append(SearchEngine(self, url, name, menuid))
                 except:
                     cw.util.print_ex(file=sys.stderr)
 

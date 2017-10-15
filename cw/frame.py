@@ -649,6 +649,7 @@ class Frame(wx.Frame):
         except:
             s = (u"シナリオデータベースへの接続に失敗しました。\n"
                  u"しばらくしてからもう一度やり直してください。")
+            event = object()
             event.args = {"text":s, "shutdown":False}
             self.OnERROR(event)
             return None
@@ -1264,6 +1265,7 @@ class MyApp(wx.App):
         wx.Log.SetLogLevel(wx.LOG_Error)
         self.SetAppName(cw.APP_NAME)
         self.SetVendorName("")
+        self.SetCallFilterEvent(True)
         skincount = get_skincount()[0]
         exe = u""
         if len(cw.SKIN_CONV_ARGS) > 0 and cw.SKIN_CONV_ARGS[0].lower().endswith(".exe"):
@@ -1307,6 +1309,9 @@ class MyApp(wx.App):
 
             if cw.cwpy.frame.filter_event(event):
                 return True
+
+        if not cw.cwpy.is_showingdlg():
+            return -1
 
         if not isinstance(event, wx.KeyEvent):
             return -1
