@@ -94,9 +94,9 @@ class CouponEditDialog(wx.Dialog):
         bmp = cw.cwpy.rsrc.buttons["DOWN_dbg"]
         self.downbtn = cw.cwpy.rsrc.create_wxbutton_dbg(self, wx.ID_DOWN, (-1, -1), bmp=bmp)
         # 最上
-        self.up2btn = cw.cwpy.rsrc.create_wxbutton_dbg(self,  -1, cw.ppis((45, 28)), name=u"≪")
+        #self.up2btn = cw.cwpy.rsrc.create_wxbutton_dbg(self,  -1, cw.ppis((45, 28)), name=u"≪")
         # 最下
-        self.down2btn = cw.cwpy.rsrc.create_wxbutton_dbg(self,  -1, cw.ppis((45, 28)), name=u"≫")
+        #self.down2btn = cw.cwpy.rsrc.create_wxbutton_dbg(self,  -1, cw.ppis((45, 28)), name=u"≫")
 
         # 決定
         self.okbtn = cw.cwpy.rsrc.create_wxbutton_dbg(self, -1, (-1, -1), cw.cwpy.msgs["entry_decide"])
@@ -127,8 +127,8 @@ class CouponEditDialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.OnUpBtn, self.upbtn)
         self.Bind(wx.EVT_BUTTON, self.OnDownBtn, self.downbtn)
         self.Bind(wx.EVT_BUTTON, self.OnOkBtn, self.okbtn)
-        self.Bind(wx.EVT_BUTTON, self.OnUp2Btn, self.up2btn)
-        self.Bind(wx.EVT_BUTTON, self.OnDown2Btn, self.down2btn)
+        #self.Bind(wx.EVT_BUTTON, self.OnUp2Btn, self.up2btn)
+        #self.Bind(wx.EVT_BUTTON, self.OnDown2Btn, self.down2btn)
         self.Bind(wx.EVT_LIST_END_LABEL_EDIT, self.OnEndLabelEdit, self.values)
         self.Bind(wx.EVT_MENU, self.OnUpBtn, id=self.upid)
         self.Bind(wx.EVT_MENU, self.OnDownBtn, id=self.downid)
@@ -165,10 +165,10 @@ class CouponEditDialog(wx.Dialog):
         sizer_right.Add(self.upbtn, 0, wx.EXPAND|wx.TOP, border=cw.ppis(5))
         sizer_right.Add(self.downbtn, 0, wx.EXPAND|wx.TOP, border=cw.ppis(5))
 
-        sizer_right2 = wx.BoxSizer(wx.HORIZONTAL)
-        sizer_right2.Add(self.up2btn, 0)
-        sizer_right2.Add(self.down2btn, 0)
-        sizer_right.Add(sizer_right2, 0, wx.EXPAND|wx.TOP, border=cw.ppis(5))
+        #sizer_right2 = wx.BoxSizer(wx.HORIZONTAL)
+        #sizer_right2.Add(self.up2btn, 0)
+        #sizer_right2.Add(self.down2btn, 0)
+        #sizer_right.Add(sizer_right2, 0, wx.EXPAND|wx.TOP, border=cw.ppis(5))
 
         sizer_right.AddStretchSpacer(1)
         sizer_right.Add(self.okbtn, 0, wx.EXPAND)
@@ -468,16 +468,16 @@ class CouponEditDialog(wx.Dialog):
             self.valbtn.Enable(False)
             self.upbtn.Enable(False)
             self.downbtn.Enable(False)
-            self.up2btn.Enable(False)
-            self.down2btn.Enable(False)
+            #self.up2btn.Enable(False)
+            #self.down2btn.Enable(False)
         else:
             self.rmvbtn.Enable(True)
             self.valbtn.Enable(True)
             lcount = self.values.GetItemCount()
             self.upbtn.Enable(0 < indexes[0])
             self.downbtn.Enable(indexes[-1] + 1 < lcount)
-            self.up2btn.Enable(indexes <> range(0, len(indexes)))
-            self.down2btn.Enable(indexes <> range(lcount - len(indexes), lcount))
+            #self.up2btn.Enable(indexes <> range(0, len(indexes)))
+            #self.down2btn.Enable(indexes <> range(lcount - len(indexes), lcount))
 
         if self.target.GetSelection() == 0:
             # 全員を選択中
@@ -643,10 +643,10 @@ class ListEditDialog(wx.Dialog):
         sizer_right.Add(self.rmvbtn, 0, wx.EXPAND|wx.TOP, border=cw.ppis(5))
         sizer_right.Add(self.upbtn, 0, wx.EXPAND|wx.TOP, border=cw.ppis(5))
         sizer_right.Add(self.downbtn, 0, wx.EXPAND|wx.TOP, border=cw.ppis(5))
-        sizer_right2 = wx.BoxSizer(wx.HORIZONTAL)
+        #sizer_right2 = wx.BoxSizer(wx.HORIZONTAL)
         #sizer_right2.Add(self.up2btn, 0)
         #sizer_right2.Add(self.down2btn, 0)
-        sizer_right.Add(sizer_right2, 0, wx.EXPAND|wx.TOP, border=cw.ppis(5))
+        #sizer_right.Add(sizer_right2, 0, wx.EXPAND|wx.TOP, border=cw.ppis(5))
 
         sizer_right.AddStretchSpacer(1)
         sizer_right.Add(self.okbtn, 0, wx.EXPAND)

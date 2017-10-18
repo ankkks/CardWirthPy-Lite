@@ -1227,7 +1227,8 @@ class ScenarioSelect(select.Select):
     def OnCreateDirBtn(self, event):
         #TODO Liteとりあえずコピペ処置
         findresult = not self.dirstack or self.dirstack[0][1] <> u"/find_result"
-        if not findresult:
+        scenarioordir = bool(self.list) and not isinstance(self.list[self.index], FindResult) and findresult
+        if not scenarioordir:
             cw.cwpy.play_sound("error")
             return
 
@@ -1247,7 +1248,8 @@ class ScenarioSelect(select.Select):
             return
         #TODO Liteとりあえずコピペ処置
         findresult = not self.dirstack or self.dirstack[0][1] <> u"/find_result"
-        if not findresult:
+        scenarioordir = bool(self.list) and not isinstance(self.list[self.index], FindResult) and findresult
+        if not scenarioordir:
             cw.cwpy.play_sound("error")
             return
 
@@ -1334,7 +1336,8 @@ class ScenarioSelect(select.Select):
 
         #TODO Liteとりあえずコピペ処置
         findresult = not self.dirstack or self.dirstack[0][1] <> u"/find_result"
-        if not findresult:
+        scenarioordir = bool(self.list) and not isinstance(self.list[self.index], FindResult) and findresult
+        if not scenarioordir:
             cw.cwpy.play_sound("error")
             return
 
