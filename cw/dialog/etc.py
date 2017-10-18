@@ -494,10 +494,21 @@ class BookmarkDialog(wx.Dialog):
         bmp = cw.cwpy.rsrc.buttons["DOWN"]
         self.downbtn = cw.cwpy.rsrc.create_wxbutton(self, wx.ID_DOWN, (-1, -1), bmp=bmp)
 
+        # 最上
+        #self.up2btn = cw.cwpy.rsrc.create_wxbutton_dbg(self,  -1, cw.ppis((30, 28)), name=u"≪")
+        # 最下
+        #self.down2btn = cw.cwpy.rsrc.create_wxbutton_dbg(self,  -1, cw.ppis((30, 28)), name=u"≫")
+
         # 決定
         self.okbtn = cw.cwpy.rsrc.create_wxbutton(self, -1, (-1, -1), cw.cwpy.msgs["decide"])
         # 中止
         self.cnclbtn = cw.cwpy.rsrc.create_wxbutton(self, wx.ID_CANCEL, (-1, -1), cw.cwpy.msgs["entry_cancel"])
+
+        self.upid = wx.NewId()
+        self.downid = wx.NewId()
+        self.homekeyid = wx.NewId()
+        self.endkeyid = wx.NewId()
+        self.deleteid = wx.NewId()
 
         self._bind()
         self._do_layout()
@@ -510,11 +521,28 @@ class BookmarkDialog(wx.Dialog):
         self.Bind(wx.EVT_BUTTON, self.OnRemoveBtn, self.rmvbtn)
         self.Bind(wx.EVT_BUTTON, self.OnUpBtn, self.upbtn)
         self.Bind(wx.EVT_BUTTON, self.OnDownBtn, self.downbtn)
+        #self.Bind(wx.EVT_BUTTON, self.OnUp2Btn, self.up2btn)
+        #self.Bind(wx.EVT_BUTTON, self.OnDown2Btn, self.down2btn)
         self.Bind(wx.EVT_BUTTON, self.OnOkBtn, self.okbtn)
         self.Bind(wx.EVT_BUTTON, self.OnCancel, self.cnclbtn)
         self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected, self.values)
         self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemSelected, self.values)
         self.values.Bind(wx.EVT_SIZE, self.OnResize)
+
+        self.Bind(wx.EVT_MENU, self.OnUpBtn, id=self.upid)
+        self.Bind(wx.EVT_MENU, self.OnDownBtn, id=self.downid)
+        self.Bind(wx.EVT_MENU, self.OnUp2Btn, id=self.homekeyid)
+        self.Bind(wx.EVT_MENU, self.OnDown2Btn, id=self.endkeyid)
+        self.Bind(wx.EVT_MENU, self.OnRemoveBtn, id=self.deleteid)
+
+        seq = [
+            (wx.ACCEL_NORMAL, wx.WXK_DELETE, self.deleteid),
+            (wx.ACCEL_CTRL, wx.WXK_UP, self.upid),
+            (wx.ACCEL_CTRL, wx.WXK_DOWN, self.downid),
+            (wx.ACCEL_CTRL, wx.WXK_HOME, self.homekeyid),
+            (wx.ACCEL_CTRL, wx.WXK_END, self.endkeyid),
+        ]
+        cw.util.set_acceleratortable(self, seq)
 
         self.Bind(wx.EVT_RIGHT_UP, self.OnCancel)
         for child in self.GetChildren():
@@ -537,6 +565,11 @@ class BookmarkDialog(wx.Dialog):
         sizer_right.Add(self.rmvbtn, 0, wx.EXPAND)
         sizer_right.Add(self.upbtn, 0, wx.EXPAND|wx.TOP, border=cw.wins(5))
         sizer_right.Add(self.downbtn, 0, wx.EXPAND|wx.TOP, border=cw.wins(5))
+        #sizer_right2 = wx.BoxSizer(wx.HORIZONTAL)
+        #sizer_right2.Add(self.up2btn, 1)
+        #sizer_right2.Add(self.down2btn, 1)
+        #sizer_right.Add(sizer_right2, 0, wx.TOP, border=cw.ppis(5))
+
         sizer_right.AddStretchSpacer(1)
         sizer_right.Add(self.okbtn, 0, wx.EXPAND)
         sizer_right.Add(self.cnclbtn, 0, wx.EXPAND|wx.TOP, border=cw.wins(5))
@@ -550,6 +583,8 @@ class BookmarkDialog(wx.Dialog):
         self.Layout()
 
     def OnRemoveBtn(self, event):
+        if not self.rmvbtn.Enabled:
+            return
         cw.cwpy.play_sound("dump")
         while True:
             index = self.values.GetNextItem(-1, wx.LIST_NEXT_ALL, wx.LIST_STATE_SELECTED)
@@ -560,6 +595,9 @@ class BookmarkDialog(wx.Dialog):
         self._item_selected()
 
     def OnUpBtn(self, event):
+        indexes = self.get_selectedindexes()
+        if not indexes or indexes[0] < 1:
+            return
         index = -1
         cw.cwpy.play_sound("page")
         while True:
@@ -568,6 +606,7 @@ class BookmarkDialog(wx.Dialog):
                 break
             self._swap(index, index-1)
         self._item_selected()
+        self.values.EnsureVisible(indexes[0] - 1)
 
     def OnDownBtn(self, event):
         indexes = self.get_selectedindexes()
@@ -578,6 +617,27 @@ class BookmarkDialog(wx.Dialog):
         indexes.reverse()
         for index in indexes:
             self._swap(index, index+1)
+        self._item_selected()
+        self.values.EnsureVisible(indexes[-1] + 1)
+
+    def OnUp2Btn(self, event):
+        self._processing = True
+        indexes = self.get_selectedindexes()
+        if not indexes:
+            return
+        cw.cwpy.play_sound("page")
+        cw.debug.edit.up_to_top(self.values, self.bookmark, indexes)
+        self._processing = False
+        self._item_selected()
+
+    def OnDown2Btn(self, event):
+        self._processing = True
+        indexes = self.get_selectedindexes()
+        if not indexes:
+            return
+        cw.cwpy.play_sound("page")
+        cw.debug.edit.down_to_bottom(self.values, self.bookmark, indexes)
+        self._processing = False
         self._item_selected()
 
     def _swap(self, index1, index2):
@@ -611,15 +671,22 @@ class BookmarkDialog(wx.Dialog):
         return indexes
 
     def _item_selected(self):
+        self.Freeze()
         indexes = self.get_selectedindexes()
         if not indexes:
             self.rmvbtn.Enable(False)
             self.upbtn.Enable(False)
             self.downbtn.Enable(False)
+            #self.up2btn.Enable(False)
+            #self.down2btn.Enable(False)
         else:
             self.rmvbtn.Enable(True)
+            lcount = self.values.GetItemCount()
             self.upbtn.Enable(0 < indexes[0])
-            self.downbtn.Enable(indexes[-1] + 1 < self.values.GetItemCount())
+            self.downbtn.Enable(indexes[-1] + 1 < lcount)
+            #self.up2btn.Enable(indexes <> range(0, len(indexes)))
+            #self.down2btn.Enable(indexes <> range(lcount-len(indexes), lcount))
+        self.Thaw()
 
     def OnOkBtn(self, event):
         cw.cwpy.play_sound("harvest")

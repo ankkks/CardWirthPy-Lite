@@ -734,7 +734,6 @@ class ScenarioSelect(select.Select):
         findresult = not self.dirstack or self.dirstack[0][1] <> u"/find_result"
         self._createdir.Enable(findresult)
         scenarioordir = bool(self.list) and not isinstance(self.list[self.index], FindResult) and findresult
-        scenarioordir = bool(self.list) and not isinstance(self.list[self.index], FindResult) and findresult
         self._move.Enable(scenarioordir)
         self._delete.Enable(scenarioordir)
         self._rename.Enable(scenarioordir)
@@ -1226,6 +1225,12 @@ class ScenarioSelect(select.Select):
         self.set_selected(lastscenario, lastscenariopath, opendir=True, updatetree=True, findresults=paths)
 
     def OnCreateDirBtn(self, event):
+        #TODO Liteとりあえずコピペ処置
+        findresult = not self.dirstack or self.dirstack[0][1] <> u"/find_result"
+        if not findresult:
+            cw.cwpy.play_sound("error")
+            return
+
         dpath, seldname = self._get_installtarget()
 
         dpath = scenarioinstall.create_dir(self, self.nowdir)
@@ -1239,6 +1244,11 @@ class ScenarioSelect(select.Select):
             return
         header = self.list[self.index]
         if isinstance(header, FindResult):
+            return
+        #TODO Liteとりあえずコピペ処置
+        findresult = not self.dirstack or self.dirstack[0][1] <> u"/find_result"
+        if not findresult:
+            cw.cwpy.play_sound("error")
             return
 
         cw.cwpy.play_sound("click")
@@ -1322,6 +1332,12 @@ class ScenarioSelect(select.Select):
         if isinstance(header, FindResult):
             return
 
+        #TODO Liteとりあえずコピペ処置
+        findresult = not self.dirstack or self.dirstack[0][1] <> u"/find_result"
+        if not findresult:
+            cw.cwpy.play_sound("error")
+            return
+
         cw.cwpy.play_sound("signal")
         if isinstance(header, cw.header.ScenarioHeader):
             fpath = header.get_fpath()
@@ -1391,6 +1407,13 @@ class ScenarioSelect(select.Select):
             return
         header = self.list[self.index]
         if isinstance(header, FindResult):
+            return
+
+        #TODO Liteとりあえずコピペ処置
+        findresult = not self.dirstack or self.dirstack[0][1] <> u"/find_result"
+        scenarioordir = bool(self.list) and not isinstance(self.list[self.index], FindResult) and findresult
+        if not scenarioordir:
+            cw.cwpy.play_sound("error")
             return
 
         cw.cwpy.play_sound("click")
