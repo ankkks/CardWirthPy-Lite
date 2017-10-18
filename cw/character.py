@@ -2840,8 +2840,8 @@ class Character(object):
                         event = events.check_keynum(1)
                         if event:
                             event.run_scenarioevent()
-                        else:
-                            events.start(1, isinsideevent=False)
+                    else:
+                        events.start(1, isinsideevent=False)
                 finally:
                     self.remove_coupon(u"＠イベント対象")
 
