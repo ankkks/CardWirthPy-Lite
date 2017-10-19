@@ -305,7 +305,7 @@ class Setting(object):
         self.vol_bgm = 0.5
         self.vol_midi = 1.0
         self.vol_sound = 0.5
-        self.soundfonts = [(cw.DEFAULT_SOUNDFONT, True)]
+        self.soundfonts = [(cw.DEFAULT_SOUNDFONT, True, 100)]
         self.messagespeed = 5
         self.dealspeed = 5
         self.dealspeed_battle = 5
@@ -534,7 +534,8 @@ class Setting(object):
             self.soundfonts = []
             for e in elements:
                 use = e.getbool(".", "enabled", True)
-                self.soundfonts.append((e.text, use))
+                volume = e.getint(".", "volume", 100)
+                self.soundfonts.append((e.text, use, volume))
         # メッセージスピード(数字が小さいほど速い)(0～100)
         self.messagespeed = data.getint("MessageSpeed", self.messagespeed)
         self.messagespeed = cw.util.numwrap(self.messagespeed, 0, 100)
