@@ -613,7 +613,8 @@ class UnconvCWYado(object):
                     f.close()
                 return data, fpath
             except Exception, ex:
-                cw.util.print_ex(file=sys.stderr)
+                if not isinstance(ex, cw.binary.cwfile.UnsupportedError):
+                    cw.util.print_ex(file=sys.stderr)
                 cw.util.remove(fpath)
                 raise ex
 
@@ -634,7 +635,7 @@ class UnconvCWYado(object):
                 if ex.msg:
                     s = ex.msg
                 else:
-                    s = u"%s は対象エンジンで使用できないため、変換しません。\n" % (header.name)
+                    s = u"%s は対象エンジンで使用できない機能(%s)を使用しているため、変換しません。\n" % (header.name, ex.funcname)
                 self.write_errorlog(s)
             except Exception:
                 cw.util.print_ex(file=sys.stderr)
@@ -671,7 +672,7 @@ class UnconvCWYado(object):
                 if ex.msg:
                     s = ex.msg
                 else:
-                    s = u"%s は対象エンジンで使用できないため、変換しません。\n" % (header.name)
+                    s = u"%s は対象エンジンで使用できない機能(%s)を使用しているため、変換しません。\n" % (header.name, ex.funcname)
                 self.write_errorlog(s)
                 cw.util.remove(ppath)
                 cw.util.remove(hpath)
@@ -701,7 +702,7 @@ class UnconvCWYado(object):
                     if ex.msg:
                         s = ex.msg
                     else:
-                        s = u"%s の所持する %s は対象エンジンで使用できないため、変換しません。\n" % (partyheader.name, header.name)
+                        s = u"%s の所持する %s は対象エンジンで使用できない機能(%s)を使用しているため、変換しません。\n" % (partyheader.name, header.name, ex.funcname)
                     self.write_errorlog(s)
                 except Exception:
                     cw.util.print_ex(file=sys.stderr)
@@ -771,7 +772,7 @@ class UnconvCWYado(object):
                 if ex.msg:
                     s = ex.msg
                 else:
-                    s = u"%s は対象エンジンで使用できないため、変換しません。\n" % (partyheader.name)
+                    s = u"%s は対象エンジンで使用できない機能(%s)を使用しているため、変換しません。\n" % (partyheader.name, ex.funcname)
                 self.write_errorlog(s)
                 cw.util.remove(fpath1)
                 cw.util.remove(fpath2)
@@ -804,7 +805,7 @@ class UnconvCWYado(object):
                 if ex.msg:
                     s = ex.msg
                 else:
-                    s = u"%s は対象エンジンで使用できないため、変換しません。\n" % (header.name)
+                    s = u"%s は対象エンジンで使用できない機能(%s)を使用しているため、変換しません。\n" % (header.name, ex.funcname)
                 self.write_errorlog(s)
                 cw.util.remove(fpath)
             except Exception:
