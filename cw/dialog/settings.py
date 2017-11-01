@@ -88,14 +88,14 @@ class SettingsDialog(wx.Dialog):
                                     wx.EVT_SLIDER.typeId,
                                     wx.EVT_CHOICE.typeId,
                                     wx.EVT_COLOURPICKER_CHANGED.typeId,
-                                    wx.grid.EVT_GRID_CELL_CHANGE.typeId,
-                                    wx.grid.EVT_GRID_EDITOR_SHOWN.typeId):
+                                    wx.grid.EVT_GRID_CELL_CHANGE.typeId):
+                                    #wx.grid.EVT_GRID_EDITOR_SHOWN.typeId):
             obj = event.GetEventObject()
-            if wx.grid.EVT_GRID_EDITOR_SHOWN.typeId and isinstance(obj, wx.grid.Grid):
-                editor = obj.GetCellEditor(event.GetRow(), event.GetCol())
-                if isinstance(editor, wx.grid.GridCellBoolEditor):
-                    self.applied()
-            elif isinstance(obj, wx.Window) and obj.GetTopLevelParent() is self:
+            #if wx.grid.EVT_GRID_EDITOR_SHOWN.typeId and isinstance(obj, wx.grid.Grid):
+            #    editor = obj.GetCellEditor(event.GetRow(), event.GetCol())
+            #    if isinstance(editor, wx.grid.GridCellBoolEditor):
+            #        self.applied()
+            if isinstance(obj, wx.Window) and obj.GetTopLevelParent() is self:
                 self.applied()
         return False
 
@@ -1797,7 +1797,7 @@ class AudioSettingPanel(wx.Panel):
         self.btn_downsoundfont = wx.Button(self, -1, u"↓", size=(cw.ppis(25), -1))
         self.grid_soundfont = wx.grid.Grid(self, -1, size=(1, 0), style=wx.BORDER)
         #self.grid_soundfont.SetDefaultCellBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INACTIVECAPTION))
-        #self.grid_soundfont.SetDoubleBuffered(True)#バッファ
+        self.grid_soundfont.SetDoubleBuffered(True)#バッファ
         #self.grid_soundfont.EnableGridLines(False)#線を入れない
         self.grid_soundfont.CreateGrid(0, 4)
         self.grid_soundfont.DisableDragRowSize()
@@ -1808,7 +1808,7 @@ class AudioSettingPanel(wx.Panel):
         #self.grid_soundfont.SetRowLabelAlignment(wx.LEFT, wx.CENTER)
         self.grid_soundfont.SetRowLabelSize(cw.ppis(0))
         self.grid_soundfont.SetColLabelSize(cw.ppis(0))
-        #self.grid_soundfont.SetColLabelValue(0, u"")
+        #self.grid_soundfont.SetColLabelValue(0, u"使")
         self.grid_soundfont.SetColSize(0, cw.ppis(25))
         #self.grid_soundfont.SetColLabelValue(1, u"ファイル")
         #self.grid_soundfont.SetColSize(1, cw.ppis(220))
@@ -1852,7 +1852,11 @@ class AudioSettingPanel(wx.Panel):
 
     def set_soundfont(self, row, soundfont):
         sfont, use, volume = soundfont
-        sfont2 = os.path.basename(sfont) #+ u"<"+ sfont + u">"
+        sfont2 = os.path.basename(sfont) if os.path.lexists(sfont) else u"！無効なパス(移動・削除されています)"
+        sfont3 = os.path.dirname(sfont)
+        #sfont4 = u"" if os.path.lexists(sfont) else u"削除されています"
+        #print sfont4
+        #sfont2 += (sfont4)
         self.grid_soundfont.SetCellValue(row, 0, u"1" if use else u"")
         self.grid_soundfont.SetCellValue(row, 1, sfont)
         self.grid_soundfont.SetCellValue(row, 2, str(volume))
@@ -1882,6 +1886,9 @@ class AudioSettingPanel(wx.Panel):
         self.Bind(wx.EVT_BUTTON, self.OnUpSoundFontBtn, self.btn_upsoundfont)
         self.Bind(wx.EVT_BUTTON, self.OnDownSoundFontBtn, self.btn_downsoundfont)
         self.grid_soundfont.Bind(wx.grid.EVT_GRID_RANGE_SELECT, self.OnGridRangeSelect)
+        self.grid_soundfont.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.OnGridLeftbutton)
+        self.grid_soundfont.Bind(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.OnGridLeftbutton)
+        self.grid_soundfont.Bind(wx.EVT_KEY_DOWN, self.OnKeyDown)
 
     def _do_layout(self):
         sizer = wx.BoxSizer(wx.VERTICAL)
@@ -1930,8 +1937,35 @@ class AudioSettingPanel(wx.Panel):
         sizer.Fit(self)
         self.Layout()
 
+    def OnKeyDown(self, event):
+        keycode = event.GetKeyCode()
+        if keycode == wx.WXK_DELETE:
+            return self.OnRemoveSoundFontBtn(event)
+        elif event.ControlDown():
+            if keycode == wx.WXK_UP:
+                return self.OnUpSoundFontBtn(event)
+            elif keycode == wx.WXK_DOWN:
+                return self.OnDownSoundFontBtn(event)
+        event.Skip()
+
     def OnGridRangeSelect(self, event):
         wx.CallAfter(self._select_changed_soundfonts)
+
+    def OnGridLeftbutton(self, event):
+        #Lite:チェックボックスを1クリックで行うため部分的にハンドラを横取りする
+        col = event.GetCol()
+        row = event.GetRow()
+        if col > 0: # 横1番目(use)以外ならキャンセル
+            event.Skip()
+            return
+        #self.grid_soundfont.SelectRow(row)
+        #self.grid_soundfont.SelectCol(col)
+        self.grid_soundfont.GoToCell(row, 1)#フォーカス線が邪魔なので闇の狭間に落とす
+        if self.grid_soundfont.GetCellValue(row, 0) == u"":
+            self.grid_soundfont.SetCellValue(row, 0, u"1")
+        else:
+            self.grid_soundfont.SetCellValue(row, 0, u"")
+        self.GetTopLevelParent().applied()  # 適用
 
     def _select_changed_soundfonts(self):
         indexes = self.grid_soundfont.GetSelectedRows()
@@ -2705,7 +2739,8 @@ class FontSettingPanel(wx.Panel):
 
         def create_grid(grid, seq, faces, cols, rowlblsize):
             grid.CreateGrid(len(seq), cols)
-            grid.DisableDragRowSize()
+            grid.DisableDragRowSize()#幅調整を認めない
+            grid.DisableDragColSize()
             #grid.SetLabelBackgroundColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_3DLIGHT ) )
             #grid.SetLabelTextColour( wx.SystemSettings.GetColour( wx.SYS_COLOUR_CAPTIONTEXT ) )
             grid.SetSelectionMode(wx.grid.Grid.SelectRows)
@@ -2713,7 +2748,7 @@ class FontSettingPanel(wx.Panel):
             grid.SetRowLabelSize(rowlblsize)
             grid.SetColLabelSize( cw.ppis(20) )
             grid.SetColLabelValue(0, u"フォント名")
-            grid.SetColSize(0, cw.ppis(150))
+            grid.SetColSize(0, cw.ppis(155))
             editors = []
             for i, name in enumerate(seq):
                 editor = wx.grid.GridCellChoiceEditor(faces)
@@ -2727,7 +2762,7 @@ class FontSettingPanel(wx.Panel):
         self.base.SetLabelTextColour(wx.Colour(30, 55, 240))
         #self.base.SetLabelBackgroundColour(wx.Colour(230, 235, 240))
         self.base.SetColLabelSize(cw.ppis(16))
-        self.base.SetDefaultCellFont(wx.Font(cw.ppis(8), 71, wx.NORMAL, wx.NORMAL))
+        self.base.SetDefaultCellFont(wx.Font(cw.ppis(8), 71, wx.NORMAL, wx.NORMAL))#TODO スクロールバーが出てしまう
         #self.base.SetDefaultRowSize(cw.ppis(23))
         self.base.SetDoubleBuffered(True)
         self.choicebases = create_grid(self.base, self.bases, self._fontface_array, 1, cw.ppis(100))
@@ -2736,17 +2771,19 @@ class FontSettingPanel(wx.Panel):
         # 役割別フォント
         self.box_type = wx.StaticBox(self, -1, u"役割別フォント")
         self.type = wx.grid.Grid(self, -1, size=(1, 0), style=wx.BORDER)
-        #self.type.SetColLabelSize(cw.ppis(20))
         self.type.SetDoubleBuffered(True)
-        self.choicetypes = create_grid(self.type, self.types, self._types, 5, cw.ppis(120))
+        self.choicetypes = create_grid(self.type, self.types, self._types, 6, cw.ppis(120))
+        self.type.SetColLabelSize(cw.ppis(20))
+        self.type.SetColSize(0, cw.ppis(160))
         self.type.SetColLabelValue(1, u"サイズ")
-        self.type.SetColSize(1, cw.ppis(80))
+        self.type.SetColSize(1, cw.ppis(70))
         self.type.SetColLabelValue(2, u"太字")
         self.type.SetColSize(2, cw.ppis(70))
         self.type.SetColLabelValue(3, u"太字(拡大)")
         self.type.SetColSize(3, cw.ppis(70))
         self.type.SetColLabelValue(4, u"斜体")
         self.type.SetColSize(4, cw.ppis(70))
+        self.type.SetColSize(5, cw.ppis(0))#グリットカーソルを闇に葬る為の空間
         local = cw.setting.LocalSetting()
         for i, name in enumerate(self.types):
             _deffonttype, _defface, defpixels, defbold, defbold_upscr, defitalic = local.fonttypes_init[name]
@@ -2806,15 +2843,6 @@ class FontSettingPanel(wx.Panel):
             self.base.SetCellValue(i, 0, str_font)
 
         create_grid(self.type, self.types)
-        self.type.SetColLabelSize( cw.ppis(20) )
-        self.type.SetColLabelValue(1, u"サイズ")
-        self.type.SetColSize(1, cw.ppis(80))
-        self.type.SetColLabelValue(2, u"太字")
-        self.type.SetColSize(2, cw.ppis(70))
-        self.type.SetColLabelValue(3, u"太字(拡大)")
-        self.type.SetColSize(3, cw.ppis(70))
-        self.type.SetColLabelValue(4, u"斜体")
-        self.type.SetColSize(4, cw.ppis(70))
 
         for i, name, in enumerate(self.bases):
             str_font = local.basefont[name]
@@ -2969,11 +2997,32 @@ class FontSettingPanel(wx.Panel):
         self.type.Bind(wx.grid.EVT_GRID_RANGE_SELECT, self.OnSelectFontType)
         self.type.Bind(wx.grid.EVT_GRID_CELL_CHANGE, self.OnCellChangeType)
         self.type.Bind(wx.grid.EVT_GRID_EDITOR_CREATED, self.OnEditorCreatedType)
+        self.type.Bind(wx.grid.EVT_GRID_CELL_LEFT_CLICK, self.OnGridLeftbutton)
+        self.type.Bind(wx.grid.EVT_GRID_CELL_LEFT_DCLICK, self.OnGridLeftbutton)
         if self._for_local:
             self.cb_important.Bind(wx.EVT_CHECKBOX, self.OnImportant)
             if self.copybtn:
                 self.copybtn.Bind(wx.EVT_BUTTON, self.OnCopyBase)
             self.initbtn.Bind(wx.EVT_BUTTON, self.OnInitValue)
+
+    def OnGridLeftbutton(self, event):
+        #Lite:チェックボックスを1クリックにするため部分的にハンドラを横取りする
+        col = event.GetCol()
+        row = event.GetRow()
+        if col < 2:  # 横3番目(太字)より前ならキャンセル
+            event.Skip()
+            return
+        self.type.SetGridCursor(row,5)
+        #self.type.GoToCell(row, 0)
+        if self.type.GetCellValue(row, col) == u"":
+            self.type.SetCellValue(row, col, u"1")
+        else:
+            self.type.SetCellValue(row, col, u"")
+        #obj = event.GetEventObject()
+        #print obj
+        #if isinstance(obj, wx.Window) and obj.GetTopLevelParent():
+        if not self._for_local:#適用。SkinEditDialogでエラーになるので分岐する。
+            self.GetTopLevelParent().applied()
 
     def _select_base(self, i):
         if 0 <= i:
