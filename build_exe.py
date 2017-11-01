@@ -46,7 +46,7 @@ class BuildExe(object):
         self.project_url = "https://bitbucket.org/akkw/cardwirthpy-lite/"
 
         #Version of program
-        self.project_version = "1.2"
+        self.project_version = "2.2"
 
         #License of the program
         self.license = "LGPL"
@@ -73,7 +73,7 @@ class BuildExe(object):
             "Data/Compatibility.xml", "Data/SystemCoupons.xml", "Data/SearchEngines.xml", 
             "License.txt", "msvcr90.dll", "msvcp90.dll", 
             "bass.dll", "bass_fx.dll", "bassmidi.dll", 
-            "Microsoft.VC90.CRT.manifest", "ReadMe.txt", self.srcfile_name]
+            "Microsoft.VC90.CRT.manifest", "ReadMe.txt"]#, self.srcfile_name
 
         #Extra/excludes python modules
         self.extra_modules = []

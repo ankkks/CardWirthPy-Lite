@@ -4,10 +4,9 @@
 CardWirthPy/Reboot/Lite ソースコードのライセンス
 実行ファイルに含まれるプログラミングコードの著作権は作者および各貢献者が保持し、MITライセンスで提供されます。
 (CardWirthPy.icoについても同様とのこと)
-
   : License: [The MIT License](http://www.opensource.org/licenses/mit-license.php)
 Copyright (c) 2016 logの中の人ならびにコントリビューター一同
-コーディング貢献者(敬称略)：logの中の人,k4nagatsuki,takuto_cw,TachiGigas,暗黒騎士,Iraka.T,name.req,HAND
+コーディング貢献者(敬称略)：logの中の人,k4nagatsuki,takuto_cw,TachiGigas,暗黒騎士,Iraka.T,name.req,HAND,MURAMATSU Atsushi
 
 以下から入手して下さい。
 https://bitbucket.org/akkw/cardwirthpy-lite
@@ -15,31 +14,30 @@ https://bitbucket.org/akkw/cardwirthpy-lite
 ----実行ファイル----
 CardWirthPy は プログラミング言語Pythonで書かれました。実行ファイルの作成にはpy2exeを使用しています。
 
-  : License: Python Software Foundation License
 [Python ver2.7.13 (32bit版)](http://www.python.org/)
 [Python for Windows extensions Build 220](http://sourceforge.net/projects/pywin32/)
+  : License: Python Software Foundation License
 
-  : License: GNU Lesser General Public License
 [py2exe ver0.6.9](http://www.py2exe.org/)
 [pygame ver1.9.2](http://www.pygame.org/)
+  : License: GNU Lesser General Public License
 
- : License: wxWindows Library License
 [wxPython ver3.0.2.0](http://www.wxpython.org/)
+ : License: wxWindows Library License
 
- : License: 修正BSDライセンス
 [lhafile 0.1](http://trac.neotitans.net/wiki/lhafile)
+ : License: 修正BSDライセンス
 
-
-----同梱ライブラリ----
+----同梱DLL----
 以下のMicrosoftのライブラリを同梱しています。
 msvcp90.dll, msvcr90.dll
  : [Download](http://www.microsoft.com/japan/msdn/vstudio/)
  : License: Visual Studio 2008 Redistributable Code(後述)
 
 音声再生用に以下のライブラリを同梱しています。
-bass.dll, bassmidi.dll, bass32.so, bassmidi32.so, bass64.so, bassmidi64.so
+bass.dll, bassmidi.dll, bass_fx.dll
  : [Web Site](http://www.un4seen.com/)
- : License: BASS Audioのライセンス
+ : License: BASS Audio free license(商用利用には別のライセンスを購入する必要があります)
 
 ----リソース素材----
 

@@ -298,6 +298,16 @@ class SoundInterface(object):
         self._type = -1
         self.mastervolume = 0
 
+    def copy(self):
+        sound = SoundInterface()
+        sound._sound = self._sound
+        sound._path = self._path
+        sound.subvolume = self.subvolume
+        sound.channel = self.channel
+        sound._type = self._type
+        sound.mastervolume = self.mastervolume
+        return sound
+
     def get_path(self):
         return self._path
 
@@ -992,7 +1002,7 @@ def load_sound(path):
         return SoundInterface()
 
     if cw.cwpy.is_playingscenario() and path in cw.cwpy.sdata.resource_cache:
-        return cw.cwpy.sdata.resource_cache[path]
+        return cw.cwpy.sdata.resource_cache[path].copy()
 
     try:
         assert threading.currentThread() == cw.cwpy
@@ -1019,7 +1029,7 @@ def load_sound(path):
         cw.cwpy.sdata.sweep_resourcecache(os.path.getsize(path) if os.path.isfile(path) else 0)
         cw.cwpy.sdata.resource_cache[path] = sound
 
-    return sound
+    return sound.copy()
 
 def get_soundfilepath(basedir, path):
     """宿のフォルダにある場合は問題が出るため、
@@ -1736,12 +1746,18 @@ def get_materialpathfromskin(path, mtype, findskin=True):
                 path = cw.util.find_resource(fname, cw.cwpy.rsrc.ext_snd)
         else:
             fname = os.path.basename(path)
-            fname = cw.util.splitext(fname)[0]
+            lfname = fname.lower()
+            eb = lfname.endswith(".jpy1") or lfname.endswith(".jptx") or lfname.endswith(".jpdc")
+            if not eb:
+                fname = cw.util.splitext(fname)[0]
             dpaths = [cw.cwpy.skindir]
             if os.path.isdir(u"Data/Materials"):
                 dpaths.extend(map(lambda d: cw.util.join_paths(u"Data/Materials", d), os.listdir(u"Data/Materials")))
             for dpath in dpaths:
-                if mtype == cw.M_IMG:
+                if eb:
+                    # エフェクトブースターのファイルは他の拡張子への付替を行わない
+                    path = cw.cwpy.rsrc.get_filepath(cw.util.join_paths(dpath, "Table", fname))
+                elif mtype == cw.M_IMG:
                     path = cw.util.find_resource(cw.util.join_paths(dpath, "Table", fname), cw.cwpy.rsrc.ext_img)
                 elif mtype == cw.M_MSC:
                     path = cw.util.find_resource(cw.util.join_paths(dpath, "Bgm", fname), cw.cwpy.rsrc.ext_bgm)
