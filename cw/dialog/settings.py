@@ -375,13 +375,9 @@ class SettingsPanel(wx.Panel):
                 def func():
                     if cw.bassplayer.is_alivable():
                         cw.bassplayer.dispose_bass()
-                    if pygame.mixer.get_init():
-                        pygame.mixer.quit()
 
                     if sfonts1:
                         cw.bassplayer.init_bass(sfonts1)
-                    else:
-                        cw.util.sdlmixer_init()
 
                     if bool(sfonts1) <> bool(sfonts2):
                         cw.cwpy.init_sounds()
@@ -987,6 +983,7 @@ class GeneralSettingPanel(wx.Panel):
 
         self.cb_autosavepartyrecord = wx.CheckBox(
             self, -1, u"解散時、自動的にパーティ情報を記録する")
+        self.cb_autosavepartyrecord.SetToolTipString(u"同名のパーティ記録がある場合は上書きします")
         #self.cb_overwritepartyrecord = wx.CheckBox(
         #    self, -1, u"自動記録時、同名のパーティ記録へ上書きする")
 
@@ -999,6 +996,7 @@ class GeneralSettingPanel(wx.Panel):
 
         # 背景イメージ
         self.st_ssinfobackimage = wx.StaticText(self, -1, u"背景画像:")
+        self.st_ssinfobackimage.SetToolTipString(u"スクリーンショットのタイトル部分に表示されます")
         self.tx_ssinfobackimage = wx.TextCtrl(self, -1, size=(-1, -1), style=wx.SIMPLE_BORDER)
         self.ref_ssinfobackimage = cw.util.create_fileselection(self,
                                                                 target=self.tx_ssinfobackimage,
@@ -1007,11 +1005,12 @@ class GeneralSettingPanel(wx.Panel):
 
         # スクリーンショットのファイル名
         self.st_ssfnameformat = wx.StaticText(self, -1, u"ファイル名:")
+        self.st_ssfnameformat.SetToolTipString(u"スクリーンショットのファイル名\nPrtScr or Ctrl+Pで撮影")
         self.tx_ssfnameformat = wx.TextCtrl(self, -1, size=(cw.ppis(150), -1), style=wx.SIMPLE_BORDER)
         # 所持カード撮影情報のファイル名
         self.st_cardssfnameformat = wx.StaticText(self, -1, u"所持カード:")
+        self.st_cardssfnameformat.SetToolTipString(u"パーティの所持カード一覧のファイル名\nshift+PrtScrで撮影")
         self.tx_cardssfnameformat = wx.TextCtrl(self, -1, size=(cw.ppis(150), -1), style=wx.SIMPLE_BORDER)
-        self.st_cardssfnameformat.SetToolTipString(u"パーティ全員の所持カード一覧のファイル名。\nshift+PrtScrで撮影。")
 
         self.ss_tx = set()
         self.ss_tx.add(self.tx_ssinfoformat)
@@ -1796,6 +1795,8 @@ class AudioSettingPanel(wx.Panel):
         self.btn_upsoundfont = wx.Button(self, -1, u"↑", size=(cw.ppis(25), -1))
         self.btn_downsoundfont = wx.Button(self, -1, u"↓", size=(cw.ppis(25), -1))
         self.grid_soundfont = wx.grid.Grid(self, -1, size=(1, 0), style=wx.BORDER)
+        #self.grid_soundfont.GetGridColLabelWindow().SetToolTipString(u"使用するサウンドフォントにチェックを入れて下さい"
+        #                                                             u"\n重複チェックした場合は上位にあるものが優先して使用されます")
         #self.grid_soundfont.SetDefaultCellBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_INACTIVECAPTION))
         self.grid_soundfont.SetDoubleBuffered(True)#バッファ
         #self.grid_soundfont.EnableGridLines(False)#線を入れない
@@ -1808,14 +1809,14 @@ class AudioSettingPanel(wx.Panel):
         #self.grid_soundfont.SetRowLabelAlignment(wx.LEFT, wx.CENTER)
         self.grid_soundfont.SetRowLabelSize(cw.ppis(0))
         self.grid_soundfont.SetColLabelSize(cw.ppis(0))
-        #self.grid_soundfont.SetColLabelValue(0, u"使")
+        #self.grid_soundfont.SetColLabelValue(0, u"")
         self.grid_soundfont.SetColSize(0, cw.ppis(25))
-        #self.grid_soundfont.SetColLabelValue(1, u"ファイル")
+        #self.grid_soundfont.SetColLabelValue(3, u"ファイル名")
         #self.grid_soundfont.SetColSize(1, cw.ppis(220))
         self.grid_soundfont.SetColSize(1, cw.ppis(0))
         #self.grid_soundfont.SetColLabelValue(2, u"音量")
         self.grid_soundfont.SetColSize(2, cw.ppis(50))
-        self.grid_soundfont.SetColSize(3, cw.ppis(220))
+        self.grid_soundfont.SetColSize(3, cw.ppis(230))
 
         self._do_layout()
         self._bind()
@@ -1852,10 +1853,9 @@ class AudioSettingPanel(wx.Panel):
 
     def set_soundfont(self, row, soundfont):
         sfont, use, volume = soundfont
-        sfont2 = os.path.basename(sfont) if os.path.lexists(sfont) else u"！無効なパス(移動・削除されています)"
-        sfont3 = os.path.dirname(sfont)
+        sfont2 = os.path.basename(sfont) if os.path.lexists(sfont) else u"無効なパス (移動・削除されています)"
+        #sfont3 = os.path.dirname(sfont)
         #sfont4 = u"" if os.path.lexists(sfont) else u"削除されています"
-        #print sfont4
         #sfont2 += (sfont4)
         self.grid_soundfont.SetCellValue(row, 0, u"1" if use else u"")
         self.grid_soundfont.SetCellValue(row, 1, sfont)
@@ -1869,7 +1869,6 @@ class AudioSettingPanel(wx.Panel):
         #self.grid_soundfont.SetCellAlignment(row, 1, wx.ALIGN_LEFT, 0)
         self.grid_soundfont.SetCellAlignment(row, 2, wx.ALIGN_CENTER, 0)
         self.grid_soundfont.SetCellAlignment(row, 3, wx.ALIGN_LEFT, 0)
-        #self.grid_soundfont.SetReadOnly(row, 0, True)
         self.grid_soundfont.SetReadOnly(row, 1, True)
         self.grid_soundfont.SetReadOnly(row, 3, True)
 
@@ -2349,78 +2348,52 @@ class UISettingPanel(wx.Panel):
 
         # マウスオプション
         self.box_wait = wx.StaticBox(self, -1, u"マウス操作とスキップ")
-        self.cb_can_skipwait = wx.CheckBox(
-            self, -1, u"空白時間をスキップ可能にする")
-        self.cb_can_skipanimation = wx.CheckBox(
-            self, -1, u"アニメーションをスキップ可能にする")
-        self.cb_can_repeatlclick = wx.CheckBox(
-            self, -1, u"マウスの左ボタンを押し続けた時は連打状態にする")
-        self.cb_autoenter_on_sprite = wx.CheckBox(
-            self, -1, u"連打状態の時、カードなどの選択を自動的に決定")
-        self.cb_can_clicksidesofcardcontrol = wx.CheckBox(
-            self, -1, u"カード選択ダイアログの背景クリックで左右移動を行う")
-        self.cb_wheel_movefocus = wx.CheckBox(
-            self, -1, u"ホイールでカード選択と選択肢のフォーカス移動を行う")
+        self.cb_can_skipwait = wx.CheckBox(self, -1, u"空白時間をスキップ可能にする")
+        self.cb_can_skipanimation = wx.CheckBox(self, -1, u"アニメーションをスキップ可能にする")
+        self.cb_can_repeatlclick = wx.CheckBox(self, -1, u"マウスの左ボタンを押し続けた時は連打状態にする")
+        self.cb_autoenter_on_sprite = wx.CheckBox(self, -1, u"連打状態の時、カードなどの選択を自動的に決定")
+        self.cb_can_clicksidesofcardcontrol = wx.CheckBox(self, -1, u"カード選択ダイアログの背景クリックで左右移動を行う")
+        self.cb_wheel_movefocus = wx.CheckBox(self, -1, u"ホイールでカード選択と選択肢のフォーカス移動を行う")
         self.cb_wheel_movefocus.SetToolTipString(u"「ホイールを上に回すとログを表示」が有効な場合はログ表示優先")
-        self.cb_showlogwithwheelup = wx.CheckBox(
-            self, -1, u"ホイールを上に回すとログを表示")
-        self.st_wheel_down = wx.StaticText(self, -1,
-                                                     u"ホイール下の動作:")
-        self.cb_can_skipwait_with_wheel = wx.CheckBox(
-            self, -1, u"スキップ")
-        self.cb_can_forwardmessage_with_wheel = wx.CheckBox(
-            self, -1, u"メッセージ送り")
+        self.cb_showlogwithwheelup = wx.CheckBox(self, -1, u"ホイールを上に回すとログを表示")
+        self.st_wheel_down = wx.StaticText(self, -1,u"ホイール下の動作:")
+        self.cb_can_skipwait_with_wheel = wx.CheckBox(self, -1, u"スキップ")
+        self.cb_can_forwardmessage_with_wheel = wx.CheckBox(self, -1, u"メッセージ送り")
 
         # 描画オプション
         self.box_draw = wx.StaticBox(self, -1, u"カード")
-        self.st_quickdeal = wx.StaticText(self, -1,
-                                                     u"メニューの高速表示:")
+        self.st_quickdeal = wx.StaticText(self, -1, u"メニューの高速表示:")
         choices = [u"全てのシステムカード", u"キャンプモードへの切替のみ", u"使用しない"]
-        self.st_quickdeal.SetToolTipString( u"一度にカードアニメーションを行うことで瞬時に画面を移行します" )
+        self.st_quickdeal.SetToolTipString( u"メニューカードの回転アニメを全て同時に行い、表示時間を短縮します" )
         self.ch_quickdeal = wx.Choice(self, -1, choices=choices)
-        self.cb_show_cardkind = wx.CheckBox(
-            self, -1, u"カード置場と荷物袋でカードの種類を表示する")
-        self.cb_show_premiumicon = wx.CheckBox(
-            self, -1, u"カードの希少度をアイコンで表示する(1.20方式)")
+        self.cb_show_cardkind = wx.CheckBox(self, -1, u"カード置場と荷物袋でカードの種類を表示する")
+        self.cb_show_premiumicon = wx.CheckBox(self, -1, u"カードの希少度をアイコンで表示する(1.20方式)")
 
         # インタフェースオプション
         self.box_gene = wx.StaticBox(self, -1, u"インターフェース補助")
-        self.st_showbackpackcard = wx.StaticText(self, -1,
-                                                     u"荷物袋のカードを一時的に使用:")
+        self.st_showbackpackcard = wx.StaticText(self, -1, u"荷物袋のカードを一時的に使用:")
         self.st_showbackpackcard.SetToolTipString( u"シナリオ中、テーブルモードでキャラクターの手札に特殊カードが配置されます" )
         choices = [u"最初に配置", u"最後に配置", u"使用しない"]
         self.ch_showbackpackcard = wx.Choice(self, -1, choices=choices)
-        self.cb_revertcardpocket = wx.CheckBox(
-            self, -1, u"レベル調節で手放したカードを自動的に戻す")
-        self.cb_show_addctrlbtn = wx.CheckBox(
-            self, -1, u"選択ダイアログで検索モード切替ボタンを追加(Ctrl+F)")
+        self.cb_revertcardpocket = wx.CheckBox(self, -1, u"レベル調節で手放したカードを自動的に戻す")
+        self.cb_show_addctrlbtn = wx.CheckBox(self, -1, u"選択ダイアログで検索モード切替ボタンを追加(Ctrl+F)")
         self.cb_show_addctrlbtn.SetToolTipString( u"非表示にしてもCtrl+Fは有効" )
-        self.cb_showautobuttoninentrydialog = wx.CheckBox(
-            self, -1, u"キャラクターの新規登録で自動ボタンを追加")
-        self.cb_protect_premiercard = wx.CheckBox(
-            self, -1, u"プレミアカードの売却や破棄を禁止する")
+        self.cb_showautobuttoninentrydialog = wx.CheckBox(self, -1, u"キャラクターの新規登録で自動ボタンを追加")
+        self.cb_protect_premiercard = wx.CheckBox(self, -1, u"プレミアカードの売却や破棄を禁止する")
 
         # 戦闘オプション
         self.box_battle = wx.StaticBox(self, -1, u"戦闘")
-        self.cb_showroundautostartbutton = wx.CheckBox(
-            self, -1, u"自動で行動開始するボタンを追加(F7)")
-        self.cb_showallselectedcards = wx.CheckBox(
-            self, -1, u"戦闘行動を全員分表示する")
-        self.cb_showstatustime = wx.CheckBox(
-            self, -1, u"状態の残り時間をカード上に表示する")
+        self.cb_showroundautostartbutton = wx.CheckBox(self, -1, u"自動で行動開始するボタンを追加(F7)")
+        self.cb_showallselectedcards = wx.CheckBox(self, -1, u"戦闘行動を全員分表示する")
+        self.cb_showstatustime = wx.CheckBox(self, -1, u"状態の残り時間をカード上に表示する")
 
         # 通知オプション
         self.box_notice = wx.StaticBox(self, -1, u"通知と解説")
-        self.cb_show_experiencebar = wx.CheckBox(
-            self, -1, u"キャラクター情報に次のレベルアップまでの割合を表示")
-        self.cb_show_btndesc = wx.CheckBox(
-            self, -1, u"ステータスバーで解説を表示する")
-        self.cb_statusbarmask = wx.CheckBox(
-            self, -1, u"イベント中にステータスバーの色を変える")
-        self.cb_blink_statusbutton = wx.CheckBox(
-            self, -1, u"通知のあるステータスボタンを点滅させる")
-        self.cb_blink_partymoney = wx.CheckBox(
-            self, -1, u"所持金変更時の視覚効果")
+        self.cb_show_experiencebar = wx.CheckBox(self, -1, u"キャラクター情報に次のレベルアップまでの割合を表示")
+        self.cb_show_btndesc = wx.CheckBox(self, -1, u"ステータスバーで解説を表示する")
+        self.cb_statusbarmask = wx.CheckBox(self, -1, u"イベント中にステータスバーの色を変える")
+        self.cb_blink_statusbutton = wx.CheckBox(self, -1, u"通知のあるステータスボタンを点滅させる")
+        self.cb_blink_partymoney = wx.CheckBox(self, -1, u"所持金変更時の視覚効果")
 
         #self.cb_protect_staredcard = wx.CheckBox(
         #    self, -1, u"スター付きのカードの売却や破棄を禁止する")
@@ -2428,23 +2401,17 @@ class UISettingPanel(wx.Panel):
         # ダイアログオプション
         self.box_dlg = wx.StaticBox(self, -1, u"ダイアログ省略")
 
-        self.st_confirm_beforesaving = wx.StaticText(self, -1,
-                                                     u"セーブ前の確認メッセージ:")
+        self.st_confirm_beforesaving = wx.StaticText(self, -1, u"セーブ前の確認メッセージ:")
         choices = [u"常に表示", u"拠点にいる時だけ表示", u"表示しない"]
         self.ch_confirm_beforesaving = wx.Choice(self, -1, choices=choices)
-        self.cb_showsavedmessage = wx.CheckBox(
-            self, -1, u"セーブ完了時に確認メッセージを表示")
-        self.st_confirm_card = wx.StaticText(self, -1,
-                                                     u"カード操作の確認:")
-        self.cb_confirmbeforeusingcard = wx.CheckBox(
-            self, -1, u"カード使用時")
-        self.cb_confirm_dumpcard = wx.CheckBox(
-            self, -1, u"売却・破棄時")
-        self.cb_noticeimpossibleaction = wx.CheckBox(
-            self, -1, u"不可能な行動を選択した時に警告を表示")
-        self.cb_noticeimpossibleaction.SetToolTipString( u"Capを超えてカードを配ろうとしたり、戦闘中に行動不能キャストをクリックした時など" )
-        self.cb_cautionbeforesaving = wx.CheckBox(
-            self, -1, u"保存せずに終了しようとしたら警告を表示")
+        self.cb_showsavedmessage = wx.CheckBox(self, -1, u"セーブ完了時に確認メッセージを表示")
+        self.st_confirm_card = wx.StaticText(self, -1, u"カード操作の確認:")
+        self.st_confirm_card.SetToolTipString(u"無効時は はい/いいえ の確認を行いません(高速設定)")
+        self.cb_confirmbeforeusingcard = wx.CheckBox(self, -1, u"カード使用時")
+        self.cb_confirm_dumpcard = wx.CheckBox(self, -1, u"売却・破棄時")
+        self.cb_noticeimpossibleaction = wx.CheckBox(self, -1, u"不可能な行動を選択した時に警告を表示")
+        self.cb_noticeimpossibleaction.SetToolTipString( u"Capを超えてカードを配ろうとしたり、行動不能キャストをクリックした時など" )
+        self.cb_cautionbeforesaving = wx.CheckBox(self, -1, u"保存せずに終了しようとしたら警告を表示")
 
         self._do_layout()
         #self._bind()
