@@ -524,8 +524,12 @@ def install_scenario(parentdialog, headers, scedir, dstpath, db, skintype):
                                 else:
                                     dst = cw.util.dupcheck_plus(dst, yado=False)
 
-                    if os.path.normcase(os.path.normpath(os.path.abspath(fpath))) <> \
-                            os.path.normcase(os.path.normpath(os.path.abspath(dst))):
+                    normpath1 = os.path.normcase(os.path.normpath(os.path.abspath(fpath)))
+                    normpath2 = os.path.normcase(os.path.normpath(os.path.abspath(dst)))
+                    dstisfile = os.path.isfile(fpath)
+
+                    if normpath1 <> normpath2:
+                        update_scenariolog(normpath1, dst, dstisfile)
                         for rmpath in rmpaths:
                             cw.util.remove(rmpath, trashbox=True)
                         if not os.path.isdir(os.path.dirname(dst)):
@@ -537,6 +541,10 @@ def install_scenario(parentdialog, headers, scedir, dstpath, db, skintype):
                     elif repls:
                         for rmpath in repls:
                             cw.util.remove(rmpath, trashbox=True)
+
+                    for path in repls:
+                        normpath3 = os.path.normcase(os.path.normpath(os.path.abspath(path)))
+                        update_scenariolog(normpath3, dst, dstisfile)
 
                     self.updates.add(os.path.dirname(dst))
 
@@ -585,6 +593,56 @@ def _remove_emptydir(dpath):
                 # 中身が存在する
                 return
         cw.util.remove(dpath)
+
+
+def update_scenariolog(normpath, dst, dstisfile):
+    """
+    インストールに伴うシナリオの移動を追跡する。
+    """
+    if not cw.cwpy.ydata:
+        return
+    normpath2 = os.path.normcase(os.path.normpath(os.path.abspath(dst)))
+    if normpath == normpath2:
+        return
+
+    if cw.cwpy.is_playingscenario():
+        cw.cwpy.sdata.update_scenariopath(normpath, dst, dstisfile)
+    if not dstisfile:
+        cw.sprite.message.update_scenariopath_for_log(normpath, dst)
+
+    for header in cw.cwpy.ydata.partys:
+        dpath = os.path.dirname(header.fpath)
+        wsl = os.path.splitext(header.fpath)[0] + u".wsl"
+        wsl = cw.util.get_yadofilepath(wsl)
+        if not os.path.isfile(wsl):
+            continue
+
+        tempdir = cw.util.join_paths(cw.tempdir, u"ScenarioLogTemp")
+        dstdir = cw.util.decompress_zip(wsl, tempdir)
+        fpath = cw.util.join_paths(dstdir, u"ScenarioLog.xml")
+        try:
+            etree = cw.data.xml2etree(fpath)
+            e = etree.find("Property/WsnPath")
+            if not e is None:
+                normpath2 = os.path.normcase(os.path.normpath(os.path.abspath(e.text)))
+                if normpath2 == normpath:
+                    cw.cwpy.ydata.changed()
+                    etree.edit("Property/WsnPath", dst)
+                    etree.write()
+
+                    if wsl.startswith(cw.cwpy.yadodir):
+                        wsl = wsl.replace(cw.cwpy.yadodir, cw.cwpy.tempdir, 1)
+                    cw.util.compress_zip(dstdir, wsl, unicodefilename=True)
+        finally:
+            cw.util.remove(tempdir)
+
+    if dstisfile:
+        cw.cwpy.ydata.recenthistory.update_scenariopath(normpath, dst)
+    elif cw.cwpy.ydata.party:
+        for header in cw.cwpy.ydata.party.get_allcardheaders():
+            if not header.scenariocard:
+                continue
+            header.update_scenariopath(normpath, dst) # 次の表示で再初期化
 
 
 class OverwriteScenarioDialog(wx.Dialog):

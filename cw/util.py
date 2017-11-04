@@ -481,7 +481,7 @@ def init(size_noscale=None, title="", fullscreen=False, soundfonts=None, fullscr
     # BASS Audioを初期化(使用できない事もある)
     if soundfonts is None:
         soundfonts = [(cw.DEFAULT_SOUNDFONT, True, 100)]
-    soundfonts = [(sfont[0], sfont[2] / 100.0) for sfont in soundfonts if sfont[1]]
+    soundfonts = [(sfont[0], sfont[2]/100.0) for sfont in soundfonts if sfont[1]]
     if not cw.bassplayer.init_bass(soundfonts):
         # BASS Audioが使用できない場合に限りpygame.mixerを初期化
         # (BASSとpygame.mixerを同時に初期化した場合、
@@ -1114,6 +1114,7 @@ def relpath(path, start):
         if path2[0] == '/' or (sys.platform == "win32" and path2[0] == '\\'):
             return path2[1:]
     try:
+        path = os.path.abspath(path)
         return os.path.relpath(path, start)
     except:
         return path
@@ -1127,6 +1128,20 @@ assert relpath("/a", "..").replace("\\", "/") == os.path.relpath("/a", "..").rep
 assert relpath("a", "../bcde").replace("\\", "/") == os.path.relpath("a", "../bcde").replace("\\", "/")
 assert relpath("../a", "../bcde").replace("\\", "/") == os.path.relpath("../a", "../bcde").replace("\\", "/")
 assert relpath("../a", "../").replace("\\", "/") == os.path.relpath("../a", "../").replace("\\", "/")
+
+def is_descendant(path, start):
+    """
+    pathはstartのサブディレクトリにあるか。
+    ある場合は相対パスを返す。
+    """
+    if not path or not start:
+        return False
+    rel = join_paths(relpath(path, start))
+    if os.path.isabs(rel):
+        return False
+    if rel.startswith("../"):
+        return False
+    return rel
 
 def splitext(p):
     """パスの拡張子以外の部分と拡張子部分の分割。
@@ -2474,7 +2489,7 @@ WRAPS_CHARS = u"｡|､|，|、|。|．|）|」|』|〕|｝|】"
 def txtwrap(s, mode, width=30, wrapschars="", encodedtext=True, spcharinfo=None):
     """引数の文字列を任意の文字数で改行する(全角は2文字として数える)。
     mode=1: カード解説。
-    mode=2: 画像付きメッセージ（台詞）用。
+    mode=2: 画像付きメッセージ(台詞)用。
     mode=3: 画像なしメッセージ用。
     mode=4: キャラクタ情報ダイアログの解説文・張り紙説明用。
     mode=5: 素質解説文用。
@@ -2585,9 +2600,9 @@ def txtwrap(s, mode, width=30, wrapschars="", encodedtext=True, spcharinfo=None)
             seq.append(char)
             seqlen += len(char)
             cnt += 1
-            if not (mode in (2, 3) or (mode in (1, 4) and char == ' ')) and not (mode == 1 and index + 1 < len(s) and not is_hw(s[index + 1])):
+            if not (mode in (2, 3) or (mode in (1, 4) and char == ' ')) and not (mode == 1 and index+1 < len(s) and not is_hw(s[index+1])):
                 asciicnt += 1
-            if spchar2 or not (mode in (2, 3) or (mode in (1, 4) and char == ' ')) or len(s) <= index + 1 or is_hw(s[index + 1]):
+            if spchar2 or not (mode in (2, 3) or (mode in (1, 4) and char == ' ')) or len(s) <= index+1 or is_hw(s[index+1]):
                 width2 += 1
             wrapafter = False
 
@@ -2604,7 +2619,7 @@ def txtwrap(s, mode, width=30, wrapschars="", encodedtext=True, spcharinfo=None)
         # 互換動作: 1.28以降は行末に半角スペースがあると折り返し位置が変わる
         #           (イベントによるメッセージのみ)
         if mode in (3, 4) or cw.cwpy.sdata and not cw.cwpy.sct.lessthan("1.20", cw.cwpy.sdata.get_versionhint()):
-            if not wrapafter2 and index + 1 < len(s) and s[index + 1] == " " and mode in (1, 2, 3, 4):
+            if not wrapafter2 and index+1 < len(s) and s[index+1] == " " and mode in (1, 2, 3, 4):
                 width2 += 1
                 asciicnt = 0
 
@@ -3558,6 +3573,15 @@ def adjust_dropdownwidth(choice):
         # 幅を設定
         win32api.SendMessage(choice.GetHandle(), win32con.CB_SETDROPPEDWIDTH, w, 0)
 
+
+def has_modalchild(frame):
+    """frame.TopLevelParentにモーダル表示中のサブウィンドウがあればTrue。"""
+    for child in frame.TopLevelParent.GetChildren():
+        if isinstance(child, wx.Dialog) and child.IsShown() and child.IsModal():
+            return True
+    return False
+
+
 class CWPyRichTextCtrl(wx.richtext.RichTextCtrl):
     _search_engines = None
 
@@ -3681,6 +3705,9 @@ class CWPyRichTextCtrl(wx.richtext.RichTextCtrl):
         self.ShowPosition(0)
 
     def OnMouseWheel(self, event):
+        if has_modalchild(self):
+            return
+
         y = self.GetScrollPos(wx.VERTICAL)
 
         if sys.platform == "win32":

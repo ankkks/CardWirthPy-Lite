@@ -253,6 +253,15 @@ class CardHeader(object):
         self._bordering_cardname = cw.cwpy.setting.bordering_cardname
         self._show_premiumicon = cw.cwpy.setting.show_premiumicon
 
+    def update_scenariopath(self, normpath, dst):
+        if not self.scenariocard:
+            return
+        normpath2 = os.path.normcase(os.path.normpath(os.path.abspath(self.scedir)))
+        if normpath <> normpath2:
+            return
+        self._cardimg = None
+        self.scedir = dst
+
     def get_owner(self):
         if self._owner == "BACKPACK":
             return cw.cwpy.ydata.party.backpack
@@ -1168,6 +1177,7 @@ class Gene(object):
 
 assert Gene([0, 1, 1, 0, 1, 0, 1, 0, 1, 1], 4).rotate_father().get_str() == "0101011011"
 assert Gene([0, 1, 1, 0, 0, 0, 0, 0, 0, 1], 3).rotate_mother().get_str() == "0101100000"
+
 
 class ScenarioHeader(object):
     def __init__(self, dbrec, imgdbrec):
