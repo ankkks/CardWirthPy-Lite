@@ -442,6 +442,8 @@ class Frame(wx.Frame):
         cw.thread.post_pygameevent(evt)
 
     def OnMouseWheel(self, event):
+        if cw.util.has_modalchild(self):
+            return
         self._update_mousepressed()
         if cw.util.get_wheelrotation(event) > 0:
             evt = pygame.event.Event(pygame.locals.MOUSEBUTTONUP, button=4)
@@ -465,6 +467,9 @@ class Frame(wx.Frame):
                 break
         else:
             # シナリオのインストール
+            if cw.cwpy.is_decompressing:
+                cw.cwpy.play_sound("error")
+                return
             db = self._open_scenariodb()
             if not db:
                 return

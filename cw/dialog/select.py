@@ -235,6 +235,8 @@ class Select(wx.Dialog):
         pass
 
     def OnMouseWheel(self, event):
+        if cw.util.has_modalchild(self):
+            return
         if not self.list or len(self.list) == 1:
             return
 
@@ -246,6 +248,8 @@ class Select(wx.Dialog):
             self.ProcessEvent(btnevent)
 
     def OnMouseDown(self, event):
+        if cw.util.has_modalchild(self):
+            return
         self._downbutton = event.GetButton()
 
     def OnSelectBase(self, event):
@@ -491,6 +495,8 @@ class MultiViewSelect(Select):
             self.ProcessEvent(btnevent)
 
     def OnMouseWheel(self, event):
+        if cw.util.has_modalchild(self):
+            return
         if self._processing:
             return
         if not self.list or len(self.list) == 1:
@@ -870,6 +876,8 @@ class YadoSelect(MultiViewSelect):
             cw.util.sort_by_attr(objs, "name", "skin", "yadodir")
 
     def OnMouseWheel(self, event):
+        if cw.util.has_modalchild(self):
+            return
         if self._processing:
             return
 
@@ -2004,6 +2012,8 @@ class PartySelect(MultiViewSelect):
             self.draw(True)
 
     def OnMouseWheel(self, event):
+        if cw.util.has_modalchild(self):
+            return
         if self._processing:
             return
 
@@ -2611,6 +2621,8 @@ class PlayerSelect(MultiViewSelect):
         MultiViewSelect.OnLeftDClick(self, event)
 
     def OnMouseWheel(self, event):
+        if cw.util.has_modalchild(self):
+            return
         if self._processing:
             return
 
