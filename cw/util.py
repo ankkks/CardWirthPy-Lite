@@ -486,8 +486,7 @@ def init(size_noscale=None, title="", fullscreen=False, soundfonts=None, fullscr
         # BASS Audioが使用できない場合に限りpygame.mixerを初期化
         # (BASSとpygame.mixerを同時に初期化した場合、
         # 環境によっては音が出なくなるなどの不具合が出る)
-        pass#TODO：初期化関係なく、なぜかこの分岐がないと音が鳴らない？
-        #pygame.mixer.init(44100, -16, 2, 1024)
+        pass#TODO：初期化しなくても、なぜかこの分岐がないと音が鳴らない？
         #pygame.mixer.quit
 
     return scr, scr_draw, scr_fullscreen, clock
