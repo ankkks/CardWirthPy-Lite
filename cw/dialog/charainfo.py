@@ -679,15 +679,12 @@ class TopPanel(wx.Panel):
                 else:
                     cw.util.draw_witharound_simple(dc, s, cw.wins(5), cw.wins(32), backcolor)
                 # 種族
+                dc.SetFont(cw.cwpy.rsrc.get_wxfont("charaparam2", pixelsize=cw.wins(16)))
                 if not isinstance(self.race, cw.header.UnknownRaceHeader):
                     s = self.race.name
-                    dc.SetFont(cw.cwpy.rsrc.get_wxfont("charaparam2", pixelsize=cw.wins(16)))
-                    w = dc.GetTextExtent(s)[0]
-                    cw.util.draw_witharound_simple(dc, s, cw.wins(5), cw.wins(82), backcolor)
                 else:
                     s = self.otherrace
-                    dc.SetFont(cw.cwpy.rsrc.get_wxfont("charaparam2", pixelsize=cw.wins(16)))
-                    cw.util.draw_witharound_simple(dc, s, cw.wins(5), cw.wins(82), backcolor)
+                cw.util.draw_witharound_simple(dc, s, cw.wins(5), cw.wins(82), backcolor)
 
             # 年代
             dc.SetFont(cw.cwpy.rsrc.get_wxfont("charaparam2", pixelsize=cw.wins(16)))
