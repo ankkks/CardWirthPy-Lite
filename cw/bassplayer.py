@@ -283,6 +283,7 @@ def init_bass(soundfonts):
     # サウンドフォントのロード
     _sfonts = ""
     encoding = sys.getfilesystemencoding()
+
     if _bassmidi:
         for soundfont, volume in soundfonts:
             sfont = _bassmidi.BASS_MIDI_FontInit(soundfont.encode(encoding), 0)

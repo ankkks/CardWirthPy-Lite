@@ -482,12 +482,7 @@ def init(size_noscale=None, title="", fullscreen=False, soundfonts=None, fullscr
     if soundfonts is None:
         soundfonts = [(cw.DEFAULT_SOUNDFONT, True, 100)]
     soundfonts = [(sfont[0], sfont[2]/100.0) for sfont in soundfonts if sfont[1]]
-    if not cw.bassplayer.init_bass(soundfonts):
-        # BASS Audioが使用できない場合に限りpygame.mixerを初期化
-        # (BASSとpygame.mixerを同時に初期化した場合、
-        # 環境によっては音が出なくなるなどの不具合が出る)
-        pass#TODO：初期化しなくても、なぜかこの分岐がないと音が鳴らない？
-        #pygame.mixer.quit
+    cw.bassplayer.init_bass(soundfonts)
 
     return scr, scr_draw, scr_fullscreen, clock
 

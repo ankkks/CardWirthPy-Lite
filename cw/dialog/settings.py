@@ -623,7 +623,9 @@ class SkinPanel(wx.Panel):
 
         # スキン
         self.ch_skin = wx.Choice(self, -1, size=(-1, -1))
-        self.st_skin = wx.StaticText(self, -1, u"")
+        self.tx_skin = wx.TextCtrl(self, -1, size=(cw.ppis(255), -1), style=wx.TE_MULTILINE | wx.NO_BORDER)
+        self.tx_skin.SetEditable(False)
+        self.tx_skin.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
 
         if self.editbuttons:
             self.btn_convertskin = wx.Button(self, -1, u"自動生成...")
@@ -706,7 +708,7 @@ class SkinPanel(wx.Panel):
             self._load_skinproperties(skin)
         skintype, _skinname, author, desc, _vocation120, _initialcash = self.skin_summarys[skin]
         desc = cw.util.txtwrap(desc, 1)
-        self.st_skin.SetLabel(s % (skintype, cw.util.join_paths(u"Data/Skin", skin), author, desc))
+        self.tx_skin.SetValue(s % (skintype, cw.util.join_paths(u"Data/Skin", skin), author, desc))
         if self.editbuttons:
             self.btn_deleteskin.Enable(cw.cwpy.setting.skindirname <> skin)
         if not init and applied:
@@ -769,7 +771,8 @@ class SkinPanel(wx.Panel):
             bsizer_skinbtn.Add(self.btn_deleteskin, 0, 0, cw.ppis(3))
 
         sizer.Add(self.ch_skin, 0, wx.CENTER, cw.ppis(0))
-        sizer.Add(self.st_skin, 1, wx.CENTER|wx.TOP, cw.ppis(3))
+        #sizer.Add(self.st_skin, 1, wx.CENTER|wx.TOP, cw.ppis(3))
+        sizer.Add(self.tx_skin, 1, wx.CENTER | wx.TOP , cw.ppis(3))
         if self.editbuttons:
             sizer.Add(bsizer_skinbtn, 0, wx.ALIGN_RIGHT|wx.TOP, cw.ppis(3))
 
