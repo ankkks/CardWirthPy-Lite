@@ -2098,7 +2098,6 @@ class CardHolder(CardControl):
         index = self.page.GetValue()-1
         if self.index <> index:
             cw.cwpy.play_sound("page")
-            #Lite　ページ切りかえ時に重複して鳴る原因
             self._on_pagenum(index + 1)
 
     def _on_pagenum(self, page):
@@ -2222,9 +2221,7 @@ class CardHolder(CardControl):
                         # 荷物袋に存在する場合のみ選択肢「荷物袋」を表示
                         if header.type == cardtype:
                             # 「荷物袋」の表示順
-                            x = 0
-                            if cw.cwpy.setting.show_backpackcardatend:
-                                x = 10
+                            x = 10 if cw.cwpy.setting.show_backpackcardatend else 0
                             self.list.insert(x, cw.cwpy.rsrc.backpackcards[cardtype])
                             break
 

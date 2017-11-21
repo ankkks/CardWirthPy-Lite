@@ -578,7 +578,7 @@ class ScenarioSelect(select.Select):
         if not value:
             cw.cwpy.play_sound("error")
             self.OnNextButton(event)
-            #ENTERから呼ばれた場合に操作性が悪化するのでFocusを飛ばす
+            # ENTERから呼ばれた場合に操作性が悪化するのでFocusを飛ばす
             return
         narrow = self.narrow_type.GetSelection()
         ftypes = set()
