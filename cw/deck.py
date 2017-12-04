@@ -110,8 +110,8 @@ class Deck(object):
         self.talon.extend(self.get_actioncards(ccard))
         self.talon.extend(self.get_skillcards(ccard))
         self.shuffle()
-        self.set_hand(ccard)
         if draw:
+            self.set_hand(ccard)
             self.draw(ccard)
 
     def set_hand(self, ccard):
@@ -247,6 +247,10 @@ class Deck(object):
         """手札消去効果を適用する。"""
         self._throwaway = True
 
+    def clear_nextcards(self):
+        """配付予約されていたカードをクリアする。"""
+        self.nextcards = []
+
     def is_throwed(self):
         """手札が消去されているか。"""
         return self._throwaway
@@ -263,7 +267,7 @@ class Deck(object):
     def draw(self, ccard):
         self._used = None
         maxn = self.get_handmaxnum(ccard)
-        if self._throwaway:
+        if self._throwaway or not self.hand:
             # 現在の手札を山札に戻す
             for header in self.hand[1::]:
                 self._remove(header)

@@ -1757,7 +1757,6 @@ class CallStartContent(EventContentBase):
     def __init__(self, data):
         EventContentBase.__init__(self, data)
         self.startname = self.data.get("call")
-        self.is_call = 0 < self.get_children_num()
 
     def action(self):
         """スタートコールコンテント。
@@ -1769,7 +1768,7 @@ class CallStartContent(EventContentBase):
         if self.startname in trees:
             event = cw.cwpy.event.get_event()
 
-            if self.is_call:
+            if 0 < self.get_children_num():
                 if cw.LIMIT_RECURSE <= cw.cwpy.event.get_currentstack():
                     s = u"イベントの呼び出しが%s層を超えたので処理を中止します。スタートやパッケージのコールによってイベントが無限ループになっていないか確認してください。" % (cw.LIMIT_RECURSE)
                     cw.cwpy.call_modaldlg("ERROR", text=s)
@@ -2947,16 +2946,17 @@ class LoseContent(EventContentBase):
             return 0
         name = e.gettext("Name", "")
         desc = e.gettext("Description", "")
-        if self.num == 0:
-            self.num = 0x7fffffff
+        num = self.num
+        if num == 0:
+            num = 0x7fffffff
 
         for target in cw.cwpy.event.get_targetscope(self.scope):
             if isinstance(target, cw.character.Character):
                 target = target.get_pocketcards(index)
 
-            _headers, losenum = self.lose_card(name, desc, target, self.num)
-            self.num -= losenum
-            if self.num <= 0:
+            _headers, losenum = self.lose_card(name, desc, target, num)
+            num -= losenum
+            if num <= 0:
                 break
 
     def lose_card(self, name, desc, target, num):
