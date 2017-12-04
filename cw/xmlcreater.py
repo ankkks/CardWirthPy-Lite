@@ -578,6 +578,9 @@ def create_settings(setting, writeplayingdata=True, fpath="Settings_Lite.xml"):
     if setting.enable_oldf9 <> setting.enable_oldf9_init:
         e = cw.data.make_element("EnableOldF9", str(setting.enable_oldf9))
         element.append(e)
+    if setting.enable_equalbug <> setting.enable_equalbug_init:
+        e = cw.data.make_element("EnableOldF9", str(setting.enable_equalbug))
+        element.append(e)
 
     #  最後に選んだシナリオを開始地点にする
     if setting.open_lastscenario <> setting.open_lastscenario_init:
@@ -1044,17 +1047,29 @@ def create_scenariolog(sdata, path, recording, logfilepath):
     e_flag = cw.data.make_element("Flags")
     element.append(e_flag)
 
-    for name, flag in sdata.flags.iteritems():
-        e = cw.data.make_element("Flag", name, {"value": str(flag.value)})
-        e_flag.append(e)
+    if cw.cwpy.setting.enable_equalbug:
+        for name, flag in sdata.flags.iteritems():
+            if name.find(u"=") == -1: # BUG:PyLite :「=」を含む変数はセーブされない(1.50変数バグ)
+                e = cw.data.make_element("Flag", name, {"value": str(flag.value)})
+                e_flag.append(e)
+    else:
+        for name, flag in sdata.flags.iteritems():
+            e = cw.data.make_element("Flag", name, {"value": str(flag.value)})
+            e_flag.append(e)
 
     # step
     e_step = cw.data.make_element("Steps")
     element.append(e_step)
 
-    for name, step in sdata.steps.iteritems():
-        e = cw.data.make_element("Step", name, {"value": str(step.value)})
-        e_step.append(e)
+    if cw.cwpy.setting.enable_equalbug:
+        for name, step in sdata.steps.iteritems():
+            if name.find(u"=") == -1: # BUG:PyLite :「=」を含む変数はセーブされない(1.50変数バグ)
+                e = cw.data.make_element("Step", name, {"value": str(step.value)})
+                e_step.append(e)
+    else:
+        for name, step in sdata.steps.iteritems():
+            e = cw.data.make_element("Step", name, {"value": str(step.value)})
+            e_step.append(e)
 
     if not recording:
         # gossip

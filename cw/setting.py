@@ -301,7 +301,7 @@ class Setting(object):
         self.no_levelup_in_debugmode = True
         self.play_bgm = True
         self.play_sound = True
-        self.vol_master = 0.5 #少し大きい気がするので中間にしておく
+        self.vol_master = 0.5
         self.vol_bgm = 0.5
         self.vol_midi = 1.0
         self.vol_sound = 0.5
@@ -398,11 +398,13 @@ class Setting(object):
         self.volume_increment = 5 # ホイールによる全体音量調節での増減量
         self.show_debuglogdialog = False
         self.write_playlog = False
-        self.enable_oldf9 = False
         self.move_repeat = 240 #移動ボタン押しっぱなしの速度
         self.open_lastscenario = True
         # アップデートに伴うファイルの自動移動・削除を行う
         self.auto_update_files = True
+        # PyLite固有オプション
+        self.enable_equalbug = True
+        self.enable_oldf9 = False
 
         # 絞り込み・整列などのコントロールの表示有無
         self.show_additional_yado = False
@@ -767,6 +769,7 @@ class Setting(object):
         # 設定バージョンの更新 設定ファイルを独立させているためカット
         # F9互換オプション
         self.enable_oldf9 = data.getbool("EnableOldF9", self.enable_oldf9)
+        self.enable_equalbug = data.getbool("EnableEqualBug", self.enable_equalbug)
         # 最後に選んだシナリオを開始地点にする
         self.open_lastscenario = data.getbool("OpenLastScenario", self.open_lastscenario)
 

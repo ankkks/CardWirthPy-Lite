@@ -445,11 +445,14 @@ class BackGround(base.CWPySprite):
         layer = e.getint("Layer", cw.LAYER_BACKGROUND)
         visible = e.getattr(".", "visible", "")
         hasvisible = visible <> ""
-        if visible in (u"True", u"False"):
-            visible = visible == u"True"
-        else:
-            visible = cw.cwpy.sdata.flags.get(flag, True) and size <> (0, 0) and\
-                self.rect.colliderect(cw.s(pygame.Rect(pos, size)))
+        #if visible in (u"True", u"False"):
+        #    visible = visible == u"True"
+        #else:
+        #    visible = cw.cwpy.sdata.flags.get(flag, True) and size <> (0, 0) and\
+        #        self.rect.colliderect(cw.s(pygame.Rect(pos, size)))
+        # Lite：セーブ再開時に背景更新されないとおかしくなるシナリオが存在するのでCW仕様に戻す
+        visible = cw.cwpy.sdata.flags.get(flag, True) and size <> (0, 0) and\
+                  self.rect.colliderect(cw.s(pygame.Rect(pos, size)))
         cellname = e.getattr(".", "cellname", "")
 
         def getcolor(e, xpath, r, g, b, a):
