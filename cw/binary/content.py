@@ -347,22 +347,22 @@ class Content(base.CWBinaryBase):
                 self.properties["skill"] = True
                 self.properties["item"] = True
                 self.properties["beast"] = True
-                self.properties["hand"] = False # Liteでは手札側をWSN独自仕様として対応
+                #self.properties["hand"] = False # Liteでは手札側をWSN独自仕様として対応
             elif ect == "Skill":
                 self.properties["skill"] = True
                 self.properties["item"] = False
                 self.properties["beast"] = False
-                self.properties["hand"] = False
+                #self.properties["hand"] = False
             elif ect == "Item":
                 self.properties["skill"] = False
                 self.properties["item"] = True
                 self.properties["beast"] = False
-                self.properties["hand"] = False # Liteでは手札側をWSN独自仕様として対応
+                #self.properties["hand"] = False # Liteでは手札側をWSN独自仕様として対応
             elif ect == "Beast":
                 self.properties["skill"] = False
                 self.properties["item"] = False
                 self.properties["beast"] = True
-                self.properties["hand"] = False
+                #self.properties["hand"] = False
             self.properties["keyCode"] = f.string()
         elif self.tag == "Check" and self.type == "Step": # 1.50
             self.properties["step"] = f.string()
