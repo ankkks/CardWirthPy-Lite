@@ -1792,7 +1792,7 @@ class AudioSettingPanel(wx.Panel):
         self.sl_sound.SetTickFreq(10, 1)
 
         # サウンドフォント
-        self.box_soundfont = wx.StaticBox(self, -1, u"MIDIサウンドフォント")
+        self.box_soundfont = wx.StaticBox(self, -1, u"MIDIサウンドフォント(有効化/音量設定)")
         self.btn_addsoundfont = wx.Button(self, -1, u"追加...")
         self.btn_rmvsoundfont = wx.Button(self, -1, u"削除")
         self.btn_upsoundfont = wx.Button(self, -1, u"↑", size=(cw.ppis(25), -1))

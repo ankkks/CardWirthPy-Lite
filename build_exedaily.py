@@ -46,7 +46,7 @@ class BuildExe(object):
         self.project_url = "https://bitbucket.org/akkw/cardwirthpy-lite/"
 
         #Version of program
-        self.project_version = "2.2"
+        self.project_version = "2.3a"
 
         #License of the program
         self.license = "LGPL"
@@ -101,7 +101,6 @@ class BuildExe(object):
             "pywintypes27.dll",
             "sdl.dll",
             "sdl_image.dll",
-            "sdl_mixer.dll",
             "sdl_ttf.dll",
             "smpeg.dll",
             "sqlite3.dll",
@@ -132,6 +131,8 @@ class BuildExe(object):
             "msvcp90.dll",
         ]
 
+    #除外ファイル
+    #"sdl_mixer.dll",
     ## Code from DistUtils tutorial at http://wiki.python.org/moin/Distutils/Tutorial
     ## Originally borrowed from wxPython's setup and config files
     def opj(self, *args):
