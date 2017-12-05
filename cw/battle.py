@@ -34,12 +34,17 @@ class BattleEngine(object):
         for fcard in cw.cwpy.get_fcards():
             fcard.deck.set(fcard, draw=False)
 
+        #優先選択済みリスト
         self.priorityacts = []
+        self.priorityacts_beast = []
 
         # ラウンド数
         self.round = 0
         # 戦闘参加メンバ
         self.members = []
+        self.pmembers = []
+        self.emembers = []
+        self.fmembers = []
         # 戦闘開始の準備完了フラグ
         self._ready = False
         # 戦闘行動中フラグ
@@ -229,13 +234,13 @@ class BattleEngine(object):
         self.round += 1
         self.round = cw.util.numwrap(self.round, 1, 999999)
         # 戦闘参加メンバセット・行動順にソート・手札自動選択
-        self.priorityacts = []
+        #self.priorityacts = []
         self.set_members()
         # 山札からカードをドロー
         for member in self.members:
             member.deck.draw(member)
+        self.set_action() # PyLite 行動順の前に行動を決定する
         self.set_actionorder()
-        self.set_action()
 
         if cw.cwpy.is_autospread():
             ecards = cw.cwpy.get_mcards("flagtrue")
@@ -402,10 +407,15 @@ class BattleEngine(object):
         """戦闘参加メンバを設定する。
         行動可能でないものは除外。
         """
-        members = cw.cwpy.get_pcards("unreversed")
-        members.extend(cw.cwpy.get_ecards("unreversed"))
-        members.extend(cw.cwpy.get_fcards())
-        self.members = members
+        #members = cw.cwpy.get_pcards("unreversed")
+        #members.extend(cw.cwpy.get_ecards("unreversed"))
+        #members.extend(cw.cwpy.get_fcards())
+        #self.members = members
+
+        self.pmembers = cw.cwpy.get_pcards("unreversed")
+        self.emembers = cw.cwpy.get_ecards("unreversed")
+        self.fmembers = cw.cwpy.get_fcards()
+        self.members = self.pmembers + self.emembers + self.fmembers
 
     def set_actionorder(self):
         """行動順を決める値を算出し、
@@ -424,9 +434,23 @@ class BattleEngine(object):
         self.members = map(lambda o: o[2], members)
 
     def set_action(self):
-        """戦闘参加メンバ全員、行動自動選択。"""
-        for member in self.members:
-            member.decide_action()
+        """戦闘参加メンバ全員、行動自動選択。
+        Lite:味方→敵→同行NPC。"""
+        for pcard in self.pmembers:
+            pcard.decide_action()
+        self.clear_priorityacts()
+        for fcard in self.fmembers:
+            fcard.decide_action()
+        self.clear_priorityacts()
+        for ecard in self.emembers:
+            ecard.decide_action()
+        self.clear_priorityacts()
+        #for member in self.members:
+        #    member.decide_action()
+
+    def clear_priorityacts(self):
+        self.priorityacts = []
+        self.priorityacts_beast = []
 
     def clear_playersaction(self):
         """PlayerCard, FriendCardの行動をクリアする。"""

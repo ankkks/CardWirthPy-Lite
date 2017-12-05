@@ -685,7 +685,7 @@ class Character(object):
     def is_downdefense(self):
         return self.enhance_def < 0 and 0 < self.enhance_def_dur
 
-    def is_effective(self, motion):
+    def is_effective(self, motion, beast=False):
         """motionが現在のselfに対して有効な効果か。
         ターゲットの選択に使用される判定であるため、
         実際には有効であっても必ずしもTrueを返さない。
@@ -698,6 +698,18 @@ class Character(object):
 
         mtype = motion.get("type", "")
         if mtype == "Heal":
+            # すでに回復ターゲットになっている場合
+            if beast:
+                priorityacts = cw.cwpy.battle.priorityacts_beast
+            else:
+                priorityacts = cw.cwpy.battle.priorityacts
+            for s, tarr, _user in priorityacts:
+                if mtype == s:
+                    if isinstance(tarr, cw.character.Character):
+                        if tarr == self:
+                            return False
+                    elif self in tarr:
+                        return False
             return self.is_injuredall()
         elif mtype == "Damage":
             return not self.is_unconscious()
@@ -1029,9 +1041,13 @@ class Character(object):
             for e in self._get_motions(h):
                 t = e.get("type", "")
                 if not self._is_bonusedmtype(t):
+                    # 逃走・回復以外は詠唱破棄
                     continue
                 if t:
-                    cw.cwpy.battle.priorityacts.append((t, target, self))
+                    if h.type == "BeastCard":#召喚獣は別に判定
+                        cw.cwpy.battle.priorityacts_beast.append((t, target, self))
+                    else:
+                        cw.cwpy.battle.priorityacts.append((t, target, self))
 
     def adjust_action(self):
         """
@@ -1048,6 +1064,11 @@ class Character(object):
 
         if self.is_inactive(check_reversed=False):
             self.deck.throwaway()
+
+        if self.is_unconscious() or self.is_paralyze() or self.is_sleep():
+            # 意識不明・麻痺・睡眠であれば手札の配付予約はキャンセルされる
+            # 呪縛はキャンセルされない(CardWirth 1.50)
+            self.deck.clear_nextcards()
 
     def clear_action(self):
         self.actiondata = None
@@ -1152,7 +1173,7 @@ class Character(object):
                         targets = [cw.cwpy.dice.choice(effectivetargets)]
 
                     beasts.append((targets, header))
-                    # 優先行動済みリストへ追加する
+                    # 優先行動済みリストへ追加する(キャラ)
                     self._add_priorityacts(targets, header)
 
         # 行動不能時は召喚獣のみ
@@ -1290,7 +1311,7 @@ class Character(object):
             elif 1 <= per:
                 bonus = 6 + (11 - per)
             else:
-                bonus = 100
+                bonus = self.maxlife
 
         elif mtype == "Runaway":
             per = self.get_lifeper()
@@ -1311,21 +1332,21 @@ class Character(object):
             else:
                 bonus = 10 + (11 - per)
 
-        if cw.cwpy.battle:
-            # すでにその行動のターゲットになっている場合はボーナスを入れず、
-            # ターゲット回数分をペナルティとする(選択されにくくなる)
-            targeting = 0
-            for s, tarr, _user in cw.cwpy.battle.priorityacts:
-                if mtype == s:
-                    if isinstance(tarr, cw.character.Character):
-                        if tarr == self:
-                            targeting += 1
-                    elif self in tarr:
-                        targeting += 1
-            if targeting:
-                bonus = min(0, bonus)
-                if mtype == "Heal":
-                    bonus -= targeting
+#        if cw.cwpy.battle:
+#            # すでにその行動のターゲットになっている場合はボーナスを入れず、
+#            # ターゲット回数分をペナルティとする(選択されにくくなる)
+#            targeting = 0
+#            for s, tarr, _user in cw.cwpy.battle.priorityacts:
+#                if mtype == s:
+#                    if isinstance(tarr, cw.character.Character):
+#                        if tarr == self:
+#                            targeting += 1
+#                    elif self in tarr:
+#                        targeting += 1
+#            if targeting:
+#                bonus = min(0, bonus)
+#                if mtype == "Heal":
+#                    bonus -= targeting
 
         return bonus
 

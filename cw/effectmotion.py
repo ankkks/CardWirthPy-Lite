@@ -676,6 +676,7 @@ class EffectMotion(object):
         """
         if success_res:
             return False
+
         value = self.calc_effectvalue(target)
         oldlife = target.life
         origvalue = value
@@ -1374,11 +1375,12 @@ def get_effectivetargets(header, targets):
     effecttype = header.carddata.gettext("Property/EffectType", "")
     motions = header.carddata.getfind("Motions").getchildren()
 
-    """CWでは魔法無効化を考慮しない
-    ignore_antimagic = header.type == "BeastCard" or\
-                       header.penalty or\
-                       not isinstance(header.get_owner(), cw.character.Player)
-    """
+    #CWでは魔法無効化を考慮しない
+    #ignore_antimagic = header.type == "BeastCard" or\
+    #                   header.penalty or\
+    #                   not isinstance(header.get_owner(), cw.character.Player)
+
+    beast = header.type == "BeastCard"
     sets = set()
 
     for t in targets:
@@ -1387,7 +1389,7 @@ def get_effectivetargets(header, targets):
         # カード効果を上から順に見ていき、対象の存在する効果があれば
         # その効果の対象群を返す
         for motion in motions:
-            if t.is_effective(motion):
+            if t.is_effective(motion, beast=beast):
                 sets.add(t)
                 break
 
