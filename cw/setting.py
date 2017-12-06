@@ -396,7 +396,6 @@ class Setting(object):
         self.filer_file = ""
         self.recenthistory_limit = 5 # 展開したシナリオを取っておく数
         self.volume_increment = 5 # ホイールによる全体音量調節での増減量
-        self.show_debuglogdialog = False
         self.write_playlog = False
         self.move_repeat = 240 #移動ボタン押しっぱなしの速度
         self.open_lastscenario = True
@@ -511,8 +510,6 @@ class Setting(object):
                 # 強制デバッグモード起動
                 self.debug = True
             cw.OPTIONS.debug = False
-        # シナリオの終了時にデバッグ情報を表示する
-        self.show_debuglogdialog = data.getbool("ShowDebugLogDialog", self.show_debuglogdialog)
         # デバッグ時はレベル上昇しない
         self.no_levelup_in_debugmode = data.getbool("NoLevelUpInDebugMode", self.no_levelup_in_debugmode)
         # 音楽を再生する

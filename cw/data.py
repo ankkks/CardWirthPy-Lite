@@ -273,61 +273,7 @@ class SystemData(object):
             self.create_log()
             return False, None
 
-    def remove_log(self, debuglog):
-        if debuglog:
-            dpath = cw.util.join_paths(cw.tempdir, u"ScenarioLog/Members")
-            for pcard in cw.cwpy.get_pcards():
-                fname = os.path.basename(pcard.data.fpath)
-                fpath = cw.util.join_paths(dpath, fname)
-                prop = cw.header.GetProperty(fpath)
-                old_coupons = set()
-                get_coupons = []
-                lose_coupons = []
-
-                for _coupon, attrs, name in prop.third.get("Coupons", []):
-                    old_coupons.add(name)
-                    value = int(attrs.get("value", "0"))
-                    if not pcard.has_coupon(name):
-                        lose_coupons.append((name, value))
-                for name in pcard.get_coupons():
-                    if not name in old_coupons:
-                        value = pcard.get_couponvalue(name)
-                        get_coupons.append((name, value))
-                debuglog.add_player(pcard, get_coupons, lose_coupons)
-
-            dpath = cw.util.join_paths(cw.tempdir, u"ScenarioLog/Party")
-            for fname in os.listdir(dpath):
-                if fname.lower().endswith(".xml"):
-                    prop = cw.header.GetProperty(cw.util.join_paths(dpath, fname))
-                    money = int(prop.properties.get("Money", str(cw.cwpy.ydata.party.money)))
-                    debuglog.set_money(money, cw.cwpy.ydata.party.money)
-                    break
-
-            data = xml2etree(cw.util.join_paths(cw.tempdir, u"ScenarioLog/ScenarioLog.xml"))
-
-            for gossip, get in cw.util.sorted_by_attr(self.gossips.iteritems()):
-                debuglog.add_gossip(gossip, get)
-
-            for compstamp, get in cw.util.sorted_by_attr(self.compstamps.iteritems()):
-                debuglog.add_compstamp(compstamp, get)
-
-            for type in ("SkillCard", "ItemCard", "BeastCard"):
-                dname = "Deleted" + type
-                dpath = cw.util.join_paths(cw.tempdir, u"ScenarioLog/Party", dname)
-                if os.path.isdir(dpath):
-                    for fname in os.listdir(dpath):
-                        if fname.lower().endswith(".xml"):
-                            fpath = cw.util.join_paths(dpath, fname)
-                            prop = cw.header.GetProperty(fpath)
-                            name = prop.properties.get("Name", "")
-                            desc = cw.util.decodewrap(prop.properties.get("Description", ""))
-                            scenario = prop.properties.get("Scenario", "")
-                            author = prop.properties.get("Author", "")
-                            premium = prop.properties.get("Premium", "Normal")
-                            attachment = cw.util.str2bool(prop.properties.get("Attachment", "False"))
-                            if type <> "BeastCard" or attachment:
-                                debuglog.add_lostcard(type, name, desc, scenario, author, premium)
-
+    def remove_log(self):
         cw.util.remove(cw.util.join_paths(cw.tempdir, u"ScenarioLog"))
         path = cw.util.splitext(cw.cwpy.ydata.party.data.fpath)[0] + ".wsl"
         cw.cwpy.ydata.deletedpaths.add(path)
@@ -1301,19 +1247,11 @@ class ScenarioData(SystemData):
         for header in cw.cwpy.ydata.party.get_allcardheaders():
             header.set_scenariostart()
 
-    def end(self, showdebuglog=False):
+    def end(self):
         """
         シナリオの正規終了時の共通処理をまとめたもの。
         冒険の中断時やF9時には呼ばない。
         """
-        putdebuglog = showdebuglog and cw.cwpy.is_debugmode() and cw.cwpy.setting.show_debuglogdialog
-        debuglog = None
-        if putdebuglog:
-            debuglog = cw.debug.logging.DebugLog()
-
-        if debuglog:
-            for fcard in cw.cwpy.get_fcards():
-                debuglog.add_friend(fcard)
 
         # NPCの連れ込み
         cw.cwpy.ydata.join_npcs()
@@ -1328,8 +1266,6 @@ class ScenarioData(SystemData):
                 path = cw.util.join_yadodir(path)
             ccard = cw.character.Character(yadoxml2etree(path))
             ccard.remove_numbercoupon()
-            if debuglog:
-                debuglog.add_lostplayer(ccard)
 
             # "＿消滅予約"を持ってない場合、アルバムに残す
             if not ccard.has_coupon(u"＿消滅予約"):
@@ -1345,16 +1281,12 @@ class ScenarioData(SystemData):
         # シナリオ取得カードの正規取得処理などを行う
         if cw.cwpy.ydata.party:
             for header in cw.cwpy.ydata.party.get_allcardheaders():
-                if debuglog and header.scenariocard:
-                    debuglog.add_gotcard(header.type, header.name, header.desc, header.scenario, header.author, header.premium)
                 header.set_scenarioend()
 
             # 移動済みの荷物袋カードを削除
             for header in cw.cwpy.ydata.party.backpack_moved:
                 if header.moved == 2:
                     # 素材も含めて完全削除
-                    if debuglog and not header.scenariocard:
-                        debuglog.add_lostcard(header.type, header.name, header.desc, header.scenario, header.author, header.premium)
                     cw.cwpy.remove_xml(header)
                 else:
                     # どこかで所有しているので素材は消さない
@@ -1362,19 +1294,11 @@ class ScenarioData(SystemData):
             cw.cwpy.ydata.party.backpack_moved = []
 
         # 保存済みJPDCイメージを宿フォルダへ移動
-        cw.header.SavedJPDCImageHeader.create_header(debuglog)
+        cw.header.SavedJPDCImageHeader.create_header()
 
         cw.cwpy.ydata.party.remove_numbercoupon()
-        self.remove_log(debuglog)
+        self.remove_log()
         cw.cwpy.ydata.deletedpaths.update(self.deletedpaths)
-
-        if debuglog:
-            def func(sname, debuglog):
-                dlg = cw.debug.logging.DebugLogDialog(cw.cwpy.frame, sname, debuglog)
-                cw.cwpy.frame.move_dlg(dlg)
-                dlg.ShowModal()
-                dlg.Destroy()
-            cw.cwpy.frame.exec_func(func, self.name, debuglog)
 
     def f9(self):
         """

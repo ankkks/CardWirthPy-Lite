@@ -1786,7 +1786,6 @@ class ScenarioSelect(select.Select):
         #1.50のホイール対応のため現状仕方なくフラグを三段階作っている
         if not self.list or not self.yesbtn.Enabled:
             if self._paperslide_d:
-                print 66
                 return
             elif not self._paperslide and not self._paperslide2:
                 return

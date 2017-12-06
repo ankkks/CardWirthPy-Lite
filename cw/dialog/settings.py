@@ -438,8 +438,8 @@ class SettingsPanel(wx.Panel):
             skintype = self.pane_scenario.grid_folderoftype.GetCellValue(row, 0)
             folder = self.pane_scenario.grid_folderoftype.GetCellValue(row, 1)
             setting.folderoftype.append((skintype, folder))
-        value = self.pane_scenario.cb_show_debuglogdialog.GetValue()
-        setting.show_debuglogdialog = value
+        value = self.pane_scenario.cb_equalbug.GetValue()
+        setting.enable_equalbug = value
         value = self.pane_scenario.cb_open_lastscenario.GetValue()
         setting.open_lastscenario = value
         value = self.pane_scenario.cb_oldf9.GetValue()
@@ -2060,13 +2060,12 @@ class ScenarioSettingPanel(wx.Panel):
 
         # その他オプション
         self.box_other = wx.StaticBox(self, -1, u"その他")
-        self.cb_show_debuglogdialog = wx.CheckBox(
-            self, -1, u"シナリオの終了時にデバッグ情報を表示する")
-        self.cb_write_playlog = wx.CheckBox(self, -1, u"シナリオのプレイログをテキスト出力する")
-        self.cb_oldf9 = wx.CheckBox(
-            self, -1, u"CardWirth1.28由来のF9仕様を使用する")
-        self.cb_oldf9.SetToolTipString( u"有効化非推奨\nシナリオによって変更された終了印・ゴシップがF9でリセットされなくなります")
-
+        self.cb_write_playlog = wx.CheckBox(self, -1, u"シナリオのプレイログを出力する")
+        self.cb_write_playlog.SetToolTipString(u"PlayLogフォルダにテキスト形式で出力されます")
+        self.cb_oldf9 = wx.CheckBox(self, -1, u"CardWirth 1.28由来の旧F9仕様を再現する")
+        self.cb_oldf9.SetToolTipString( u"有効化非推奨[1.28-1.50互換設定]\nシナリオによって変更された終了印・ゴシップがF9でリセットされなくなります")
+        self.cb_equalbug = wx.CheckBox(self, -1, u"CardWirth 1.50の変数=バグを再現する")
+        self.cb_equalbug.SetToolTipString( u"変数名に「=」を含むステップとフラグがセーブされなくなります")
 
         # スキンタイプ毎の初期フォルダ
         self.box_folderoftype = wx.StaticBox(self, -1, u"シナリオフォルダ(スキンタイプ別)")
@@ -2127,7 +2126,7 @@ class ScenarioSettingPanel(wx.Panel):
         self.cb_selectscenariofromtype.SetValue(setting.selectscenariofromtype)
         self.cb_show_paperandtree.SetValue(setting.show_paperandtree)
         self.cb_write_playlog.SetValue(setting.write_playlog)
-        self.cb_show_debuglogdialog.SetValue(setting.show_debuglogdialog)
+        self.cb_equalbug.SetValue(setting.enable_equalbug)
         self.cb_open_lastscenario.SetValue(setting.open_lastscenario)
         self.cb_oldf9.SetValue(setting.enable_oldf9)
 
@@ -2152,7 +2151,7 @@ class ScenarioSettingPanel(wx.Panel):
         self.cb_selectscenariofromtype.SetValue(setting.selectscenariofromtype_init)
         self.cb_show_paperandtree.SetValue(setting.show_paperandtree)
         self.cb_write_playlog.SetValue(setting.write_playlog)
-        self.cb_show_debuglogdialog.SetValue(setting.show_debuglogdialog_init)
+        self.cb_equalbug.SetValue(setting.enable_equalbug_init)
         self.cb_open_lastscenario.SetValue(setting.open_lastscenario_init)
         self.cb_oldf9.SetValue(setting.enable_oldf9_init)
 
@@ -2210,9 +2209,9 @@ class ScenarioSettingPanel(wx.Panel):
         bsizer_gene.Add(self.cb_selectscenariofromtype, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         #bsizer_gene.SetMinSize((_settings_width(), -1))
 
-        bsizer_other.Add(self.cb_show_debuglogdialog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_other.Add(self.cb_write_playlog, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_other.Add(self.cb_oldf9, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_other.Add(self.cb_equalbug, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
 
         sizer_v2.Add(bsizer_gene, 1, wx.RIGHT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
         sizer_v2.Add(bsizer_other, 1, wx.LEFT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))

@@ -1016,11 +1016,7 @@ class Font(object):
     def __init__(self, face, pixels, bold=False, italic=False):
         self._cache = {}
 
-        d = {(u"IPAゴシック", u"IPAGothic"):"gothic.ttf",
-             (u"IPA UIゴシック", u"IPAUIGothic"):"uigothic.ttf",
-             (u"IPA明朝", u"IPAMincho"):"mincho.ttf",
-             (u"IPA P明朝", u"IPAPMincho"):"pmincho.ttf",
-             (u"IPA Pゴシック", u"IPAPGothic"):"pgothic.ttf"}
+        d = {(u"梅Hyゴシック", u"Ume Hy Gothic"):"gothic.ttf"}
         for names, ttf in d.iteritems():
             if face in names:
                 path = cw.util.join_paths(u"Data/Font", ttf)

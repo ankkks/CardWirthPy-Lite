@@ -700,16 +700,15 @@ class Character(object):
         if mtype == "Heal":
             # すでに回復ターゲットになっている場合
             if beast:
-                priorityacts = cw.cwpy.battle.priorityacts_beast
+                selected = cw.cwpy.battle.heal_selectedlist_beast
             else:
-                priorityacts = cw.cwpy.battle.priorityacts
-            for s, tarr, _user in priorityacts:
-                if mtype == s:
-                    if isinstance(tarr, cw.character.Character):
-                        if tarr == self:
-                            return False
-                    elif self in tarr:
+                selected = cw.cwpy.battle.heal_selectedlist
+            for target in selected:
+                if isinstance(target, cw.character.Character):
+                    if target == self:
                         return False
+                elif self in target:
+                    return False
             return self.is_injuredall()
         elif mtype == "Damage":
             return not self.is_unconscious()
@@ -1044,10 +1043,10 @@ class Character(object):
                     # 逃走・回復以外は詠唱破棄
                     continue
                 if t:
-                    if h.type == "BeastCard":#召喚獣は別に判定
-                        cw.cwpy.battle.priorityacts_beast.append((t, target, self))
+                    if h.type == "BeastCard":#PyLite:召喚獣は別に判定
+                        cw.cwpy.battle.heal_selectedlist_beast.append((target))
                     else:
-                        cw.cwpy.battle.priorityacts.append((t, target, self))
+                        cw.cwpy.battle.heal_selectedlist.append((target))
 
     def adjust_action(self):
         """
@@ -1074,10 +1073,10 @@ class Character(object):
         self.actiondata = None
         self.actionautoselected = False
         self.actionend = True
-        if cw.cwpy.battle:
-            for key, target, user in cw.cwpy.battle.priorityacts[:]:
-                if user == self:
-                    cw.cwpy.battle.priorityacts.remove((key, target, user))
+        #if cw.cwpy.battle:
+        #    for key, target, user in cw.cwpy.battle.priorityacts[:]:
+        #        if user == self:
+        #            cw.cwpy.battle.priorityacts.remove((key, target, user))
 
     def is_autoselectedpenalty(self, header=None):
         """戦闘中にペナルティカードを自動選択した状態か。

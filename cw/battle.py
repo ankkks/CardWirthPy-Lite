@@ -34,14 +34,18 @@ class BattleEngine(object):
         for fcard in cw.cwpy.get_fcards():
             fcard.deck.set(fcard, draw=False)
 
-        #優先選択済みリスト
-        self.priorityacts = []
-        self.priorityacts_beast = []
+        #self.priorityacts = []
+        # PyLite:回復選択済みリスト。
+        # Rebootのpriorityactsはtargetの他に使用者と効果種別を格納している
+        # 取り出しを高速化するため別に作り直す
+        self.heal_selectedlist = []
+        self.heal_selectedlist_beast = []
 
         # ラウンド数
         self.round = 0
         # 戦闘参加メンバ
         self.members = []
+        # PyLite:行動順決定順位
         self.pmembers = []
         self.emembers = []
         self.fmembers = []
@@ -438,19 +442,19 @@ class BattleEngine(object):
         Lite:味方→敵→同行NPC。"""
         for pcard in self.pmembers:
             pcard.decide_action()
-        self.clear_priorityacts()
+        self.clear_heal_selected()
         for fcard in self.fmembers:
             fcard.decide_action()
-        self.clear_priorityacts()
+        self.clear_heal_selected()
         for ecard in self.emembers:
             ecard.decide_action()
-        self.clear_priorityacts()
+        self.clear_heal_selected()
         #for member in self.members:
         #    member.decide_action()
 
-    def clear_priorityacts(self):
-        self.priorityacts = []
-        self.priorityacts_beast = []
+    def clear_heal_selected(self):
+        self.heal_selectedlist = []
+        self.heal_selectedlist_beast = []
 
     def clear_playersaction(self):
         """PlayerCard, FriendCardの行動をクリアする。"""
