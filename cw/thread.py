@@ -335,7 +335,8 @@ class CWPy(_Singleton, threading.Thread):
                 self.statusbar = cw.sprite.statusbar.StatusBar()
                 # ステータスバークリップ
                 self.sbargrp.set_clip(self.statusbar.rect)
-            # FPS描画用フォント
+            # FPS描画用フォント　TODO:付属フォント除去の壁
+            #self.fpsfont = pygame.font.SysFont(None, cw.s(14))
             self.fpsfont = pygame.font.Font(self.rsrc.fontpaths["gothic"], cw.s(14))
             self.fpsfont.set_bold(True)
 
@@ -2334,7 +2335,7 @@ class CWPy(_Singleton, threading.Thread):
             pcard.set_fullrecovery()
             pcard.update_image()
 
-        self.sdata.remove_log(None)
+        self.sdata.remove_log()
 
         self.ydata.party._loading = False
 
