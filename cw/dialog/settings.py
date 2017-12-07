@@ -1032,11 +1032,9 @@ class GeneralSettingPanel(wx.Panel):
         ssdic = [
             (u"application", u"アプリケーション名"),
             (u"version", u"バージョン情報"),None,
-            (u"skin", u"スキン名"),
-            (u"yado", u"拠点名"),
+            (u"skin", u"スキン名"),(u"yado", u"拠点名"),
             (u"party", u"パーティ名"),None,
-            (u"scenario", u"シナリオ名"),
-            (u"author", u"作者名"),
+            (u"scenario", u"シナリオ名"),(u"author", u"作者名"),
             (u"path", u"シナリオのファイルパス"),
             (u"file", u"シナリオのファイル名"),
             (u"compatibility", u"互換モード"),None,
@@ -1060,7 +1058,6 @@ class GeneralSettingPanel(wx.Panel):
         self._bind()
 
     def _bind(self):
-        self.cb_autosavepartyrecord.Bind(wx.EVT_CHECKBOX, self.OnAutoSavePartyRecord)
         self.cb_initmoneyisinitialcash.Bind(wx.EVT_CHECKBOX, self.OnInitMoneyIsInitialCash)
         self.sstoolbar.Bind(wx.EVT_TOOL, self.OnSSTool)
         for tx in self.ss_tx:
@@ -1148,10 +1145,6 @@ class GeneralSettingPanel(wx.Panel):
     def _ss_focus(self):
         enable = wx.Window.FindFocus() in self.ss_tx
         self.sstoolbar.Enable(enable)
-
-    def OnAutoSavePartyRecord(self, event):
-        pass
-        #self.cb_overwritepartyrecord.Enable(self.cb_autosavepartyrecord.GetValue())
 
     def OnInitMoneyIsInitialCash(self, event):
         self.sc_initmoneyamount.Enable(not self.cb_initmoneyisinitialcash.GetValue())
@@ -2061,10 +2054,10 @@ class ScenarioSettingPanel(wx.Panel):
         # その他オプション
         self.box_other = wx.StaticBox(self, -1, u"その他")
         self.cb_write_playlog = wx.CheckBox(self, -1, u"シナリオのプレイログを出力する")
-        self.cb_write_playlog.SetToolTipString(u"PlayLogフォルダにテキスト形式で出力されます")
-        self.cb_oldf9 = wx.CheckBox(self, -1, u"CardWirth 1.28由来の旧F9仕様を再現する")
+        self.cb_write_playlog.SetToolTipString(u"有効化するとPlayLogフォルダが作られ、テキスト形式で出力されます")
+        self.cb_oldf9 = wx.CheckBox(self, -1, u"CardWirth1.28由来の旧F9仕様を再現する")
         self.cb_oldf9.SetToolTipString( u"有効化非推奨[1.28-1.50互換設定]\nシナリオによって変更された終了印・ゴシップがF9でリセットされなくなります")
-        self.cb_equalbug = wx.CheckBox(self, -1, u"CardWirth 1.50の変数=バグを再現する")
+        self.cb_equalbug = wx.CheckBox(self, -1, u"CardWirth1.50の変数=バグを再現する")
         self.cb_equalbug.SetToolTipString( u"変数名に「=」を含むステップとフラグがセーブされなくなります")
 
         # スキンタイプ毎の初期フォルダ
