@@ -1555,9 +1555,13 @@ class CardHolder(CardControl):
         CardControl._bind(self)
 
         if self.callname <> "INFOVIEW":
-            self.Bind(wx.EVT_BUTTON, self.OnClickToggleBtn, self.skillbtn)
-            self.Bind(wx.EVT_BUTTON, self.OnClickToggleBtn, self.itembtn)
-            self.Bind(wx.EVT_BUTTON, self.OnClickToggleBtn, self.beastbtn)
+            for btn in self.skillbtn, self.itembtn, self.beastbtn:
+                btn.Bind(wx.EVT_LEFT_DOWN, self._skip)
+                btn.Bind(wx.EVT_LEFT_DCLICK, self._skip)
+                btn.Bind(wx.EVT_RIGHT_UP, lambda event: None)
+            #self.Bind(wx.EVT_BUTTON, self.OnClickToggleBtn, self.skillbtn)
+            #self.Bind(wx.EVT_BUTTON, self.OnClickToggleBtn, self.itembtn)
+            #self.Bind(wx.EVT_BUTTON, self.OnClickToggleBtn, self.beastbtn)
 
         self.Bind(wx.EVT_BUTTON, self.OnClickUpBtn, self.upbtn)
         self.Bind(wx.EVT_BUTTON, self.OnClickDownBtn, self.downbtn)
@@ -1566,6 +1570,19 @@ class CardHolder(CardControl):
         self.page.Bind(wx.EVT_SET_FOCUS, self.OnPageSetFocus)
 
         self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
+
+    def _skip(self, event):
+        #Lite:TODO:表示中の種別タブをクリック無効にするため一度横取りして判定する。
+        #トグルなのでDクリックイベントもバインドしなければならないのとホイール／キーにも影響が出る点に注意。
+        click = event.GetEventObject()
+        cardpocket = cw.cwpy.setting.last_cardpocket
+        if click == self.skillbtn and cardpocket == cw.POCKET_SKILL:
+            return
+        elif click == self.itembtn and cardpocket == cw.POCKET_ITEM:
+            return
+        elif click == self.beastbtn and cardpocket == cw.POCKET_BEAST:
+            return
+        self.OnClickToggleBtn(event)
 
     def _load_index(self):
         if self.callname == "CARDPOCKET":
@@ -2015,10 +2032,12 @@ class CardHolder(CardControl):
             btn = l[cw.cwpy.setting.last_cardpocket - 1] if not cw.cwpy.setting.last_cardpocket == 0 else l[len(l) -1]
             btnevent = wx.PyCommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, btn.GetId())
             btnevent.SetEventObject(btn)
-            self.ProcessEvent(btnevent)
+            self.OnClickToggleBtn(btnevent)
+            #self.ProcessEvent(btnevent)
         elif self.upbtn.IsShown() and self.upbtn.IsEnabled():
             btnevent = wx.PyCommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, self.upbtn.GetId())
-            self.ProcessEvent(btnevent)
+            self.OnClickToggleBtn(btnevent)
+            #self.ProcessEvent(btnevent)
 
     def OnDown(self, event):
         if self.callname == "CARDPOCKET":
@@ -2028,10 +2047,12 @@ class CardHolder(CardControl):
             btn = l[cw.cwpy.setting.last_cardpocket + 1] if not cw.cwpy.setting.last_cardpocket == len(l) -1 else l[0]
             btnevent = wx.PyCommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, btn.GetId())
             btnevent.SetEventObject(btn)
-            self.ProcessEvent(btnevent)
+            #self.ProcessEvent(btnevent)
+            self.OnClickToggleBtn(btnevent)
         elif self.upbtn.IsShown() and self.downbtn.IsEnabled():
             btnevent = wx.PyCommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, self.downbtn.GetId())
-            self.ProcessEvent(btnevent)
+            self.OnClickToggleBtn(btnevent)
+            #self.ProcessEvent(btnevent)
 
     def OnClickUpBtn(self, event):
         cw.cwpy.play_sound("click")
@@ -2152,7 +2173,8 @@ class CardHolder(CardControl):
                     btn = l[cw.cwpy.setting.last_cardpocket + 1] if not cw.cwpy.setting.last_cardpocket == len(l) -1 else l[0]
                 btnevent = wx.PyCommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, btn.GetId())
                 btnevent.SetEventObject(btn)
-                self.ProcessEvent(btnevent)
+                #self.ProcessEvent(btnevent)
+                self.OnClickToggleBtn(btnevent)
                 return
             else:
                 # カード置き場、荷物袋、情報カード
