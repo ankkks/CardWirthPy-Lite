@@ -121,8 +121,15 @@ class Deck(object):
         self.hand = []
         # カード交換カードを手札に加える
         header = cw.cwpy.rsrc.actioncards[0].copy()
-        header.set_owner(ccard)
-        self.hand.append(header)
+        try:
+            if header.name[0] in ccard.get_pocketcards(cw.POCKET_ITEM)[0].name:
+                pass
+            else:
+                header.set_owner(ccard)
+                self.hand.append(header)
+        except:
+            header.set_owner(ccard)
+            self.hand.append(header)
         # アイテムカードを手札に加える
         self.hand.extend(ccard.get_pocketcards(cw.POCKET_ITEM))
         # アクションカード、技能カードを手札に加える
@@ -274,13 +281,22 @@ class Deck(object):
             self.shuffle()
 
             self.hand = []
-            # カード交換は常に残す
-            header = cw.cwpy.rsrc.actioncards[0].copy()
-            header.set_owner(ccard)
-            self.hand.append(header)
             # アイテムカードを手札に加える
             self.hand.extend(ccard.get_pocketcards(cw.POCKET_ITEM))
             self._throwaway = False
+
+        # カード交換は同名アイテムを0に持っていなければ残す
+        header = cw.cwpy.rsrc.actioncards[0].copy()
+        if not header in self.hand:
+            try:
+                if header.name[0] in ccard.get_pocketcards(cw.POCKET_ITEM)[0].name:
+                    pass
+                else:
+                    header.set_owner(ccard)
+                    self.hand.insert(0, header)
+            except:
+                header.set_owner(ccard)
+                self.hand.insert(0, header)
 
         while len(self.hand) < maxn:
             if self.nextcards:
