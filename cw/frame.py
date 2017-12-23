@@ -1308,6 +1308,13 @@ class MyApp(wx.App):
         if not event:
             return -1
 
+        # BUG: wx._core.PyAssertionError
+        #      wxPython 3.0.2.0
+        try:
+            event.GetEventObject()
+        except:
+            return
+
         if cw.cwpy.frame.filter_event:
             if not event.GetEventObject():
                 return -1

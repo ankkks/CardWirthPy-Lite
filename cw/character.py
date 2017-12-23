@@ -412,11 +412,19 @@ class Character(object):
 
     def has_keycode(self, keycode, skill=True, item=True, beast=True, hand=True):
         """指定されたキーコードを所持しているか。"""
-        if hand and self.deck:
+        if (hand or item) and self.deck:#1.50仕様 アイテムでは手札も検索する
             # 戦闘時の手札(Wsn.2)
             for header in self.deck.get_hand(self):
                 if keycode in header.get_keycodes():
                     return True
+            if self.actiondata and self.actiondata[1]:
+                header = self.actiondata[1]
+                if header and keycode in header.get_keycodes():
+                    return True
+            header = self.deck.get_used()
+            if header and keycode in header.get_keycodes():
+                return True
+
         if skill:
             for header in self.get_pocketcards(cw.POCKET_SKILL):
                 if keycode in header.get_keycodes():
@@ -425,11 +433,7 @@ class Character(object):
             for header in self.get_pocketcards(cw.POCKET_ITEM):
                 if keycode in header.get_keycodes():
                     return True
-                #1.50仕様 アイテムでは手札も検索する
-                if self.deck:
-                    for header in self.deck.get_hand(self):
-                        if keycode in header.get_keycodes():
-                            return True
+
         if beast:
             for header in self.get_pocketcards(cw.POCKET_BEAST):
                 if keycode in header.get_keycodes():
