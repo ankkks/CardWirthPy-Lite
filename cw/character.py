@@ -57,7 +57,7 @@ class Character(object):
         self.antimagic = cw.util.numwrap(self.data.getint("Property/Status/AntiMagic",
                                                                     "duration", 0), 0, 999)
         # 行動力強化値
-        self.enhance_act = cw.util.numwrap(self.data.getint("Property/Enhance/Action", 0), -10, 10)
+        self.enhance_act = cw.util.numwrap(self.data.getint("Property/Enhance/Action", 0), -100, 100)
         self.enhance_act_dur = cw.util.numwrap(self.data.getint("Property/Enhance/Action",
                                                                     "duration", 0), 0, 999)
         if self.enhance_act == 0 or self.enhance_act_dur == 0:
@@ -1434,7 +1434,7 @@ class Character(object):
         """
         行動力強化値を返す。行動力は効果コンテントによる強化値だけ。
         """
-        return cw.util.numwrap(self.enhance_act, -10, 10)
+        return cw.util.numwrap(self.enhance_act, -100, 100)
 
     def get_enhance_def(self):
         """
@@ -2517,7 +2517,7 @@ class Character(object):
     def set_enhance_act(self, value, duration):
         """
         行動力強化値とその継続ラウンド数を操作する。
-        強化値の範囲は-10～10、継続ラウンド数の範囲は0～999を越えない。
+        強化正規値の範囲は-10～10、継続ラウンド数の範囲は0～999を越えない。
         """
         if cw.cwpy.ydata:
             cw.cwpy.ydata.changed()
@@ -2529,7 +2529,7 @@ class Character(object):
         if duration <= 0:
             value = 0
         self.enhance_act = value
-        self.enhance_act = cw.util.numwrap(self.enhance_act, -10, 10)
+        self.enhance_act = cw.util.numwrap(self.enhance_act, -100, 100)
         self.enhance_act_dur = duration
         self.enhance_act_dur = cw.util.numwrap(self.enhance_act_dur, 0, 999)
         path = "Property/Enhance/Action"
