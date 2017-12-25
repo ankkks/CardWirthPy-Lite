@@ -284,19 +284,17 @@ class Deck(object):
             # アイテムカードを手札に加える
             self.hand.extend(ccard.get_pocketcards(cw.POCKET_ITEM))
             self._throwaway = False
-
         # カード交換は同名アイテムを0に持っていなければ残す
         header = cw.cwpy.rsrc.actioncards[0].copy()
-        if not header in self.hand:
-            try:
-                if header.name[0] in ccard.get_pocketcards(cw.POCKET_ITEM)[0].name:
-                    pass
-                else:
-                    header.set_owner(ccard)
-                    self.hand.insert(0, header)
-            except:
+        try:
+            if self.hand[0].id == 0 or header.name[0] in ccard.get_pocketcards(cw.POCKET_ITEM)[0].name:
+                pass
+            else:
                 header.set_owner(ccard)
                 self.hand.insert(0, header)
+        except:
+            header.set_owner(ccard)
+            self.hand.insert(0, header)
 
         while len(self.hand) < maxn:
             if self.nextcards:
