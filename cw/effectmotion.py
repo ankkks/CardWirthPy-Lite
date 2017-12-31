@@ -1023,7 +1023,7 @@ class EffectMotion(object):
         """
         if success_res:
             return False
-        value = cw.util.numwrap(self.value, -100, 100)
+        value = cw.util.numwrap(self.value, -32768, 32767)
         if value <> 0:
             duration = self.calc_durationvalue(target, True)
         else:
@@ -1041,7 +1041,7 @@ class EffectMotion(object):
         """
         if success_res:
             return False
-        value = cw.util.numwrap(self.value, -10, 10)
+        value = cw.util.numwrap(self.value, -32768, 32767)
         if value <> 0:
             duration = self.calc_durationvalue(target, True)
         else:
@@ -1059,7 +1059,7 @@ class EffectMotion(object):
         """
         if success_res:
             return False
-        value = cw.util.numwrap(self.value, -10, 10)
+        value = cw.util.numwrap(self.value, -32768, 32767)
         if value <> 0:
             duration = self.calc_durationvalue(target, True)
         else:
@@ -1077,7 +1077,7 @@ class EffectMotion(object):
         """
         if success_res:
             return False
-        value = cw.util.numwrap(self.value, -10, 10)
+        value = cw.util.numwrap(self.value, -32768, 32767)
         if value <> 0:
             duration = self.calc_durationvalue(target, True)
         else:
