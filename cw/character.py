@@ -57,28 +57,28 @@ class Character(object):
         self.antimagic = cw.util.numwrap(self.data.getint("Property/Status/AntiMagic",
                                                                     "duration", 0), 0, 999)
         # 行動力強化値 //PyLite:上限解除
-        self.enhance_act = cw.util.numwrap(self.data.getint("Property/Enhance/Action", 0), -32768, 32767)
+        self.enhance_act = cw.util.numwrap(self.data.getint("Property/Enhance/Action", 0), -2147483648, 2147483647)
         self.enhance_act_dur = cw.util.numwrap(self.data.getint("Property/Enhance/Action",
                                                                     "duration", 0), 0, 999)
         if self.enhance_act == 0 or self.enhance_act_dur == 0:
             self.enhance_act = 0
             self.enhance_act_dur = 0
         # 回避力強化値
-        self.enhance_avo = cw.util.numwrap(self.data.getint("Property/Enhance/Avoid", 0), -32768, 32767)
+        self.enhance_avo = cw.util.numwrap(self.data.getint("Property/Enhance/Avoid", 0), -2147483648, 2147483647)
         self.enhance_avo_dur = cw.util.numwrap(self.data.getint("Property/Enhance/Avoid",
                                                                     "duration", 0), 0, 999)
         if self.enhance_avo == 0 or self.enhance_avo_dur == 0:
             self.enhance_avo = 0
             self.enhance_avo_dur = 0
         # 抵抗力強化値
-        self.enhance_res = cw.util.numwrap(self.data.getint("Property/Enhance/Resist", 0), -32768, 32767)
+        self.enhance_res = cw.util.numwrap(self.data.getint("Property/Enhance/Resist", 0), -2147483648, 2147483647)
         self.enhance_res_dur = cw.util.numwrap(self.data.getint("Property/Enhance/Resist",
                                                                     "duration", 0), 0, 999)
         if self.enhance_res == 0 or self.enhance_res_dur == 0:
             self.enhance_res = 0
             self.enhance_res_dur = 0
         # 防御力強化値
-        self.enhance_def = cw.util.numwrap(self.data.getint("Property/Enhance/Defense", 0), -32768, 32767)
+        self.enhance_def = cw.util.numwrap(self.data.getint("Property/Enhance/Defense", 0), -2147483648, 2147483647)
         self.enhance_def_dur = cw.util.numwrap(self.data.getint("Property/Enhance/Defense",
                                                                     "duration", 0), 0, 999)
         if self.enhance_def == 0 or self.enhance_def_dur == 0:
@@ -1434,7 +1434,7 @@ class Character(object):
         """
         行動力強化値を返す。行動力は効果コンテントによる強化値だけ。//PyLite:上限解除
         """
-        return cw.util.numwrap(self.enhance_act, -32768, 32767)
+        return cw.util.numwrap(self.enhance_act, -2147483648, 2147483647)
 
     def get_enhance_def(self):
         """
@@ -2529,7 +2529,7 @@ class Character(object):
         if duration <= 0:
             value = 0
         self.enhance_act = value
-        self.enhance_act = cw.util.numwrap(self.enhance_act, -32768, 32767)
+        self.enhance_act = cw.util.numwrap(self.enhance_act, -2147483648, 2147483647)
         self.enhance_act_dur = duration
         self.enhance_act_dur = cw.util.numwrap(self.enhance_act_dur, 0, 999)
         path = "Property/Enhance/Action"
@@ -2551,7 +2551,7 @@ class Character(object):
         if duration <= 0:
             value = 0
         self.enhance_avo = value
-        self.enhance_avo = cw.util.numwrap(self.enhance_avo, -32768, 32767)
+        self.enhance_avo = cw.util.numwrap(self.enhance_avo, -2147483648, 2147483647)
         self.enhance_avo_dur = duration
         self.enhance_avo_dur = cw.util.numwrap(self.enhance_avo_dur, 0, 999)
         path = "Property/Enhance/Avoid"
@@ -2573,7 +2573,7 @@ class Character(object):
         if duration <= 0:
             value = 0
         self.enhance_res = value
-        self.enhance_res = cw.util.numwrap(self.enhance_res, -32768, 32767)
+        self.enhance_res = cw.util.numwrap(self.enhance_res, -2147483648, 2147483647)
         self.enhance_res_dur = duration
         self.enhance_res_dur = cw.util.numwrap(self.enhance_res_dur, 0, 999)
         path = "Property/Enhance/Resist"
@@ -2595,7 +2595,7 @@ class Character(object):
         if duration <= 0:
             value = 0
         self.enhance_def = value
-        self.enhance_def = cw.util.numwrap(self.enhance_def, -32768, 32767)
+        self.enhance_def = cw.util.numwrap(self.enhance_def, -2147483648, 2147483647)
         self.enhance_def_dur = duration
         self.enhance_def_dur = cw.util.numwrap(self.enhance_def_dur, 0, 999)
         path = "Property/Enhance/Defense"
