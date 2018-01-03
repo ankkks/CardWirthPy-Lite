@@ -410,36 +410,39 @@ class Character(object):
         s.discard("")
         return s
 
-    def has_keycode(self, keycode, skill=True, item=True, beast=True, hand=True):
-        """指定されたキーコードを所持しているか。"""
+    def find_keycode(self, keycode, skill=True, item=True, beast=True, hand=False):
+        """指定されたキーコードを所持しているか。
+        当該キーコードを含むカードを返す。
+        見つからなかった場合はNoneを返す。
+        """
         if (hand or item) and self.deck:#1.50仕様 アイテムでは手札も検索する
             # 戦闘時の手札(Wsn.2)
             for header in self.deck.get_hand(self):
                 if keycode in header.get_keycodes():
-                    return True
+                    return header
             if self.actiondata and self.actiondata[1]:
                 header = self.actiondata[1]
                 if header and keycode in header.get_keycodes():
-                    return True
+                    return header
             header = self.deck.get_used()
             if header and keycode in header.get_keycodes():
-                return True
+                return header
 
         if skill:
             for header in self.get_pocketcards(cw.POCKET_SKILL):
                 if keycode in header.get_keycodes():
-                    return True
+                    return header
         if item:
             for header in self.get_pocketcards(cw.POCKET_ITEM):
                 if keycode in header.get_keycodes():
-                    return True
+                    return header
 
         if beast:
             for header in self.get_pocketcards(cw.POCKET_BEAST):
                 if keycode in header.get_keycodes():
-                    return True
+                    return header
 
-        return False
+        return None
 
     def lost(self):
         """
@@ -1009,8 +1012,11 @@ class Character(object):
             if self.is_alive() and not ishidden and self.status <> "reversed" and self.actiondata and cw.cwpy.is_battlestatus():
                 targets, header, beasts = self.actiondata
                 if header and self.is_active() and not ishidden and self.status <> "reversed":
-                    self.deck.use(header)
-                    self.use_card(targets, header)
+                    self.deck.set_used(header)
+                    try:
+                        self.use_card(targets, header)
+                    finally:
+                        self.deck.use(header)
 
     def set_action(self, target, header, beasts=[][:], auto=False):
         """

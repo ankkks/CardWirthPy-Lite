@@ -55,7 +55,7 @@ ID_SHOW_STACK_TRACE = wx.NewId()
 ID_CLEAR_BREAKPOINT = wx.NewId()
 ID_QUIT_DEBUG_MODE = wx.NewId()
 ID_INIT_VARIABLES = wx.NewId()
-
+ID_SELECTEDCARD = wx.NewId()
 
 class Debugger(wx.Frame):
     def __init__(self, parent):
@@ -234,6 +234,11 @@ class Debugger(wx.Frame):
         self.mi_bgm = wx.MenuItem(run_menu, ID_BGM, u"&BGM変更")
         self.mi_bgm.SetBitmap(rsrc["EVT_PLAY_BGM"])
         run_menu.AppendItem(self.mi_bgm)
+        run_menu.AppendSeparator()
+        self.mi_selectedcard = wx.MenuItem(run_menu, ID_SELECTEDCARD, u"選択カード(&A)",
+                                           u"選択中のカードを変更します。")
+        self.mi_selectedcard.SetBitmap(rsrc["CARD"])
+        run_menu.AppendItem(self.mi_selectedcard)
 
         self.SetMenuBar(mb)
 
@@ -374,9 +379,8 @@ class Debugger(wx.Frame):
         # _battletoolでボタンの切り替えを判別
         self.tl_area._battletool = False
 
-        self.tb_area.AddSeparator()
         self.st_area = wx.StaticText(
-            self.tb_area, -1, cw.cwpy.sdata.get_currentareaname(), size=(cw.ppis(200), -1))
+            self.tb_area, -1, cw.cwpy.sdata.get_currentareaname(), size=(cw.ppis(150), -1))
         self.tb_area.AddControl(self.st_area)
 
         self.tb_area.AddSeparator()
@@ -395,7 +399,6 @@ class Debugger(wx.Frame):
         self.tl_select = self.tb_select.AddLabelTool(
             ID_SELECTION, u"選択メンバ",
             rsrc["EVT_BRANCH_SELECT"], shortHelp=u"選択中のキャラクターを変更します。")
-        self.tb_select.AddSeparator()
         self.st_select = wx.StaticText(
             self.tb_select, -1, cw.cwpy.event.get_selectedmembername(),
             size=(cw.ppis(100), -1))
@@ -413,6 +416,18 @@ class Debugger(wx.Frame):
             ID_BGM, u"BGM変更",
             rsrc["EVT_PLAY_BGM"], shortHelp=u"BGMを変更します。")
         self.tb_select.Realize()
+
+        # create selection card toolbar
+        self.tb_selectedcard = wx.ToolBar(self, -1, style=wx.TB_FLAT | wx.TB_NODIVIDER)
+        self.tb_selectedcard.SetToolBitmapSize(wx.Size(cw.ppis(20), cw.ppis(20)))
+        self.tl_selectedcard = self.tb_selectedcard.AddLabelTool(
+            ID_SELECTEDCARD, u"選択カード",
+            rsrc["CARD"], shortHelp=u"選択中のカードを変更します。")
+        self.st_selectedcard = wx.StaticText(
+            self.tb_selectedcard, -1, cw.cwpy.event.get_selectedcardname(),
+            size=(cw.ppis(100), -1))
+        self.tb_selectedcard.AddControl(self.st_selectedcard)
+        self.tb_selectedcard.Realize()
 
         # create variable view
         self.view_var = VariableListCtrl(self)
@@ -451,6 +466,10 @@ class Debugger(wx.Frame):
         self._mgr.AddPane(
             self.tb_event, wx.aui.AuiPaneInfo().Name("tb_event").
             Caption(u"イベントコントロールバー").ToolbarPane().Top().Row(2).
+            LeftDockable(False).RightDockable(False))
+        self._mgr.AddPane(
+            self.tb_selectedcard, wx.aui.AuiPaneInfo().Name("tb_selectedcard").
+            Caption(u"カード選択バー").ToolbarPane().Top().Row(1).
             LeftDockable(False).RightDockable(False))
 
         self._mgr.Update()
@@ -1171,6 +1190,43 @@ class Debugger(wx.Frame):
 
             dlg.Destroy()
 
+    def OnSelectedCardTool(self, event):
+        def func(self):
+            if not (cw.cwpy.is_playingscenario() and cw.cwpy.is_runningevent()):
+                return
+
+            ccards = [(u"荷物袋", cw.cwpy.ydata.party.backpack[:])]
+            for ccard in itertools.chain(cw.cwpy.get_pcards(), cw.cwpy.get_ecards(), cw.cwpy.get_fcards()):
+                if cw.cwpy.is_battlestatus():
+                    hand = ccard.deck.hand[:]
+                    hand.extend(ccard.cardpocket[cw.POCKET_BEAST])
+                else:
+                    hand = ccard.cardpocket[cw.POCKET_SKILL][:]
+                    hand.extend(ccard.cardpocket[cw.POCKET_ITEM])
+                    hand.extend(ccard.cardpocket[cw.POCKET_BEAST])
+                if isinstance(ccard, cw.character.Enemy):
+                    ccards.append(("Enemy: " + ccard.name, hand))
+                elif isinstance(ccard, cw.character.Friend):
+                    ccards.append(("Friend: " + ccard.name, hand))
+                else:
+                    ccards.append(("Player: " + ccard.name, hand))
+
+            def func(self, ccards, selectedcard):
+                if not self:
+                    return
+                dlg = cw.debug.selectedcard.SelectedCardDialog(self, ccards, selectedcard)
+                if dlg.ShowModal() == wx.ID_OK:
+                    header = dlg.get_selectedcard()
+                    def func(header):
+                        if cw.cwpy.is_playingscenario() and cw.cwpy.is_runningevent():
+                            cw.cwpy.event.set_selectedcard(header)
+                    cw.cwpy.exec_func(func, header)
+                dlg.Destroy()
+
+            cw.cwpy.frame.exec_func(func, self, ccards, cw.cwpy.event.get_selectedcard())
+
+        cw.cwpy.exec_func(func, self)
+
     def OnShowPartyTool(self, event):
         cw.cwpy.exec_func(cw.cwpy.show_party)
 
@@ -1514,6 +1570,7 @@ class Debugger(wx.Frame):
                 enabled[self.mi_clear_breakpoint.GetId()] = (self.mi_clear_breakpoint, self.tl_clear_breakpoint, False)
                 enabled[self.mi_bgm.GetId()] = (self.mi_bgm, self.tl_bgm, True)
                 enabled[self.mi_initvars.GetId()] = ((self.mi_initvars, self.view_var.mi_initvars), None, False)
+                enabled[self.mi_selectedcard.GetId()] = (self.mi_selectedcard, self.tl_selectedcard, False)
 
                 if ydata:
                     enabled[self.mi_comp.GetId()] = (self.mi_comp, self.tl_comp, True)
@@ -1541,6 +1598,7 @@ class Debugger(wx.Frame):
                         else:
                             enabled[self.mi_showparty.GetId()] = (self.mi_showparty, self.tl_showparty, True)
                         enabled[self.mi_stop.GetId()] = (self.mi_stop, self.tl_stop, True)
+                        enabled[self.mi_selectedcard.GetId()] = (self.mi_selectedcard, self.tl_selectedcard, True)
                     else:
                         if not is_battlestatus:
                             enabled[self.mi_break.GetId()] = (self.mi_break, self.tl_break, True)

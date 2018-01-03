@@ -1520,6 +1520,9 @@ class BranchKeyCodeContent(BranchContent):
         if "hand" in self.data.attrib:
             self.hand = self.data.getbool(".", "hand")
 
+        # 見つかったカードを選択状態にする(Wsn.3)
+        self.selectcard = self.data.getbool(".", "selectcard")
+
     def action(self):
         """キーコード所持分岐コンテント(1.30)。"""
 
@@ -1542,19 +1545,22 @@ class BranchKeyCodeContent(BranchContent):
 
         # キーコード所持判定
         selectedmember = None
-        flag = False
+        header = None
         for target in targets:
-            if target.has_keycode(self.keycode, self.skill, self.item, self.beast, self.hand):
+            header = target.find_keycode(self.keycode, self.skill, self.item, self.beast, self.hand)
+            if header:
                 if isinstance(target, cw.character.Character):
                     selectedmember = target
-                flag = True
                 break
 
         # 選択設定
         if selectedmember:
             cw.cwpy.event.set_selectedmember(selectedmember)
 
-        return self.get_boolean_index(flag)
+        if header and self.selectcard:
+            cw.cwpy.event.set_selectedcard(header)
+
+        return self.get_boolean_index(not header is None)
 
     def get_status(self):
         return u"キーコード所持分岐コンテント"
@@ -3575,9 +3581,12 @@ class TalkMessageContent(TalkContent):
         centering_y = self.data.getbool(".", "centeringy", False)
         # 禁則処理(Wsn.2)
         boundarycheck = self.data.getbool(".", "boundarycheck", False)
+        # 話者を選択状態にする(Wsn.3)
+        selecttalker = self.data.getbool(".", "selecttalker", False)
 
         talkers = []
         firsttalker = None
+        firstchartalker = None
         talk = bool(not len(imgpaths))
 
         for i, info in enumerate(imgpaths):
@@ -3602,7 +3611,7 @@ class TalkMessageContent(TalkContent):
 
             # 使用中カード
             elif imgpath.endswith("??Card"):
-                talker = cw.cwpy.event.get_targetmember("Inusecard")
+                talker = cw.cwpy.event.get_targetmember("Selectedcard")
                 talkeriscard = True
 
                 # 使用中カードがなかったらスキップ
@@ -3658,6 +3667,9 @@ class TalkMessageContent(TalkContent):
             if not firsttalker:
                 firsttalker = talker
 
+            if not firstchartalker and isinstance(talker, cw.character.Character):
+                firstchartalker = talker
+
             talk = True
 
         # 話者無し
@@ -3684,6 +3696,9 @@ class TalkMessageContent(TalkContent):
         else:
             index = 0
 
+        if selecttalker and isinstance(firstchartalker, cw.character.Character):
+            cw.cwpy.event.set_selectedmember(firstchartalker)
+
         return index
 
     def can_action(self):
@@ -3701,7 +3716,7 @@ class TalkMessageContent(TalkContent):
                 return False
         # 使用中カード
         elif imgpath.endswith("??Card"):
-            talker = cw.cwpy.event.get_targetmember("Inusecard")
+            talker = cw.cwpy.event.get_targetmember("Selectedcard")
             # 使用中カードがなかったらスキップ
             if not talker:
                 return False
@@ -3783,6 +3798,8 @@ class TalkDialogContent(TalkContent):
         centering_y = self.data.getbool(".", "centeringy", False)
         # 禁則処理(Wsn.2)
         boundarycheck = self.data.getbool(".", "boundarycheck", False)
+        # 話者を選択状態にする(Wsn.3)
+        selecttalker = self.data.getbool(".", "selecttalker", False)
 
         # 対象メンバが必須クーポンを所持していたら、
         # その必須クーポンに対応するテキストを優先して表示させる
@@ -3804,6 +3821,9 @@ class TalkDialogContent(TalkContent):
         else:
             # どのDialogも選択されなかった場合は常に最初の分岐
             index = 0
+
+        if selecttalker and isinstance(talker, cw.character.Character):
+            cw.cwpy.event.set_selectedmember(talker)
 
         return index
 
