@@ -166,6 +166,7 @@ class MoneyEditPanel(wx.Panel):
             minvalue = 0
         # パーティ所持金変更スライダ
         self.slider = SliderWithButton(self, self.value, minvalue, maxvalue, cw.wins(130))
+        self.slider.slider.SetPageSize(100)#PyLite：スライダをクリックした時の移動幅
         # パーティ所持金変更スピン
         self.spinctrl = wx.SpinCtrl(self, -1, "", size=(cw.wins(98), cw.wins(20)))
         self.spinctrl.SetForegroundColour(wx.WHITE)
@@ -307,7 +308,6 @@ class NumberEditDialog(wx.Dialog):
         # スライダ
         self.panel = wx.Panel(self, -1, style=wx.RAISED_BORDER)
         self.slider = NumberEditor(self.panel, value, minvalue, maxvalue)
-
         # btn
         self.okbtn = cw.cwpy.rsrc.create_wxbutton(self, -1,
                                                       cw.wins((100, 30)), cw.cwpy.msgs["entry_decide"])
@@ -554,15 +554,14 @@ class SliderWithButton(wx.Panel):
         self.SetDoubleBuffered(True)
 
         # スライダ
-        #if maxvalue < 16:        
-        #    self.slider = wx.Slider(self, -1, 0, 0, 1,
-        #        size=(sliderwidth, -1), style=wx.SL_BOTH|wx.SL_AUTOTICKS|wx.SL_HORIZONTAL|wx.SL_LABELS|wx.SL_SELRANGE)
-        #else:
         self.slider = wx.Slider(self, -1, 0, 0, cw.wins(1),
             size=(sliderwidth,cw.wins(28)), style=wx.SL_BOTH|wx.SL_HORIZONTAL|wx.SL_SELRANGE)
 
         self.slider.SetFont(cw.cwpy.rsrc.get_wxfont("sbarpanel", pixelsize=cw.wins(14)))
         self.slider.SetBackgroundStyle(wx.BG_STYLE_COLOUR)
+
+        if maxvalue == 9999999:
+            self.slider.SetPageSize(100) # PyLite：スライダをクリックした時の移動幅
         # smallleft
         #bmp = cw.cwpy.rsrc.buttons["LMOVE"]
         bmp = cw.cwpy.rsrc.buttons["LSMALL"]
