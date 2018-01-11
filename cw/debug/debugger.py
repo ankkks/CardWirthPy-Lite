@@ -495,6 +495,7 @@ class Debugger(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnShowPartyTool, id=ID_SHOW_PARTY)
         self.Bind(wx.EVT_MENU, self.OnHidePartyTool, id=ID_HIDE_PARTY)
         self.Bind(wx.EVT_MENU, self.OnBgmTool, id=ID_BGM)
+        self.Bind(wx.EVT_MENU, self.OnSelectedCardTool, id=ID_SELECTEDCARD)
         self.Bind(wx.EVT_MENU, self.OnStepReturnTool, id=ID_STEPRETURN)
         self.Bind(wx.EVT_MENU, self.OnStepOverTool, id=ID_STEPOVER)
         self.Bind(wx.EVT_MENU, self.OnStepInTool, id=ID_STEPIN)
@@ -1504,6 +1505,37 @@ class Debugger(wx.Frame):
             self.st_select.SetToolTipString("")
         else:
             self.st_select.SetToolTipString(s)
+
+    def refresh_selectedcardname(self):
+        assert threading.currentThread() <> cw.cwpy
+        if cw.cwpy.frame.debugger is None:
+            return
+
+        type = cw.cwpy.event.get_selectedcardtype()
+        bitmap1 = self.tl_selectedcard.GetBitmap1()
+        if type == "SkillCard":
+            self.tl_selectedcard.SetBitmap1(cw.cwpy.rsrc.debugs["EVT_GET_SKILL"])
+        elif type == "ItemCard":
+            self.tl_selectedcard.SetBitmap1(cw.cwpy.rsrc.debugs["EVT_GET_ITEM"])
+        elif type == "BeastCard":
+            self.tl_selectedcard.SetBitmap1(cw.cwpy.rsrc.debugs["EVT_GET_BEAST"])
+        else:
+            self.tl_selectedcard.SetBitmap1(cw.cwpy.rsrc.debugs["CARD"])
+
+        s = cw.cwpy.event.get_selectedcardname()
+        if sys.platform != "win32":
+            dc = wx.ClientDC(self)
+        else:
+            dc = wx.ClientDC(self.st_selectedcard)
+        s2 = cw.util.abbr_longstr(dc, s, self.st_selectedcard.GetClientSize()[0])
+        self.st_selectedcard.SetLabel(s2)
+        if s == s2:
+            self.st_selectedcard.SetToolTipString("")
+        else:
+            self.st_selectedcard.SetToolTipString(s)
+
+        if bitmap1 <> self.tl_selectedcard.GetBitmap1():
+            self.tb_selectedcard.Realize()
 
     def refresh_tools(self):
         assert threading.currentThread() <> cw.cwpy

@@ -22,7 +22,7 @@ class SelectedCardDialog(wx.Dialog):
                                  style=wx.TR_SINGLE|wx.TR_HIDE_ROOT|wx.TR_DEFAULT_STYLE)
 
         self.imglist = wx.ImageList(cw.ppis(16), cw.ppis(16))
-        imgidx_sack = self.imglist.Add(cw.cwpy.rsrc.buttons["SACK"])
+        imgidx_sack = self.imglist.Add(cw.cwpy.rsrc.buttons["SACK_dbg"])
         imgidx_cast = self.imglist.Add(cw.cwpy.rsrc.debugs["EVT_GET_CAST"])
         imgidx_action = self.imglist.Add(cw.cwpy.rsrc.debugs["CARD"])
         imgidx_skill = self.imglist.Add(cw.cwpy.rsrc.debugs["EVT_GET_SKILL"])
