@@ -337,13 +337,15 @@ class SettingsPanel(wx.Panel):
         setting.play_sound = value
         value = self.pane_sound.sl_master.GetValue()
         value = cw.setting.Setting.wrap_volumevalue(value)
-        setting.vol_master = value
+        if setting.vol_sound <> value:
+            setting.vol_master = value
+            setting.vol_sound_midi = value
         value = self.pane_sound.sl_sound.GetValue()
         value = cw.setting.Setting.wrap_volumevalue(value)
         setting.vol_sound = value
         value = self.pane_sound.sl_midi.GetValue()
         value = cw.setting.Setting.wrap_volumevalue(value)
-        setting.vol_midi = value
+        setting.vol_bgm_midi = value
         value = self.pane_sound.sl_music.GetValue()
         value = cw.setting.Setting.wrap_volumevalue(value)
         setting.vol_bgm = value
@@ -1829,7 +1831,7 @@ class AudioSettingPanel(wx.Panel):
         self.sl_master.SetValue(n)
         n = int(setting.vol_bgm * 100)
         self.sl_music.SetValue(n)
-        n = int(setting.vol_midi * 100)
+        n = int(setting.vol_bgm_midi * 100)
         self.sl_midi.SetValue(n)
         n = int(setting.vol_sound * 100)
         self.sl_sound.SetValue(n)
@@ -1840,7 +1842,7 @@ class AudioSettingPanel(wx.Panel):
         self.cb_playsound.SetValue(setting.play_sound_init)
         self.sl_master.SetValue(int(setting.vol_master_init * 100))
         self.sl_music.SetValue(int(setting.vol_bgm_init * 100))
-        self.sl_midi.SetValue(int(setting.vol_midi_init * 100))
+        self.sl_midi.SetValue(int(setting.vol_bgm_midi_init * 100))
         self.sl_sound.SetValue(int(setting.vol_sound_init * 100))
         self._init_soundfont(setting.soundfonts_init)
 

@@ -89,7 +89,7 @@ class MusicInterface(object):
             cw.cwpy.ydata.changed()
         fpath = self.get_path(path, inusecard)
         self.path = path
-        if not cw.bassplayer.is_alivablewithpath(path):
+        if not cw.bassplayer.is_alivablewithpath(fpath):
             return
 
         if cw.cwpy.rsrc:
@@ -126,7 +126,8 @@ class MusicInterface(object):
                             name = "cwbgm_" + str(self.channel)
                             mciSendStringW = ctypes.windll.winmm.mciSendStringW
                             mciSendStringW(u'open "%s" alias %s' % (fpath, name), 0, 0, 0)
-                            volume = int(cw.cwpy.setting.vol_bgm * 1000)
+                            volume = cw.cwpy.setting.vol_bgm_midi if is_midi(fpath) else cw.cwpy.setting.vol_bgm
+                            volume = int(volume * 1000)
                             volume = volume * subvolume / 100
                             mciSendStringW(u"setaudio %s volume to %s" % (name, volume), 0, 0, 0)
                             mciSendStringW(u"play %s" % (name), 0, 0, 0)
@@ -177,7 +178,7 @@ class MusicInterface(object):
 
         assert threading.currentThread() == cw.cwpy
 
-        if cw.bassplayer.is_alivablewithpath(self.path):
+        if cw.bassplayer.is_alivablewithpath(self.fpath):
             # フェードアウト中のBGMも停止する必要があるため、
             # self._bass == Falseの時も停止処理を行う
             cw.bassplayer.stop_bgm(channel=self.channel, fade=fade, stopfadeout=stopfadeout)
@@ -212,10 +213,8 @@ class MusicInterface(object):
         if not cw.cwpy.setting.play_bgm:
             return 0
 
-        ext = cw.util.splitext(fpath)[1].lower()
-
-        if ext == ".mid" or ext == ".midi":
-            volume = cw.cwpy.setting.vol_midi * cw.cwpy.setting.vol_bgm
+        if is_midi(fpath):
+            volume = cw.cwpy.setting.vol_bgm_midi
         else:
             volume = cw.cwpy.setting.vol_bgm
 
@@ -260,13 +259,14 @@ class MusicInterface(object):
         return path
 
 class SoundInterface(object):
-    def __init__(self, sound=None, path=""):
+    def __init__(self, sound=None, path="", is_midi=False):
         self._sound = sound
         self._path = path
         self.subvolume = 100
         self.channel = -1
         self._type = -1
         self.mastervolume = 0
+        self._is_midi = is_midi
 
     def copy(self):
         sound = SoundInterface()
@@ -276,6 +276,7 @@ class SoundInterface(object):
         sound.channel = self.channel
         sound._type = self._type
         sound.mastervolume = self.mastervolume
+        sound._is_midi = self._is_midi
         return sound
 
     def get_path(self):
@@ -303,7 +304,8 @@ class SoundInterface(object):
             self.subvolume = subvolume
 
             if cw.cwpy.setting.play_sound:
-                volume = (cw.cwpy.setting.vol_sound * cw.cwpy.music[0].mastervolume) / 100.0 * subvolume / 100.0
+                volume = cw.cwpy.setting.vol_sound_midi if self._is_midi else cw.cwpy.setting.vol_sound
+                volume = (volume * cw.cwpy.music[0].mastervolume) / 100.0 * subvolume / 100.0
             else:
                 volume = 0
 
@@ -389,10 +391,8 @@ class SoundInterface(object):
         if not cw.cwpy.setting.play_sound:
             return 0
 
-        ext = cw.util.splitext(fpath)[1].lower()
-
-        if ext == ".mid" or ext == ".midi":
-            volume = cw.cwpy.setting.vol_midi * cw.cwpy.setting.vol_sound
+        if is_midi(fpath):
+            volume = cw.cwpy.setting.vol_sound_midi
         else:
             volume = cw.cwpy.setting.vol_sound
 
@@ -931,12 +931,12 @@ def load_sound(path):
         assert threading.currentThread() == cw.cwpy
         if cw.bassplayer.is_alivablewithpath(path):
             # BASSが使用できる場合
-            sound = SoundInterface(path, path)
+            sound = SoundInterface(path, path, is_midi=is_midi(path))
         elif sys.platform == "win32" and (path.lower().endswith(".wav") or\
                                         path.lower().endswith(".mp3")):
             # WinMMを使用する事でSDL_mixerの問題を避ける
             # FIXME: mp3効果音をWindows環境でしか再生できない
-            sound = SoundInterface(path, path)
+            sound = SoundInterface(path, path, is_midi=is_midi(path))
         else:
             return SoundInterface()
     except:
@@ -948,6 +948,17 @@ def load_sound(path):
         cw.cwpy.sdata.resource_cache[path] = sound
 
     return sound.copy()
+
+def is_midi(path):
+    """pathがMIDIファイルか判定する。"""
+    try:
+        if os.path.isfile(path) and 4 <= os.path.getsize(path):
+            with open(path, "rb") as f:
+                return f.read(4) == "MThd"
+    except:
+        pass
+    return os.path.splitext(path)[1].lower() in (".mid", ".midi")
+
 
 def get_soundfilepath(basedir, path):
     """宿のフォルダにある場合は問題が出るため、
@@ -2990,6 +3001,9 @@ def load_wxbmp(name="", mask=False, image=None, maskpos=(0, 0), f=None, retry=Tr
             b = image.GetBlue(maskpos[0], maskpos[1])
             image.SetMaskColour(r, g, b)
             return (r, g, b)
+
+        if not image.IsOk():
+            return wx.EmptyBitmap(0, 0)
 
         if not haspngalpha and not image.HasAlpha() and not image.HasMask():
             maskcolour = set_mask(image, maskpos)

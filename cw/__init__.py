@@ -72,7 +72,7 @@ SIZE_BILL = (400, 370)
 RECT_STATUSBAR = (0, 420, 632, 33)
 
 # 対応するWSNデータバージョン
-SUPPORTED_WSN = ("", "1", "2")
+SUPPORTED_WSN = ("", "1", "2", "3")
 
 # 対応するスキンバージョン
 SUPPORTED_SKIN = ("8", "9", "10", "11")

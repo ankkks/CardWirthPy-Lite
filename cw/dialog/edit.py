@@ -165,8 +165,8 @@ class MoneyEditPanel(wx.Panel):
         else:
             minvalue = 0
         # パーティ所持金変更スライダ
-        self.slider = SliderWithButton(self, self.value, minvalue, maxvalue, cw.wins(130))
-        self.slider.slider.SetPageSize(100)#PyLite：スライダをクリックした時の移動幅
+        page = 100
+        self.slider = SliderWithButton(self, self.value, minvalue, maxvalue, page, cw.wins(130))
         # パーティ所持金変更スピン
         self.spinctrl = wx.SpinCtrl(self, -1, "", size=(cw.wins(98), cw.wins(20)))
         self.spinctrl.SetForegroundColour(wx.WHITE)
@@ -299,7 +299,7 @@ class MoneyViewPanel(wx.Panel):
 
 class NumberEditDialog(wx.Dialog):
 
-    def __init__(self, parent, title, value, minvalue, maxvalue):
+    def __init__(self, parent, title, value, minvalue, maxvalue, page):
         wx.Dialog.__init__(self, parent, -1, title,
                 style=wx.CAPTION|wx.SYSTEM_MENU|wx.CLOSE_BOX)
         self.cwpy_debug = False
@@ -307,7 +307,7 @@ class NumberEditDialog(wx.Dialog):
 
         # スライダ
         self.panel = wx.Panel(self, -1, style=wx.RAISED_BORDER)
-        self.slider = NumberEditor(self.panel, value, minvalue, maxvalue)
+        self.slider = NumberEditor(self.panel, value, minvalue, maxvalue, page)
         # btn
         self.okbtn = cw.cwpy.rsrc.create_wxbutton(self, -1,
                                                       cw.wins((100, 30)), cw.cwpy.msgs["entry_decide"])
@@ -360,8 +360,8 @@ class NumberEditDialog(wx.Dialog):
 class Number2EditDialog(wx.Dialog):
 
     def __init__(self, parent, title,
-                 label1, value1, minvalue1, maxvalue1,
-                 label2, value2, minvalue2, maxvalue2):
+                 label1, value1, minvalue1, maxvalue1, page1,
+                 label2, value2, minvalue2, maxvalue2, page2 ):
         wx.Dialog.__init__(self, parent, -1, title,
                 style=wx.CAPTION|wx.SYSTEM_MENU|wx.CLOSE_BOX)
         self.cwpy_debug = False
@@ -375,8 +375,8 @@ class Number2EditDialog(wx.Dialog):
         self.box2 = wx.StaticBox(self.panel, -1, label2)
         self.box2.SetFont(cw.cwpy.rsrc.get_wxfont("paneltitle", pixelsize=cw.wins(12)))
 
-        self.slider1 = NumberEditor(self.panel, value1, minvalue1, maxvalue1)
-        self.slider2 = NumberEditor(self.panel, value2, minvalue2, maxvalue2)
+        self.slider1 = NumberEditor(self.panel, value1, minvalue1, maxvalue1, page1)
+        self.slider2 = NumberEditor(self.panel, value2, minvalue2, maxvalue2, page2)
 
         # btn
         self.okbtn = cw.cwpy.rsrc.create_wxbutton(self, -1,
@@ -440,7 +440,7 @@ class NumberComboEditDialog(wx.Dialog):
 
     def __init__(self, parent, title,
                  label1, mlist, selected,
-                 label2, value, minvalue, maxvalue):
+                 label2, value, minvalue, maxvalue, page):
         wx.Dialog.__init__(self, parent, -1, title,
                 style=wx.CAPTION|wx.SYSTEM_MENU|wx.CLOSE_BOX)
         self.cwpy_debug = False
@@ -469,7 +469,7 @@ class NumberComboEditDialog(wx.Dialog):
         self.combo.Select(selected)
 
         # スライダ
-        self.slider = NumberEditor(self.panel, value, minvalue, maxvalue)
+        self.slider = NumberEditor(self.panel, value, minvalue, maxvalue, page)
 
         # btn
         self.okbtn = cw.cwpy.rsrc.create_wxbutton(self, -1,
@@ -549,7 +549,7 @@ class SliderWithButton(wx.Panel):
     _repeat_second = 20
 
     """左右ボタンつきのスライダ。"""
-    def __init__(self, parent, value, minvalue, maxvalue, sliderwidth):
+    def __init__(self, parent, value, minvalue, maxvalue, page, sliderwidth):
         wx.Panel.__init__(self, parent, -1)
         self.SetDoubleBuffered(True)
 
@@ -559,9 +559,8 @@ class SliderWithButton(wx.Panel):
 
         self.slider.SetFont(cw.cwpy.rsrc.get_wxfont("sbarpanel", pixelsize=cw.wins(14)))
         self.slider.SetBackgroundStyle(wx.BG_STYLE_COLOUR)
+        self.slider.SetPageSize(page)
 
-        if maxvalue == 9999999:
-            self.slider.SetPageSize(100) # PyLite：スライダをクリックした時の移動幅
         # smallleft
         #bmp = cw.cwpy.rsrc.buttons["LMOVE"]
         bmp = cw.cwpy.rsrc.buttons["LSMALL"]
@@ -723,7 +722,7 @@ class SliderWithButton(wx.Panel):
             self._enable()
 
 class NumberEditor(wx.Panel):
-    def __init__(self, parent, value, minvalue, maxvalue ):
+    def __init__(self, parent, value, minvalue, maxvalue, page):
         #レベル調節
         wx.Panel.__init__(self, parent, -1)
 
@@ -735,7 +734,7 @@ class NumberEditor(wx.Panel):
         self.text_level.SetBackgroundColour(wx.Colour(0, 64, 0))
 
         # スライダー
-        self.slider = SliderWithButton(self, value, minvalue, maxvalue, cw.wins(200))
+        self.slider = SliderWithButton(self, value, minvalue, maxvalue, page, cw.wins(200))
 
         # スピン
         self.spinlabel = wx.StaticText(self, -1, u"直接入力:")
@@ -1009,7 +1008,7 @@ class LevelEditDialog(wx.Dialog):
         maxvalue = self.get_maxlevel()
 
         # スライダ
-        self.slider = NumberEditor(self.panel, maxvalue, minvalue, maxvalue)
+        self.slider = NumberEditor(self.panel, maxvalue, minvalue, maxvalue, 2)
 
         # btn
         self.okbtn = cw.cwpy.rsrc.create_wxbutton(self, -1,

@@ -122,7 +122,7 @@ def create_settings(setting, writeplayingdata=True, fpath="Settings_Lite.xml"):
     writeplayingdata: デバッグ状態やスキンの選択状態などを保存するか。
     fpath: 保存先のファイルパス。
     """
-    element = cw.data.make_element("Settings", attrs={"dataVersion": "3"})
+    element = cw.data.make_element("Settings", attrs={"dataVersion": "4"})
 
     create_localsettings(element, setting.local)
 
@@ -197,16 +197,23 @@ def create_settings(setting, writeplayingdata=True, fpath="Settings_Lite.xml"):
         e = cw.data.make_element("MasterVolume", str(n))
         element.append(e)
     # 音楽のボリューム(0～1.0)
-    if setting.vol_bgm <> setting.vol_bgm_init or\
-            setting.vol_midi <> setting.vol_midi_init:
+    if setting.vol_bgm <> setting.vol_bgm_init or \
+                setting.vol_bgm_midi <> setting.vol_bgm_midi_init:
         n = int(setting.vol_bgm * 100)
-        n2 = int(setting.vol_midi * 100)
-        e = cw.data.make_element("BgmVolume", str(n), {"midi": str(n2)})
+        n2 = int(setting.vol_bgm_midi * 100)
+        if n <> n2:
+            e = cw.data.make_element("BgmVolume", str(n), {"midi": str(n2)})
+        else:
+            e = cw.data.make_element("BgmVolume", str(n))
         element.append(e)
     # 効果音のボリューム(0～1.0)
     if setting.vol_sound <> setting.vol_sound_init:
         n = int(setting.vol_sound * 100)
-        e = cw.data.make_element("SoundVolume", str(n))
+        n2 = int(setting.vol_sound_midi * 100)
+        if n <> n2:
+            e = cw.data.make_element("SoundVolume", str(n), {"midi": str(n2)})
+        else:
+            e = cw.data.make_element("SoundVolume", str(n))
         element.append(e)
     # MIDIサウンドフォント
     if setting.soundfonts <> setting.soundfonts_init:
@@ -1038,6 +1045,22 @@ def create_scenariolog(sdata, path, recording, logfilepath):
             e_bgimg.append(e)
 
         e_bgimgs.append(e_bgimg)
+
+    # カード再配置情報
+    if cw.cwpy.sdata.moved_mcards:
+        e_movedmcards = cw.data.make_element("MovedCards")
+        for (cardgroup, index), (x, y, scale, layer) in cw.cwpy.sdata.moved_mcards.iteritems():
+            e_movedmcard = cw.data.make_element("MovedCard", attrs={"cardgroup":cardgroup,
+                                                                    "index":str(index)})
+            e_movedmcard.append(cw.data.make_element("Location", attrs={"left":str(x),
+                                                                        "top":str(y)}))
+            if scale <> -1:
+                e_movedmcard.append(cw.data.make_element("Size", attrs={"scale":str(scale)}))
+            if layer <> -1:
+                e_movedmcard.append(cw.data.make_element("Layer", str(layer)))
+            if len(e_movedmcard):
+                e_movedmcards.append(e_movedmcard)
+        element.append(e_movedmcards)
 
     # flag
     e_flag = cw.data.make_element("Flags")

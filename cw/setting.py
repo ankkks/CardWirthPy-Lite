@@ -303,8 +303,9 @@ class Setting(object):
         self.play_sound = True
         self.vol_master = 0.5
         self.vol_bgm = 0.5
-        self.vol_midi = 1.0
+        self.vol_bgm_midi = 0.5
         self.vol_sound = 0.5
+        self.vol_sound_midi = 0.5
         self.soundfonts = [(cw.DEFAULT_SOUNDFONT, True, 100)]
         self.bassmidi_sample32bit = True
         self.messagespeed = 5
@@ -523,11 +524,14 @@ class Setting(object):
         self.vol_bgm = data.getint("BgmVolume", int(self.vol_bgm*100))
         self.vol_bgm = Setting.wrap_volumevalue(self.vol_bgm)
         # midi音楽のボリューム(0～1.0)
-        self.vol_midi = data.getint("BgmVolume", "midi", int(self.vol_midi*100))
-        self.vol_midi = Setting.wrap_volumevalue(self.vol_midi)
+        self.vol_bgm_midi = data.getint("BgmVolume", "midi", self.vol_bgm)
+        self.vol_bgm_midi = Setting.wrap_volumevalue(self.vol_bgm_midi)
         # 効果音ボリューム
         self.vol_sound = data.getint("SoundVolume", int(self.vol_sound*100))
         self.vol_sound = Setting.wrap_volumevalue(self.vol_sound)
+        # midi効果音のボリューム(0～1.0)
+        self.vol_sound_midi = data.getint("SoundVolume", "midi", self.vol_sound)
+        self.vol_sound_midi = Setting.wrap_volumevalue(self.vol_sound_midi)
         # MIDIサウンドフォント
         elements = data.find("SoundFonts", False)
         if not elements is None:
@@ -763,8 +767,12 @@ class Setting(object):
         if not loadfile:
             self.init_skin(basedata=basedata)
 
-        # 設定バージョンの更新 設定ファイルを独立させているためカット
-        # F9互換オプション
+            # 設定バージョンの更新 設定ファイルを独立させているため2.0以前のものはカット
+            if int(settings_version) < 4:
+                # バージョン3→4でMIDI音量をその他の音量と独立した設定に変更
+                self.vol_bgm_midi = self.vol_bgm * self.vol_bgm_midi
+
+        # PyLite：F9互換オプション
         self.enable_oldf9 = data.getbool("EnableOldF9", self.enable_oldf9)
         self.enable_equalbug = data.getbool("EnableEqualBug", self.enable_equalbug)
         # 最後に選んだシナリオを開始地点にする
@@ -1296,9 +1304,11 @@ class Resource(object):
             path = cw.util.join_paths(fontdir, "gothic.ttf")
 
             if not os.path.isfile(path):
+                #return d
+                #PyLite:TODO:付属フォントなしでも起動させる
                 raise NoFontError("gothic.ttf" + " not found.")
 
-        d[os.path.splitext("gothic.ttf")[0]] = path
+            d[os.path.splitext("gothic.ttf")[0]] = path
 
         return d
 
