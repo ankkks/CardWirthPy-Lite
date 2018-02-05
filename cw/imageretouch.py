@@ -12,7 +12,9 @@ from pygame.locals import BLEND_ADD, BLEND_SUB, BLEND_MULT, BLEND_RGB_ADD, BLEND
 import cw
 
 try:
-    if sys.maxsize == 0x7fffffff:
+    if sys.platform == "darwin":
+        import _imageretouch_mac as _imageretouch
+    elif sys.maxsize == 0x7fffffff:
         import _imageretouch32 as _imageretouch
     elif sys.maxsize == 0x7fffffffffffffff:
         import _imageretouch64 as _imageretouch
@@ -133,7 +135,7 @@ def add_mosaic(image, value):
     """
     try:
         func = _imageretouch.add_mosaic
-    except NameError:
+    except:
         return _add_mosaic(image, value)
 
     return _retouch(func, image, value)
@@ -169,7 +171,7 @@ def to_binaryformat(image, value, basecolor=(255, 255, 255)):
     """
     try:
         func = _imageretouch.to_binaryformat
-    except NameError:
+    except:
         return _to_binaryformat(image, value, basecolor)
 
     return _retouch(func, image, value, basecolor)
@@ -214,7 +216,7 @@ def add_noise(image, value, colornoise=False):
     """
     try:
         func = _imageretouch.add_noise
-    except NameError:
+    except:
         return _add_noise(image, value, colornoise)
 
     return _retouch(func, image, value, colornoise)
@@ -279,7 +281,7 @@ def exchange_rgbcolor(image, colormodel):
 
     try:
         func = _imageretouch.exchange_rgbcolor
-    except NameError:
+    except:
         return _exchange_rgbcolor(image, colormodel)
 
     return _retouch(func, image, colormodel)
@@ -322,7 +324,7 @@ def to_grayscale(image):
     """
     try:
         func = _imageretouch.to_sepiatone
-    except NameError:
+    except:
         return to_sepiatone(image, (0, 0, 0))
 
     return _retouch(func, image, (0, 0, 0))
@@ -334,7 +336,7 @@ def to_sepiatone(image, color=(30, 0, -30)):
     """
     try:
         func = _imageretouch.to_sepiatone
-    except NameError:
+    except:
         return _to_sepiatone(image, color)
 
     return _retouch(func, image, color)
@@ -391,7 +393,7 @@ def spread_pixels(image):
     """
     try:
         func = _imageretouch.spread_pixels
-    except NameError:
+    except:
         return _spread_pixels(image)
 
     return _retouch(func, image)
@@ -427,7 +429,7 @@ def _filter(image, weight, offset=0, div=1):
     """
     try:
         func = _imageretouch.filter
-    except NameError:
+    except:
         return __filter(image, weight, offset, div)
 
     return _retouch(func, image, weight, offset, div)
@@ -613,7 +615,7 @@ def add_border(img, bordercolor, borderwidth):
     """
     try:
         func = _imageretouch.bordering
-    except NameError:
+    except:
         func = _bordering
 
     buf = pygame.image.tostring(img, "RGBA")
@@ -799,7 +801,7 @@ def to_disabledimage(wxbmp, maskpos=(0, 0)):
     """
     try:
         func = _imageretouch.to_disabledimage
-    except NameError:
+    except:
         func = _to_disabledimage
 
     wximg = wxbmp.ConvertToImage().ConvertToGreyscale()
@@ -837,6 +839,35 @@ def to_disabledsurface(image):
     image = image.copy()
     image.fill((128, 128, 128), special_flags=pygame.locals.BLEND_RGB_ADD)
     return to_grayscale(image)
+
+def add_lightness_for_wxbmp(wxbmp, lightness, maskpos=(0, 0)):
+    """
+    通常時のボタン画像からdisabled用の画像を作る。
+    RGB値の範囲を 0～255 から min～max に変更する。
+    wxbmp: wx.Bitmap
+    """
+    try:
+        func = _imageretouch.add_lightness
+    except:
+        func = _add_lightness
+
+    wximg = wxbmp.ConvertToImage().ConvertToGreyscale()
+    buf = str(wximg.GetDataBuffer())
+    alphabuf = wximg.GetAlphaBuffer()
+    buf = bytearray(buf)
+    w = wximg.GetWidth()
+    h = wximg.GetHeight()
+    func(buf, (w, h), lightness)
+
+    wximg = wx.ImageFromBuffer(w, h, buffer(buf), alphaBuffer=alphabuf)
+    wxbmp = wx.BitmapFromImage(wximg)
+    x, y = maskpos
+    wxbmp.SetMaskColour((wximg.GetRed(x, y), wximg.GetGreen(x, y), wximg.GetBlue(x, y)))
+    return wxbmp
+
+def _add_lightness(buf, (w, h), lightness):
+    for i, v in enumerate(buf):
+        buf[i] = cw.util.numwrap(v + lightness, 0, 255)
 
 def hex2color(hexnum):
     """RGBデータの16進数を(r, g, b)のタプルで返す。
@@ -1141,6 +1172,12 @@ class Font(object):
             return _imageretouch.font_size(self.fontinfo, text.encode("utf-8"))
 
     def render(self, text, antialias, colour):
+        return self._render_impl(text, antialias, colour, False)
+
+    def render_sbold(self, text, antialias, colour):
+        return self._render_impl(text, antialias, colour, True)
+
+    def _render_impl(self, text, antialias, colour, sbold):
         cachable = self._is_cachable(text)
         if cachable:
             key = (text, antialias, colour)
@@ -1151,9 +1188,26 @@ class Font(object):
             if antialias:
                 image = self.font2x.render(text, antialias, colour)
                 size = self.size(text)
+                if sbold:
+                    size2 = image.get_size()
+                    size2 = (size2[0]+4, size2[1])
+                    image2 = pygame.Surface(size2).convert_alpha()
+                    image2.fill((0, 0, 0, 0))
+                    for x in xrange(4):
+                        image2.blit(image, (x, 0))
+                    image = image2
+                    size = (size[0]+1, size[1])
                 bmp = pygame.transform.smoothscale(image, size)
             else:
                 bmp = self.font.render(text, antialias, colour)
+                if sbold:
+                    size = bmp.get_size()
+                    size = (size[0]+1, size[1])
+                    image2 = pygame.Surface(size).convert_alpha()
+                    image2.fill((0, 0, 0, 0))
+                    image2.blit(bmp, (0, 0))
+                    image2.blit(bmp, (1, 0))
+                    bmp = image2
         elif antialias:
             text = text.encode("utf-8")
             size = _imageretouch.font_imagesize(self.fontinfo2x, text, antialias)
@@ -1164,13 +1218,22 @@ class Font(object):
             assert len(buf) == size[0]*size[1]*4
             image = pygame.image.frombuffer(buf, size, "RGBA").convert_alpha()
             size2 = _imageretouch.font_imagesize(self.fontinfo, text, antialias)
+            if sbold:
+                size = (size[0]+4, size[1])
+                image2 = pygame.Surface(size).convert_alpha()
+                image2.fill((0, 0, 0, 0))
+                for x in xrange(4):
+                    image2.blit(image, (x, 0))
+                image = image2
+                size2 = (size2[0]+1, size2[1])
+
             bmp = pygame.transform.smoothscale(image, size2)
         else:
             text = text.encode("utf-8")
             # BUG: font_render()からタプルを返そうとするとbufがGCで
             #      回収されなくなってしまうため、bufのみを返すようにし、
             #      (w, h)取得用にfont_imagesize()を用意してある
-#            buf, size = _imageretouch.font_render(self.fontinfo, str, antialias, colour[:3])
+            #buf, size = _imageretouch.font_render(self.fontinfo, str, antialias, colour[:3])
             size = _imageretouch.font_imagesize(self.fontinfo, text, antialias)
             buf = _imageretouch.font_render(self.fontinfo, text, antialias, colour[:3])
             # BUG: Windows 10 1709で、フォント「游明朝」で「ーム」を含む文字列のサイズが
@@ -1178,6 +1241,14 @@ class Font(object):
             size = (len(buf) // size[1] // 4, size[1])
             assert len(buf) == size[0]*size[1]*4
             bmp = pygame.image.frombuffer(buf, size, "RGBA").convert_alpha()
+            if sbold:
+                size = bmp.get_size()
+                size = (size[0]+1, size[1])
+                image2 = pygame.Surface(size).convert_alpha()
+                image2.fill((0, 0, 0, 0))
+                image2.blit(bmp, (0, 0))
+                image2.blit(bmp, (1, 0))
+                bmp = image2
 
         if cachable:
             self._cache[key] = bmp.copy()
