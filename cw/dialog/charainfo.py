@@ -1256,6 +1256,7 @@ class StatusPanel(wx.ScrolledWindow):
         cw.cwpy.frame.move_dlg(dlg)
         if dlg.ShowModal() == wx.ID_OK:
             self.draw(True)
+            self.Parent.Parent.beastpanel.draw(True)
 
     def OnPaint(self, event):
         self.draw()
@@ -1677,7 +1678,7 @@ class CardPanel(wx.Panel):
         dc.SetTextForeground(wx.WHITE)
         dc.SetFont(cw.cwpy.rsrc.get_wxfont("charadesc", pixelsize=cw.wins(13)))
 
-        if not self.headers:
+        if not self.headers or update:
             self.headers = self.ccard.cardpocket[self.pocket]
 
         fw = dc.GetTextExtent(u"―")[0]
