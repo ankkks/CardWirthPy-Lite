@@ -1500,6 +1500,14 @@ class Character(object):
             if 0 < val and val < 10:
                 pvals.append(int(val))
 
+        def wrap_enhval(val, orig_val):
+            if orig_val < 0:
+                return cw.util.numwrap(val, -10, -1)
+            elif 0 < orig_val:
+                return cw.util.numwrap(val, 1, 10)
+            else:
+                return 0
+
         def addval(header, val, using=False):
             if name == "defense":
                 val = int(val)
@@ -1507,9 +1515,10 @@ class Character(object):
                 if header.type == "SkillCard":
                     # 特殊技能使用
                     assert using
-                    level = header.get_vocation_level(self, enhance_act=False)
-                    if 2 <= level:
-                        val = val * 120 // 100
+                    if val < 10:
+                        level = header.get_vocation_level(self, enhance_act=False)
+                        if 2 <= level:
+                            val = val * 120 // 100
                     add_pval(val)
                     val = val2
                 elif header.type == "ItemCard" and using:
@@ -1517,19 +1526,19 @@ class Character(object):
                     add_pval(val)
                 elif header.type == "ItemCard":
                     # アイテム所持
-                    level = header.get_vocation_level(self, enhance_act=False)
-                    if val < 0:
-                        if 3 <= level:
-                            val = val * 80 // 100
-                        elif level <= 0:
-                            val = val * 150 // 100
-                        add_pval(val)
-                    elif 0 < val:
-                        if level <= 0:
-                            val = val * 50 // 100
-                        elif level <= 1:
-                            val = val * 80 // 100
-                        add_pval(val)
+                    if val < 10:
+                        level = header.get_vocation_level(self, enhance_act=False)
+                        if val < 0:
+                            if 3 <= level:
+                                val = val * 80 // 100
+                            elif level <= 0:
+                                val = val * 120 // 100
+                        elif 0 < val:
+                            if level <= 0:
+                                val = val * 50 // 100
+                            elif level <= 1:
+                                val = val * 80 // 100
+                    add_pval(val)
                 elif header.type == "BeastCard":
                     # 召喚獣所持
                     add_pval(val)
@@ -1540,7 +1549,7 @@ class Character(object):
                 val = self._calc_enhancevalue(header, val)
                 add_pval(val)
             val = int(val)
-            seq.append(val)
+            seq.append(wrap_enhval(val, val2))
 
         if self.actiondata and self.actiondata[1]:
             header = self.actiondata[1]
@@ -1565,10 +1574,10 @@ class Character(object):
         b = 0
         ac = 0
         bc = 0
-        max10 = 0
-        max10counter = 0
         maxval = 0
         minval = 0
+        max10 = 0
+        max10counter = 0
         for val in seq:
             if val < 0:
                 if a == 0:
