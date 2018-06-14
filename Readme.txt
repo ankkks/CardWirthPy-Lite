@@ -1,6 +1,6 @@
 ﻿                 CardWirth Py Lite
-                  Ver 2.3a(04)
-                  フォーク制作者：暗黒騎士<ankkkcwあっとexcite.co.jp>
+                  Ver 2.3a(05)
+                  フォーク制作者：暗黒騎士<ankkksあっとoutlook.jp>
                   wiki：https://www65.atwiki.jp/pylite/
                   開発：https://bitbucket.org/akkw/cardwirthpy-lite/
                   動作確認環境：Windows 7/10 64bit
@@ -23,6 +23,7 @@ Liteの志向性
 ●PyLiteの更新情報
 
 Ver2.3a
+18.06.14 アイテム所持ボーナスの補正式をCWに準拠(Reboot取り込み)
 18.02.16 現時点までのWSN3に対応
 18.01.24 l_church_bell.oggをReboot3最新版に差替
 18.01.13 デバッガの各状態操作スライダをCardWirthに準拠する数値に変更
