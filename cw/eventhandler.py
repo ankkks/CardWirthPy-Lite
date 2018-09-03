@@ -334,9 +334,9 @@ class EventHandler(object):
         # シナリオプレイ時、キャンプモード切替
         if not cw.cwpy.is_runningevent():
 
-            # 選択エリアの時、キャンセル
-            if ((cw.cwpy.is_curtained() and cw.cwpy.areaid <> cw.AREA_CAMP) or cw.cwpy.selectedheader) and\
-                    cw.cwpy.statusbar.showbuttons:
+            if ((cw.cwpy.is_curtained() and cw.cwpy.areaid != cw.AREA_CAMP) or cw.cwpy.selectedheader) and\
+                    (cw.cwpy.statusbar.showbuttons or cw.cwpy.status == "Yado"):
+                #TODO;Lite:宿でESCキーが効かないため暫定処置
                 cw.cwpy.cancel_cardcontrol()
                 return
 

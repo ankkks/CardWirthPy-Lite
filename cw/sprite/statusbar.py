@@ -60,7 +60,8 @@ class StatusBar(base.CWPySprite):
 
     def change(self, showbuttons=True, encounter=False, cancelbtn=False):
         self.clear()
-        if showbuttons and (pygame.event.peek(pygame.locals.USEREVENT) or cw.cwpy.expanding):
+        in_camp = cw.cwpy.areaid in (cw.AREA_CAMP, cw.AREA_TRADE3)
+        if showbuttons and (pygame.event.peek(pygame.locals.USEREVENT) or cw.cwpy.expanding) and not in_camp:
             showbuttons = False
 
         self.showbuttons = showbuttons
@@ -78,7 +79,7 @@ class StatusBar(base.CWPySprite):
         if cw.cwpy.expanding:
             ExpandView(self, cw.s((10, 6)))
 
-        showbuttons &= not cw.cwpy.is_showingbacklog()
+        showbuttons &= not cw.cwpy.is_showingbacklog() and not cw.cwpy.sdata.in_f9
 
         left = cw.s(606)
         rmargin = cw.s(0)
@@ -98,7 +99,7 @@ class StatusBar(base.CWPySprite):
             EncounterPanel(self, (cw.s(474) - rmargin, cw.s(6)))
         elif (cw.cwpy.is_curtained() and cw.cwpy.areaid <> cw.AREA_CAMP) or cw.cwpy.selectedheader:
             if cw.cwpy.status == "Yado":
-                if cancelbtn or cw.cwpy.areaid == cw.AREA_BREAKUP:
+                if cancelbtn or cw.cwpy.areaid == -3:
                     CancelButton(self, cw.s((255, 6)))
                 elif not cw.cwpy.expanding:
                     self._create_yadomoney(cw.s((10, 6)))
@@ -1094,10 +1095,10 @@ class RunAwayButton(StatusBarButton):
 class CancelButton(StatusBarButton):
     def __init__(self, parent, pos):
         if cw.cwpy.areaid == cw.AREA_BREAKUP:
-            msg = "complete"
+            msg = cw.cwpy.msgs["complete"]
         else:
-            msg = "entry_cancel"
-        StatusBarButton.__init__(self, parent, cw.cwpy.msgs[msg], pos)
+            msg = cw.cwpy.msgs["entry_cancel"]
+        StatusBarButton.__init__(self, parent, msg, pos)
         self.selectable_on_event = False
 
     def lclick_event(self):
