@@ -1887,6 +1887,10 @@ class CWPy(_Singleton, threading.Thread):
 
     def set_yado(self):
         """宿画面へ遷移。"""
+        # ゲームオーバーしたパーティの破棄処理を行う
+        if self.ydata.losted_party:
+            self.ydata.losted_party.lost2()
+            self.ydata.losted_party = None
         self.set_status("Yado")
         msglog = self.sdata.backlog
         self.sdata = cw.data.SystemData()
@@ -2074,7 +2078,8 @@ class CWPy(_Singleton, threading.Thread):
         pygame.event.clear()
         if self._need_disposition:
             self.disposition_pcards()
-        self.ydata.party.lost()
+        party = self.ydata.party
+        party.lost1()
         del self.sdata.friendcards[:]
         self.sdata.end()
 
@@ -2086,6 +2091,7 @@ class CWPy(_Singleton, threading.Thread):
                 self.lastsound_scenario[i] = None
 
         self.ydata.load_party(None)
+        self.ydata.losted_party = party
         msglog = self.sdata.backlog
         self.sdata = cw.data.SystemData()
         self.sdata.backlog = msglog
@@ -3131,6 +3137,7 @@ class CWPy(_Singleton, threading.Thread):
         loopcount = data.getint("Property/MusicPath", "loopcount", 0)
         channel = data.getint("Property/MusicPath", "channel", 0)
         fade = data.getint("Property/MusicPath", "fadein", 0)
+        continue_bgm = data.getbool("Property/MusicPath", "continue", False)
 
         music = self.music[channel]
         self.set_battle()
@@ -3145,14 +3152,15 @@ class CWPy(_Singleton, threading.Thread):
             oldbgmpath = self.sdata.pre_battleareadata[1]
 
         # 戦闘音楽を流す
-        music.play(path, subvolume=volume, loopcount=loopcount, fade=fade)
+        if not continue_bgm:
+            music.play(path, subvolume=volume, loopcount=loopcount, fade=fade)
 
         self.change_area(areaid, False, bginhrt=True, ttype=("None", "Default"), startbattle=True)
         cw.animation.animate_sprite(sprite, "hide")
         sprite.remove(cw.cwpy.cardgrp)
 
         self.sdata.pre_battleareadata = (oldareaid, oldbgmpath, (music.path, music.subvolume, music.loopcount, music.channel))
-        cw.battle.BattleEngine()
+        cw.battle.BattleEngine(data)
         self.lock_menucards = False
 
     def clear_battlearea(self, areachange=True, eventkeynum=0, startnextbattle=False, is_battlestarting=False):
@@ -3222,6 +3230,7 @@ class CWPy(_Singleton, threading.Thread):
             if areachange:
                 # 戦闘前のエリアに戻る
                 self.change_area(areaid, False, ttype=("None", "Default"), bginhrt=True)
+                self.statusbar.change(False)
 
             if eventkeynum:
                 # 勝利イベント開始
@@ -4472,6 +4481,9 @@ class CWPy(_Singleton, threading.Thread):
 
         if header == self.selectedheader:
             self.selectedheader = None
+
+        if not sort and targettype == "BACKPACK" and cw.cwpy.ydata.party:
+            cw.cwpy.ydata.party.sorted_backpack_by_order = False
 
         # カード選択ダイアログを再び開く(イベントから呼ばれたのでなかったら)
         if not from_event and call_predlg:

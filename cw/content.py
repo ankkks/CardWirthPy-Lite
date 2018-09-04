@@ -155,6 +155,7 @@ class EventContentBase(object):
             "field" : u"フィールド全体",
             "couponholder" : u"称号所有者", # Wsn.2
             "cardtarget" : u"カードの使用対象", # Wsn.2
+            "selectedcard" : u"選択カード", # Wsn.3
             # 対象メンバ
             "random" : u"ランダムメンバ",
             "selected" : u"選択中メンバ",
@@ -275,56 +276,64 @@ class BranchContent(EventContentBase):
             someone = True
 
         # 所持判定
-        targets = cw.cwpy.event.get_targetscope(scope)
         flag = False
-        selectedmember = None
-        cardnum = 0
+        if scope == "SelectedCard":
+            # 選択カードと比較(Wsn.3)
+            h = cw.cwpy.event.get_selectedcard()
+            if h and h.type == cardtype and h.name == cardname and h.desc == carddesc:
+                flag = True
+                if h.get_owner() and isinstance(h.get_owner(), cw.character.Character):
+                    cw.cwpy.event.set_selectedmember(h.get_owner())
+        else:
+            selectedmember = None
+            targets = cw.cwpy.event.get_targetscope(scope)
+            cardnum = 0
 
-        for target in targets:
-            # 対象カード所持判定
-            if isinstance(target, list):
-                targetheaders = target
-            else:
-                targetheaders = target.get_pocketcards(pocketidx)
+            for target in targets:
+                # 対象カード所持判定
+                if isinstance(target, list):
+                    targetheaders = target
+                else:
+                    targetheaders = target.get_pocketcards(pocketidx)
 
-            headers = []
+                headers = []
 
-            for h in targetheaders:
-                if h.name == cardname and h.desc == carddesc:
-                    headers.append(h)
+                for h in targetheaders:
+                    if h.name == cardname and h.desc == carddesc:
+                        headers.append(h)
 
-            # 判定結果
-            flag = bool(len(headers) >= num)
-            cardnum += len(headers)
+                # 判定結果
+                flag = bool(len(headers) >= num)
+                cardnum += len(headers)
 
-            if flag and someone:
-                # 所持者を選択メンバに設定
-                if not isinstance(target, list):
-                    selectedmember = target
+                if flag and someone:
+                    # 所持者を選択メンバに設定
+                    if not isinstance(target, list):
+                        selectedmember = target
 
-                break
-            elif not flag and not someone:
-                # 最後に判定した者を選択メンバに設定
-                if not isinstance(target, list):
-                    selectedmember = target
+                    break
+                elif not flag and not someone:
+                    # 最後に判定した者を選択メンバに設定
+                    if not isinstance(target, list):
+                        selectedmember = target
 
-                break
+                    break
 
-        # パーティ全体での所持数判定
-        if scope == "PartyAndBackpack":
-            flag = bool(cardnum >= num)
+            # パーティ全体での所持数判定
+            if scope == "PartyAndBackpack":
+                flag = bool(cardnum >= num)
 
-        # 選択設定
-        if not scope == "Selected":
-            if selectedmember:
-                cw.cwpy.event.set_selectedmember(selectedmember)
-            elif not someone:
-                selectedmember = cw.cwpy.event.get_targetmember("Random")
+            # 選択設定
+            if not scope == "Selected":
                 if selectedmember:
                     cw.cwpy.event.set_selectedmember(selectedmember)
-                else:
-                    # BUG: 全員隠蔽状態の時は成功する(CardWirth 1.50)
-                    flag = True
+                elif not someone:
+                    selectedmember = cw.cwpy.event.get_targetmember("Random")
+                    if selectedmember:
+                        cw.cwpy.event.set_selectedmember(selectedmember)
+                    else:
+                        # BUG: 全員隠蔽状態の時は成功する(CardWirth 1.50)
+                        flag = True
 
         return self.get_boolean_index(flag)
 
@@ -531,12 +540,18 @@ class BranchSkillContent(BranchContent):
         scope = self.data.get("targets")
         name = cw.cwpy.sdata.get_skillname(resid)
         if not name is None:
-            s = self.textdict.get(scope.lower(), "")
-
-            if self.get_contentname(child) == u"○":
-                s = u"%sが『%s』を所有している" % (s, name)
+            if scope == "SelectedCard":
+                if self.get_contentname(child) == u"○":
+                    s = u"選択カードが『%s』と一致する" % (name)
+                else:
+                    s = u"選択カードが『%s』と一致しない" % (name)
             else:
-                s = u"%sが『%s』を所有していない" % (s, name)
+                s = self.textdict.get(scope.lower(), "")
+
+                if self.get_contentname(child) == u"○":
+                    s = u"%sが『%s』を所有している" % (s, name)
+                else:
+                    s = u"%sが『%s』を所有していない" % (s, name)
 
         else:
             s = u"特殊技能カードが指定されていません"
@@ -565,12 +580,18 @@ class BranchItemContent(BranchContent):
         name = cw.cwpy.sdata.get_itemname(resid)
 
         if not name is None:
-            s = self.textdict.get(scope.lower(), "")
-
-            if self.get_contentname(child) == u"○":
-                s = u"%sが『%s』を所有している" % (s, name)
+            if scope == "SelectedCard":
+                if self.get_contentname(child) == u"○":
+                    s = u"選択カードが『%s』と一致する" % (name)
+                else:
+                    s = u"選択カードが『%s』と一致しない" % (name)
             else:
-                s = u"%sが『%s』を所有していない" % (s, name)
+                s = self.textdict.get(scope.lower(), "")
+
+                if self.get_contentname(child) == u"○":
+                    s = u"%sが『%s』を所有している" % (s, name)
+                else:
+                    s = u"%sが『%s』を所有していない" % (s, name)
 
         else:
             s = u"アイテムカードが指定されていません"
@@ -597,14 +618,20 @@ class BranchBeastContent(BranchContent):
         resid = self.data.getint(".", "id", 0)
         scope = self.data.get("targets")
         name = cw.cwpy.sdata.get_beastname(resid)
-
         if not name is None:
-            s = self.textdict.get(scope.lower(), "")
+            if scope == "SelectedCard":
+                if self.get_contentname(child) == u"○":
+                    s = u"選択カードが『%s』と一致する" % (name)
+                else:
+                    s = u"選択カードが『%s』と一致しない" % (name)
 
-            if self.get_contentname(child) == u"○":
-                s = u"%sが『%s』を所有している" % (s, name)
             else:
-                s = u"%sが『%s』を所有していない" % (s, name)
+                s = self.textdict.get(scope.lower(), "")
+
+                if self.get_contentname(child) == u"○":
+                    s = u"%sが『%s』を所有している" % (s, name)
+                else:
+                    s = u"%sが『%s』を所有していない" % (s, name)
 
         else:
             s = u"召喚獣カードが指定されていません"
@@ -1526,32 +1553,46 @@ class BranchKeyCodeContent(BranchContent):
     def action(self):
         """キーコード所持分岐コンテント(1.30)。"""
 
-        # 対象メンバ取得
-        targets = []
-        if self.targetkc == "Selected":
-            target = cw.cwpy.event.get_targetmember(self.targetkc)
-            if target is None:
-                return self.get_boolean_index(False)
-            targets.append(target)
-        elif self.targetkc == "Random":
-            targets.extend(cw.cwpy.event.get_targetmember("Party"))
-            cw.cwpy.dice.shuffle(targets)
-        elif self.targetkc == "Backpack":
-            targets.append(cw.cwpy.ydata.party)
-        elif self.targetkc == "PartyAndBackpack":
-            targets.extend(cw.cwpy.event.get_targetmember("Party"))
-            cw.cwpy.dice.shuffle(targets)
-            targets.append(cw.cwpy.ydata.party)
-
-        # キーコード所持判定
         selectedmember = None
         header = None
-        for target in targets:
-            header = target.find_keycode(self.keycode, self.skill, self.item, self.beast, self.hand)
-            if header:
-                if isinstance(target, cw.character.Character):
-                    selectedmember = target
-                break
+        if self.targetkc == "SelectedCard":
+            # 選択カードのキーコードを判定(Wsn.3)
+            selcard = cw.cwpy.event.get_selectedcard()
+
+            if selcard:
+                if (selcard.type == "SkillCard" and self.skill) or \
+                        (selcard.type == "ItemCard" and self.item) or \
+                        (selcard.type == "BeastCard" and self.beast) or \
+                        (self.hand and cw.cwpy.is_battlestatus() and\
+                         isinstance(selcard.get_owner(), cw.character.Character) and\
+                         any(map(lambda h: h.ref_original == selcard.ref_original, selcard.get_owner().deck.hand))):
+                    if self.keycode in selcard.get_keycodes():
+                        header = selcard
+                        if isinstance(header.get_owner(), cw.character.Character):
+                            selectedmember= header.get_owner()
+        else:
+            # 対象メンバ取得
+            targets = []
+            if self.targetkc == "Selected":
+                target = cw.cwpy.event.get_targetmember(self.targetkc)
+                if target is None:
+                    return self.get_boolean_index(False)
+                targets.append(target)
+            elif self.targetkc == "Random":
+                targets.extend(cw.cwpy.event.get_targetmember("Party"))
+            elif self.targetkc == "Backpack":
+                targets.append(cw.cwpy.ydata.party)
+            elif self.targetkc == "PartyAndBackpack":
+                targets.extend(cw.cwpy.event.get_targetmember("Party"))
+                targets.append(cw.cwpy.ydata.party)
+
+            # キーコード所持判定
+            for target in targets:
+                header = target.find_keycode(self.keycode, self.skill, self.item, self.beast, self.hand)
+                if header:
+                    if isinstance(target, cw.character.Character):
+                        selectedmember = target
+                    break
 
         # 選択設定
         if selectedmember:
@@ -2504,18 +2545,51 @@ class GetContent(EventContentBase):
             pocket = cw.POCKET_BEAST
         else:
             raise ValueError("%s is invalid cardtype" % cardtype)
+        def is_nocache(target):
+            tobackpack = cw.cwpy.ydata.party.backpack == target
+            if not tobackpack and isinstance(target, cw.character.Character):
+                tobackpack = target.get_cardpocketspace()[pocket] <= len(target.get_pocketcards(pocket))
+            return not (cw.cwpy.ydata and cw.cwpy.ydata.party and tobackpack)
 
-        for _cnt in xrange(num):
-            for target in cw.cwpy.event.get_targetscope(scope):
-                tobackpack = cw.cwpy.ydata.party.backpack == target
-                if not tobackpack and isinstance(target, cw.character.Character):
-                    tobackpack = target.get_cardpocketspace()[pocket] <= len(target.get_pocketcards(pocket))
-                nocache = not (cw.cwpy.ydata and cw.cwpy.ydata.party and tobackpack)
-                e = getdata(resid, nocache=nocache)
-                if e is None:
-                    return 0
-                etree = cw.data.xml2etree(element=e, nocache=nocache)
-                get_card(etree, target, from_getcontent=True)
+        if scope == "SelectedCard":
+            # 選択カードとの交換(Wsn.3)
+            selcard = cw.cwpy.event.get_selectedcard()
+            if not selcard:
+                return 0
+            target = selcard.get_owner()
+            nocache = is_nocache(target)
+            e = getdata(resid, nocache=nocache)
+            if e is None:
+                return 0
+            if e.tag <> selcard.type:
+                # カード種別不一致
+                return 0
+
+            assert selcard.type <> "ActionCard"
+            if isinstance(target, cw.character.Character):
+                if selcard.type == "SkillCard":
+                    seq = target.cardpocket[cw.POCKET_SKILL]
+                elif selcard.type == "ItemCard":
+                    seq = target.cardpocket[cw.POCKET_ITEM]
+                elif selcard.type == "BeastCard":
+                    seq = target.cardpocket[cw.POCKET_BEAST]
+            else:
+                assert isinstance(target, list)
+                seq = target
+            toindex = seq.index(selcard)
+            insertorder = selcard.order
+            cw.cwpy.trade("TRASHBOX", header=selcard, from_event=True, sort=False)
+            etree = cw.data.xml2etree(element=e, nocache=nocache)
+            get_card(etree, target, from_getcontent=True, toindex=toindex, insertorder=insertorder)
+        else:
+            for _cnt in xrange(num):
+                for target in cw.cwpy.event.get_targetscope(scope):
+                    nocache = is_nocache(target)
+                    e = getdata(resid, nocache=nocache)
+                    if e is None:
+                        return 0
+                    etree = cw.data.xml2etree(element=e, nocache=nocache)
+                    get_card(etree, target, from_getcontent=True)
 
 def get_card(etree, target, notscenariocard=False, toindex=-1, insertorder=-1, party=None,
              copymaterialfrom="", fromdebugger=False, from_getcontent=False, attachment=False,
@@ -2615,10 +2689,13 @@ class GetItemContent(GetContent):
 
         if not name is None:
             scope = self.data.get("targets")
-            scope = self.textdict.get(scope.lower(), "")
-            num = self.data.getint(".", "number", 0)
-            num = u"%s枚" % (num)
-            return u"%sがアイテムカード『%s』を%s取得" % (scope, name, num)
+            if scope == "SelectedCard":
+                return u"選択カードと交換してアイテムカード『%s』を取得" % (name)
+            else:
+                scope = self.textdict.get(scope.lower(), "")
+                num = self.data.getint(".", "number", 0)
+                num = u"%s枚" % (num)
+                return u"%sがアイテムカード『%s』を%s取得" % (scope, name, num)
         else:
             return u"アイテムカードが指定されていません"
 
@@ -2637,10 +2714,13 @@ class GetBeastContent(GetContent):
 
         if not name is None:
             scope = self.data.get("targets")
-            scope = self.textdict.get(scope.lower(), "")
-            num = self.data.getint(".", "number", 0)
-            num = u"%s枚" % (num)
-            return u"%sが召喚獣カード『%s』を%s取得" % (scope, name, num)
+            if scope == "SelectedCard":
+                return u"選択カードと交換して召喚獣カード『%s』を取得" % (name)
+            else:
+                scope = self.textdict.get(scope.lower(), "")
+                num = self.data.getint(".", "number", 0)
+                num = u"%s枚" % (num)
+                return u"%sが召喚獣カード『%s』を%s取得" % (scope, name, num)
         else:
             return u"召喚獣カードが指定されていません"
 
@@ -2930,8 +3010,9 @@ class LoseContent(EventContentBase):
         numが0の場合は全対象カード削除。
         cardtype: "SkillCard" or "ItemCard" or "BeastCard"
         """
-        if self.is_differentscenario():
-            return 0
+        if self.scope <> "SelectedCard":
+            if self.is_differentscenario():
+                return 0
 
         # 対象カードのxmlファイルのパス
         if cardtype == "SkillCard":
@@ -2946,24 +3027,29 @@ class LoseContent(EventContentBase):
         else:
             raise ValueError("%s is invalid cardtype" % cardtype)
 
-        # 対象カードデータ取得
-        e = getdata(self.resid, "Property")
-        if e is None:
-            return 0
-        name = e.gettext("Name", "")
-        desc = e.gettext("Description", "")
-        num = self.num
-        if num == 0:
-            num = 0x7fffffff
+        if self.scope == "SelectedCard":
+            # 選択カードの喪失(Wsn.3)
+            selcard = cw.cwpy.event.get_selectedcard()
+            if selcard and selcard.type == cardtype:
+                cw.cwpy.trade("TRASHBOX", header=selcard, from_event=True, sort=False)
+        else:
+            # 対象カードデータ取得
+            e = getdata(self.resid, "Property")
+            if e is None:
+                return 0
+            name = e.gettext("Name", "")
+            desc = e.gettext("Description", "")
+            num = self.num
+            if num == 0:
+                num = 0x7fffffff
+            for target in cw.cwpy.event.get_targetscope(self.scope):
+                if isinstance(target, cw.character.Character):
+                    target = target.get_pocketcards(index)
 
-        for target in cw.cwpy.event.get_targetscope(self.scope):
-            if isinstance(target, cw.character.Character):
-                target = target.get_pocketcards(index)
-
-            _headers, losenum = self.lose_card(name, desc, target, num)
-            num -= losenum
-            if num <= 0:
-                break
+                _headers, losenum = self.lose_card(name, desc, target, num)
+                num -= losenum
+                if num <= 0:
+                    break
 
     def lose_card(self, name, desc, target, num):
         headers = []
@@ -2996,17 +3082,20 @@ class LoseSkillContent(LoseContent):
         return 0
 
     def get_status(self):
-        resid = self.data.getint(".", "id", 0)
-        name = cw.cwpy.sdata.get_skillname(resid)
-
-        if not name is None:
-            scope = self.data.get("targets")
-            scope = self.textdict.get(scope.lower(), "")
-            num = self.data.getint(".", "number", 0)
-            num = u"%s枚" % (num) if num else u"全て"
-            return u"%sが特殊技能カード『%s』を%s喪失" % (scope, name, num)
+        scope = self.data.get("targets")
+        if scope == "SelectedCard":
+            return u"選択カードを喪失"
         else:
-            return u"特殊技能カードが指定されていません"
+            resid = self.data.getint(".", "id", 0)
+            name = cw.cwpy.sdata.get_skillname(resid)
+
+            if not name is None:
+                scope = self.textdict.get(scope.lower(), "")
+                num = self.data.getint(".", "number", 0)
+                num = u"%s枚" % (num) if num else u"全て"
+                return u"%sが特殊技能カード『%s』を%s喪失" % (scope, name, num)
+            else:
+                return u"特殊技能カードが指定されていません"
 
 class LoseItemContent(LoseContent):
     def __init__(self, data):
@@ -3018,17 +3107,20 @@ class LoseItemContent(LoseContent):
         return 0
 
     def get_status(self):
-        resid = self.data.getint(".", "id", 0)
-        name = cw.cwpy.sdata.get_itemname(resid)
-
-        if not name is None:
-            scope = self.data.get("targets")
-            scope = self.textdict.get(scope.lower(), "")
-            num = self.data.getint(".", "number", 0)
-            num = u"%s枚" % (num) if num else u"全て"
-            return u"%sがアイテムカード『%s』を%s喪失" % (scope, name, num)
+        scope = self.data.get("targets")
+        if scope == "SelectedCard":
+            return u"選択カードを喪失"
         else:
-            return u"アイテムカードが指定されていません"
+            resid = self.data.getint(".", "id", 0)
+            name = cw.cwpy.sdata.get_itemname(resid)
+
+            if not name is None:
+                scope = self.textdict.get(scope.lower(), "")
+                num = self.data.getint(".", "number", 0)
+                num = u"%s枚" % (num) if num else u"全て"
+                return u"%sがアイテムカード『%s』を%s喪失" % (scope, name, num)
+            else:
+                return u"アイテムカードが指定されていません"
 
 class LoseBeastContent(LoseContent):
     def __init__(self, data):
@@ -3040,17 +3132,22 @@ class LoseBeastContent(LoseContent):
         return 0
 
     def get_status(self):
-        resid = self.data.getint(".", "id", 0)
-        name = cw.cwpy.sdata.get_beastname(resid)
+        scope = self.data.get("targets")
+        if scope == "SelectedCard":
+            return u"選択カードを喪失"
 
-        if not name is None:
-            scope = self.data.get("targets")
-            scope = self.textdict.get(scope.lower(), "")
-            num = self.data.getint(".", "number", 0)
-            num = u"%s枚" % (num) if num else u"全て"
-            return u"%sが召喚獣カード『%s』を%s喪失" % (scope, name, num)
         else:
-            return u"召喚獣カードが指定されていません"
+            resid = self.data.getint(".", "id", 0)
+            name = cw.cwpy.sdata.get_beastname(resid)
+
+            if not name is None:
+                scope = self.textdict.get(scope.lower(), "")
+                num = self.data.getint(".", "number", 0)
+                num = u"%s枚" % (num) if num else u"全て"
+                return u"%sが召喚獣カード『%s』を%s喪失" % (scope, name, num)
+            else:
+                return u"召喚獣カードが指定されていません"
+
 
 class LoseCastContent(LoseContent):
     def __init__(self, data):

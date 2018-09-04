@@ -699,6 +699,9 @@ class CWBinaryBase(object):
             else:
                 f.check_wsnversion("3", u"任意の称号所持者の指定")
             return 0
+        elif n == "SelectedCard":
+            f.check_wsnversion("3", u"範囲に選択カードを指定")
+            return 0
         elif n == "CardTarget" and effectcontent:
             f.check_wsnversion("2", u"カードの効果対象の指定")
             return 0
@@ -854,7 +857,7 @@ class CWBinaryBase(object):
             raise ValueError(self.fpath)
 
     @staticmethod
-    def unconv_keycoderange(n):
+    def unconv_keycoderange(n, f):
         if n == "Selected":
             return 0
         elif n == "Random":
@@ -865,6 +868,9 @@ class CWBinaryBase(object):
             return 3
         elif n in ("CouponHolder", "CardTarget"):
             f.check_wsnversion("2", u"キーコードを手札から検索")
+            return 0
+        elif n == "SelectedCard":
+            f.check_wsnversion("3", u"範囲に選択カードを指定")
             return 0
         else:
             raise cw.binary.cwfile.UnsupportedError(funcname=u"キーコード検索範囲「%s」" % n)
