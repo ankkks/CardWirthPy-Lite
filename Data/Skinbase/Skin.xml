@@ -690,7 +690,6 @@
     <Message key="auto_selection">自動選択</Message>
     <Message key="input_name">名称:</Message>
     <!-- 0.12.3 ここまで -->
-    <!-- 0.12.4 ここから -->
     <Message key="run_event">実行</Message>
     <Message key="open_event">開く</Message>
     <Message key="hold_all">全てホールド</Message>
@@ -734,8 +733,7 @@
     <Message key="penalty_keycode">ペナルティ</Message>
     <Message key="recycle_keycode">リサイクル</Message>
     <Message key="re_deal">手札を捨てて新しくカードを引く</Message>
-    <!-- 0.12.4 ここまで -->
-    <!-- 2.0 ここから -->
+    <!-- 0.12.4(1.0) ここまで -->
     <Message key="skillcard">技能カード</Message>
     <Message key="itemcard">アイテムカード</Message>
     <Message key="beastcard">召喚獣カード</Message>
@@ -783,6 +781,8 @@
     <Message key="show_object">%sを表示</Message>
     <Message key="complete">終了</Message>
     <!-- 2.0 ここまで -->
+    <Message key="beast_invocation_failed">発動条件を満たしていません。</Message>
+    <!-- 3.0 ここまで -->
   </Messages>
   <Settings importantdrawing="False" importantfont="False" />
 </Skin>

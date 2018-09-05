@@ -46,7 +46,7 @@ class BuildExe(object):
         self.project_url = "https://bitbucket.org/akkw/cardwirthpy-lite/"
 
         #Version of program
-        self.project_version = "2.3a"
+        self.project_version = "2.3b"
 
         #License of the program
         self.license = "LGPL"

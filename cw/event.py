@@ -166,7 +166,7 @@ class EventInterface(object):
         self._selectedcard = header
         self.refresh_selectedcardname()
 
-    def get_targetscope(self, scope, unreversed=True, cards=True):
+    def get_targetscope(self, scope, unreversed=True, cards=True, coupon=u""):
         """
         コンテントの適用範囲を返す関数。
         すべてリストで返す。
@@ -211,6 +211,12 @@ class EventInterface(object):
             # 同行キャストは対象外
             seq.extend(cw.cwpy.get_pcards(mode))
             seq.extend(cw.cwpy.get_ecards(mode))
+        # 称号所有者(Wsn.3)
+        elif scope == "CouponHolder":
+            if coupon:
+                for ccard in itertools.chain(cw.cwpy.get_pcards("unreversed"), cw.cwpy.get_ecards("unreversed")):
+                    if ccard.has_coupon(coupon):
+                        seq.append(ccard)
         else:
             raise ValueError(scope + " is invalid value.")
 
@@ -686,7 +692,9 @@ class ScenarioBadEndError(EventError):
     pass
 
 class EffectBreakError(EventError):
-    pass
+    def __init__(self, consumecard=True):
+        EventError.__init__(self)
+        self.consumecard = consumecard
 
 class Event(object):
     def __init__(self, event):
@@ -1372,8 +1380,8 @@ class CardEvent(Event, Targeting):
 
         # カードの使用回数減らす(シナリオ終了後に回数減らさないよう条件付き)
         if not isinstance(self.error, ScenarioEndError):
-            self.inusecard.set_uselimit(-1, animate=True)
-
+            if not isinstance(self.error, EffectBreakError) or self.error.consumecard:
+                self.inusecard.set_uselimit(-1, animate=True)
         # effect_cardmotionでウェイトをとってない場合はここでとる
         if not self.waited:
             waitrate = (cw.cwpy.setting.get_dealspeed(cw.cwpy.is_battlestatus())+1) * 2
