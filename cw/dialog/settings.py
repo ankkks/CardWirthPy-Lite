@@ -629,6 +629,10 @@ class SkinPanel(wx.Panel):
         self.tx_skin.SetEditable(False)
         self.tx_skin.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
 
+        #PyLite:トレード・解散エリアではスキンを変更できなくする
+        if cw.cwpy.areaid in (cw.AREAS_TRADE or cw.AREA_BREAKUP):
+            self.ch_skin.Disable()
+
         if self.editbuttons:
             self.btn_convertskin = wx.Button(self, -1, u"自動生成...")
             self.btn_editskin = wx.Button(self, -1, u"編集...")
