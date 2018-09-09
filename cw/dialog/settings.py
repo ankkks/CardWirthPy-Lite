@@ -291,6 +291,12 @@ class SettingsPanel(wx.Panel):
         elif value == 2:
             value = cw.setting.LOG_COMPRESS
         setting.messagelog_type = value
+        #PyLite：ステータスボタン
+        value = self.pane_gene.cb_display_scalebutton.GetValue()
+        if not value == cw.cwpy.setting.display_scalebutton:
+            setting.display_scalebutton = value
+            cw.cwpy.statusbar.change()
+
         value = self.pane_gene.ch_startupscene.GetSelection()
         if value == 0:
             value = cw.setting.OPEN_TITLE
@@ -971,7 +977,12 @@ class GeneralSettingPanel(wx.Panel):
         self.box_gene = wx.StaticBox(self, -1, u"動作モード")
         self.cb_debug = wx.CheckBox(self, -1, u"デバッグモードでプレイする" + u"(Ctrl+D)")
         self.cb_debug.SetValue(cw.cwpy.debug)
-        
+
+        self.st_display_sbb = wx.StaticText(self, -1, u"ショートカットボタン:")
+        #self.ch_display_sbb = wx.Choice(self, -1, choices=[
+        #    u"すべて表示", u"画面拡大", u"メッセージログ", u"設定ボタンのみ"])
+        self.cb_display_scalebutton = wx.CheckBox(self, -1, u"画面拡大(F4)")
+
         self.st_startupscene = wx.StaticText(self, -1, u"起動時の動作:")
         self.ch_startupscene = wx.Choice(self, -1, choices=[u"タイトル画面を開く", u"最後に選択した拠点を開く"])
 
@@ -1082,6 +1093,9 @@ class GeneralSettingPanel(wx.Panel):
             self.ch_messagelog_type.SetSelection(2) # 圧縮表示
         else:
             self.ch_messagelog_type.SetSelection(1) # 並べて表示(デフォルト)
+
+        self.cb_display_scalebutton.SetValue(setting.display_scalebutton)
+
         if setting.startupscene == cw.setting.OPEN_LAST_BASE:
             self.ch_startupscene.SetSelection(1) # 最後に選択した拠点を開く
         else:
@@ -1111,6 +1125,9 @@ class GeneralSettingPanel(wx.Panel):
             self.ch_messagelog_type.SetSelection(1)
         elif setting.messagelog_type_init == cw.setting.LOG_COMPRESS:
             self.ch_messagelog_type.SetSelection(2)
+
+        self.cb_display_scalebutton.SetValue(setting.display_scalebutton_init)
+
         if setting.startupscene_init == cw.setting.OPEN_TITLE:
             self.ch_startupscene.SetSelection(0)
         elif setting.startupscene_init == cw.setting.OPEN_LAST_BASE:
@@ -1168,6 +1185,7 @@ class GeneralSettingPanel(wx.Panel):
         sizer_right = wx.BoxSizer(wx.VERTICAL)
 
         bsizer_gene = wx.StaticBoxSizer(self.box_gene, wx.VERTICAL)
+
         bsizer_skin = wx.StaticBoxSizer(self.box_skin, wx.VERTICAL)
         bsizer_expandmode = wx.StaticBoxSizer(self.box_expandmode, wx.VERTICAL)
 
@@ -1177,7 +1195,12 @@ class GeneralSettingPanel(wx.Panel):
         bsizer_startup.Add(self.st_startupscene, 0, wx.ALIGN_CENTER, cw.ppis(0))
         bsizer_startup.Add(self.ch_startupscene, 0, wx.LEFT|wx.ALIGN_CENTER, cw.ppis(3))
         bsizer_gene.Add(bsizer_startup, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_gene.SetMinSize((_settings_width(), -1))
 
+        bsizer_sbb = wx.BoxSizer(wx.HORIZONTAL)
+        bsizer_sbb.Add(self.st_display_sbb,0, wx.ALIGN_CENTER, cw.ppis(3))
+        bsizer_sbb.Add(self.cb_display_scalebutton,0, wx.LEFT|wx.ALIGN_CENTER, cw.ppis(3))
+        bsizer_gene.Add(bsizer_sbb, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_gene.SetMinSize((_settings_width(), -1))
 
         bsizer_log = wx.StaticBoxSizer(self.box_messagelog, wx.HORIZONTAL)

@@ -26,6 +26,7 @@ class StatusBar(base.CWPySprite):
         self.autostart = None
         self.debugger = None
         self.backlog = None
+        self.scaling = None
         self.settings = None
         self.infocards = None
         self.friendcards = None
@@ -85,7 +86,14 @@ class StatusBar(base.CWPySprite):
         rmargin = cw.s(0)
         self._create_settings((left, cw.s(2)))
 
-        if cw.cwpy.setting.backlogmax:
+        #PyLite：画面拡大ボタン
+        if cw.cwpy.setting.display_scalebutton:
+            left -= cw.s(26)
+            rmargin += cw.s(24)
+            self._create_scaling((left, cw.s(2)))
+
+        if cw.cwpy.setting.display_logbutton and cw.cwpy.setting.backlogmax:
+        #if cw.cwpy.setting.backlogmax:
             left -= cw.s(26)
             rmargin += cw.s(24)
             self._create_backlog((left, cw.s(2)))
@@ -178,6 +186,12 @@ class StatusBar(base.CWPySprite):
             self.backlog.reset(pos)
         else:
             self.backlog = BacklogButton(self, pos)
+
+    def _create_scaling(self, pos):
+        if self.scaling:
+            self.scaling.reset(pos)
+        else:
+            self.scaling = ScalingButton(self, pos)
 
     def _create_settings(self, pos):
         if self.settings:
@@ -1229,6 +1243,26 @@ class SettingsButton(StatusBarButton):
     def lclick_event(self):
         StatusBarButton.lclick_event(self)
         cw.cwpy.eventhandler.f2key_event()
+
+
+class ScalingButton(StatusBarButton):
+    def __init__(self, parent, pos):
+        image = cw.cwpy.rsrc.pygamedialogs["WINDOW_SCALING"]
+        name = u"画面拡大/縮小"
+        desc = u"画面サイズを切り替えます"
+        StatusBarButton.__init__(self, parent, name, pos, 1, icon=image, desc=desc, hotkey=u"F4")
+        self.selectable_on_event = True
+        if self.is_selection():
+            self.update_image()
+
+    def get_icon(self):
+        return cw.cwpy.rsrc.pygamedialogs["WINDOW_SCALING"]
+
+    def lclick_event(self):
+        StatusBarButton.lclick_event(self)
+        cw.cwpy.eventhandler.f4key_event()
+
+
 
 class DebuggerButton(StatusBarButton):
     def __init__(self, parent, pos):

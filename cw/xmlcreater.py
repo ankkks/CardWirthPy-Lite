@@ -585,6 +585,14 @@ def create_settings(setting, writeplayingdata=True, fpath="Settings_Lite.xml"):
         e = cw.data.make_element("EnableOldF9", str(setting.enable_equalbug))
         element.append(e)
 
+    # ステータスバーのボタン表示
+    if setting.display_scalebutton <> setting.display_scalebutton_init:
+        e = cw.data.make_element("DisplayScaleButton", str(setting.display_scalebutton))
+        element.append(e)
+    if setting.display_logbutton <> setting.display_logbutton_init:
+        e = cw.data.make_element("DisplayLogButton", str(setting.display_logbutton))
+        element.append(e)
+
     #  最後に選んだシナリオを開始地点にする
     if setting.open_lastscenario <> setting.open_lastscenario_init:
         e = cw.data.make_element("OpenLastScenario", str(setting.open_lastscenario))

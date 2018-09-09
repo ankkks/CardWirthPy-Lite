@@ -4275,8 +4275,8 @@ class MoveBgImageContent(EventContentBase):
         return u" ".join(seq)
 
 class MoveCardContent(EventContentBase):
-    def __init__(self, data, is_changestate=True):
-        EventContentBase.__init__(self, data, is_changestate=True)
+    def __init__(self, data):
+        EventContentBase.__init__(self, data)
         self.cardgroup = data.getattr(".", "cardgroup", u"")
         self.positiontype = data.getattr(".", "positiontype", u"")
         self.x = data.getint(".", "x", 0)

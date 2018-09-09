@@ -73,7 +73,6 @@ SB_DISABLE   = 0b00000100 # 無効状態
 SB_NOTICE    = 0b00001000 # 通知
 SB_EMPHASIZE = 0b00010000 # 強調
 
-
 class LocalSetting(object):
 
     def __init__(self):
@@ -405,6 +404,8 @@ class Setting(object):
         # PyLite固有オプション
         self.enable_equalbug = True
         self.enable_oldf9 = False
+        self.display_logbutton = True#隠しオプション
+        self.display_scalebutton = True
 
         # 絞り込み・整列などのコントロールの表示有無
         self.show_additional_yado = False
@@ -518,19 +519,20 @@ class Setting(object):
         # 効果音を再生する
         self.play_sound = data.getbool("PlaySound", self.play_sound)
         # 音声全体のボリューム(0～1.0)
-        self.vol_master = data.getint("MasterVolume", int(self.vol_master*100))
-        self.vol_master = Setting.wrap_volumevalue(self.vol_master)
+        self.vol_master = data.getint("MasterVolume", int(self.vol_master_init * 100))
         # 音楽のボリューム(0～1.0)
-        self.vol_bgm = data.getint("BgmVolume", int(self.vol_bgm*100))
-        self.vol_bgm = Setting.wrap_volumevalue(self.vol_bgm)
+        self.vol_bgm = data.getint("BgmVolume", int(self.vol_bgm_init * 100))
         # midi音楽のボリューム(0～1.0)
         self.vol_bgm_midi = data.getint("BgmVolume", "midi", self.vol_bgm)
-        self.vol_bgm_midi = Setting.wrap_volumevalue(self.vol_bgm_midi)
         # 効果音ボリューム
-        self.vol_sound = data.getint("SoundVolume", int(self.vol_sound*100))
-        self.vol_sound = Setting.wrap_volumevalue(self.vol_sound)
+        self.vol_sound = data.getint("SoundVolume", int(self.vol_sound_init * 100))
         # midi効果音のボリューム(0～1.0)
         self.vol_sound_midi = data.getint("SoundVolume", "midi", self.vol_sound)
+        # 音量の単位変更(0～100 to 0～1)
+        self.vol_master = Setting.wrap_volumevalue(self.vol_master)
+        self.vol_bgm = Setting.wrap_volumevalue(self.vol_bgm)
+        self.vol_bgm_midi = Setting.wrap_volumevalue(self.vol_bgm_midi)
+        self.vol_sound = Setting.wrap_volumevalue(self.vol_sound)
         self.vol_sound_midi = Setting.wrap_volumevalue(self.vol_sound_midi)
         # MIDIサウンドフォント
         elements = data.find("SoundFonts", False)
@@ -775,6 +777,9 @@ class Setting(object):
         # PyLite：F9互換オプション
         self.enable_oldf9 = data.getbool("EnableOldF9", self.enable_oldf9)
         self.enable_equalbug = data.getbool("EnableEqualBug", self.enable_equalbug)
+        # 表示するステータスバーボタン
+        self.display_logbutton = data.getbool("DisplayLogButton", self.display_logbutton)
+        self.display_scalebutton = data.getbool("DisplayScaleButton", self.display_scalebutton)
         # 最後に選んだシナリオを開始地点にする
         self.open_lastscenario = data.getbool("OpenLastScenario", self.open_lastscenario)
 
