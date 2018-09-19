@@ -724,6 +724,8 @@ class CWPy(_Singleton, threading.Thread):
         except:
             self.is_processing = False
             self._running = False
+            if self.advlog:
+                self.advlog.enable(False)
             # エラーログを出力
             exc_type, exc_value, exc_traceback = sys.exc_info()
             vstr = []

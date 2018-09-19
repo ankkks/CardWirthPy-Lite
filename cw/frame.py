@@ -538,8 +538,9 @@ class Frame(wx.Frame):
         while cw.cwpy.is_processing and not cw.cwpy.is_decompressing:
             pass
 
+        #PyLite:宿データが無いとき(オープニング画面)は常にダイアログを出す
         if (cw.cwpy.setting.caution_beforesaving and cw.cwpy.ydata and cw.cwpy.ydata.is_changed()) or\
-                cw.cwpy.is_runningevent():
+                cw.cwpy.is_runningevent() or not cw.cwpy.ydata:
             if cw.cwpy.ydata and cw.cwpy.ydata.is_changed():
                 s = cw.cwpy.msgs["confirm_quit_changed"]
             else:

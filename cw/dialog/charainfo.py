@@ -24,7 +24,7 @@ class CharaInfo(wx.Dialog):
         dc = wx.ClientDC(parent)
         dc.SetFont(cw.cwpy.rsrc.get_wxfont("charadesc", pixelsize=cw.wins(13)))
         self.width = dc.GetTextExtent(u"―"*20)[0] + cw.wins(20)
-        self.width = max(cw.wins(300), self.width)
+        self.width = max(cw.wins(302), self.width)
 
         # ダイアログボックス
         wx.Dialog.__init__(self, parent, -1, cw.cwpy.msgs["character_information"], size=(self.width, cw.wins(355)),

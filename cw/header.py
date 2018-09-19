@@ -831,6 +831,16 @@ class CardHeader(object):
         return False
 
 
+    def get_can_loaded_scaledimage(self):
+        """スケーリングされたイメージを使用可能なカードか。"""
+        if self.carddata is None:
+            self.do_write()
+            rootattrs = GetRootAttribute(self.fpath)
+            return cw.util.str2bool(rootattrs.attrs.get("scaledimage", "False"))
+        else:
+            return self.carddata.getbool(".", "scaledimage", False)
+
+
 def is_removewithstatus(carddata, target):
     """targetはcarddataの召喚獣カードが消滅する状態か？"""
     if not isinstance(target, cw.character.Character):
