@@ -1870,6 +1870,7 @@ class CWPy(_Singleton, threading.Thread):
         self.change_area(1, ttype=ttype)
 
     def _init_attrs(self):
+        self.background.clear_background()
         for i in xrange(len(self.lastsound_scenario)):
             if self.lastsound_scenario[i]:
                 self.lastsound_scenario[i].stop(True)
@@ -1894,6 +1895,7 @@ class CWPy(_Singleton, threading.Thread):
             self.ydata.losted_party.lost2()
             self.ydata.losted_party = None
         self.set_status("Yado")
+        self.background.clear_background()
         msglog = self.sdata.backlog
         self.sdata = cw.data.SystemData()
         self.sdata.backlog = msglog
@@ -2351,6 +2353,7 @@ class CWPy(_Singleton, threading.Thread):
         if not self.is_showparty and not loadyado:
             self._show_party()
 
+        self.background.clear_background()
         for music in self.music:
             music.stop()
 
@@ -2404,6 +2407,7 @@ class CWPy(_Singleton, threading.Thread):
             # シナリオを強制終了
             if self.is_playingscenario():
                 self.sdata.end()
+            self.sdata.is_playing = False
 
             self.exec_func(init_resources)
 
@@ -2417,7 +2421,6 @@ class CWPy(_Singleton, threading.Thread):
                 self.event._stoped = True
             elif self.is_runningevent():
                 self.event._stoped = True
-            self.sdata.is_playing = False
 
             # バトルを強制終了
             if self.battle and self.battle.is_running:
@@ -2840,12 +2843,10 @@ class CWPy(_Singleton, threading.Thread):
             fcard.set_alpha(alpha)
             if fcard.status == "hidden":
                 fcard.clear_image()
-                fcard.layer = (cw.LAYER_FCARDS_T, cw.LTYPE_FCARDS, fcard.index, 0)
-                self.cardgrp.add(fcard, layer=fcard.layer)
+                self.cardgrp.add(fcard, layer=fcard.layer_t)
                 self.mcards.append(fcard)
             else:
-                fcard.layer = (cw.LAYER_FCARDS_T, cw.LTYPE_FCARDS, fcard.index, 0)
-                self.cardgrp.add(fcard, layer=fcard.layer)
+                self.cardgrp.add(fcard, layer=fcard.layer_t)
                 self.mcards.append(fcard)
                 if not alpha is None:
                     fcard.update_image()
@@ -2860,6 +2861,7 @@ class CWPy(_Singleton, threading.Thread):
             if isinstance(fcard, cw.character.Friend):
                 fcard.set_alpha(None)
                 fcard.hide()
+                fcard.layer = (cw.LAYER_FCARDS, cw.LTYPE_FCARDS, fcard.index, 0)
                 fcards.append(fcard)
                 self.mcards.remove(fcard)
         self.cardgrp.remove(fcards)
@@ -3251,6 +3253,7 @@ class CWPy(_Singleton, threading.Thread):
             if areaid in (cw.AREA_BREAKUP, cw.AREA_CAMP):
                 if cw.cwpy.ydata:
                     changed = cw.cwpy.ydata.is_changed()
+                self.clear_fcardsprites()
                 self.change_area(areaid, quickdeal=True, specialarea=True)
                 if cw.cwpy.ydata:
                     cw.cwpy.ydata._changed = changed
@@ -3376,7 +3379,10 @@ class CWPy(_Singleton, threading.Thread):
                 self.mcards = []
                 self.file_updates.clear()
                 for mcard in self.pre_mcards.pop():
-                    self.cardgrp.add(mcard, layer=mcard.layer)
+                    if areaid == cw.AREA_CAMP and hasattr(mcard, "layer_t"):
+                        self.cardgrp.add(mcard, layer=mcard.layer_t)
+                    else:
+                        self.cardgrp.add(mcard, layer=mcard.layer)
                     self.mcards.append(mcard)
                 self.deal_cards()
                 self.list = self.get_mcards("visible")

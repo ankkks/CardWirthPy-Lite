@@ -557,8 +557,12 @@ class EventHandler(object):
 
         if ctrldown and key == ord('D'):
             if not cw.cwpy.is_showingdlg():
-                cw.cwpy.play_sound("page")
-                cw.cwpy.set_debug(not cw.cwpy.is_debugmode())
+                #PyLite:キャンプ以外の特殊エリアでのデバッグモード切替を禁止
+                if cw.cwpy.areaid in (-1, -2, -3, -5) or cw.cwpy.status == "GameOver":
+                    cw.cwpy.play_sound("error")
+                else:
+                    cw.cwpy.play_sound("page")
+                    cw.cwpy.set_debug(not cw.cwpy.is_debugmode())
                 return False
         return True
 

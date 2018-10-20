@@ -635,8 +635,8 @@ class SkinPanel(wx.Panel):
         self.tx_skin.SetEditable(False)
         self.tx_skin.SetBackgroundColour(wx.SystemSettings.GetColour(wx.SYS_COLOUR_WINDOW))
 
-        #PyLite:トレード・解散エリアではスキンを変更できなくする
-        if cw.cwpy.areaid in (cw.AREAS_TRADE or cw.AREA_BREAKUP):
+        #PyLite:トレード・解散・ゲームオーバーではスキンを変更できなくする
+        if cw.cwpy.areaid in (-1, -2, -3, -5) or cw.cwpy.status == "GameOver":
             self.ch_skin.Disable()
 
         if self.editbuttons:
@@ -977,6 +977,9 @@ class GeneralSettingPanel(wx.Panel):
         self.box_gene = wx.StaticBox(self, -1, u"動作モード")
         self.cb_debug = wx.CheckBox(self, -1, u"デバッグモードでプレイする" + u"(Ctrl+D)")
         self.cb_debug.SetValue(cw.cwpy.debug)
+        #PyLite:トレード・解散・ゲームオーバーでは動作モードを変更できなくする
+        if cw.cwpy.areaid in (-1, -2, -3, -5) or cw.cwpy.status == "GameOver":
+            self.cb_debug.Disable()
 
         self.st_display_sbb = wx.StaticText(self, -1, u"ショートカットボタン:")
         #self.ch_display_sbb = wx.Choice(self, -1, choices=[
