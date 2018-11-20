@@ -272,12 +272,12 @@ class MessageWindow(base.CWPySprite):
 
             # 通常のテキスト描画
             if txtimg3:
-                for x in xrange(pos[0]-1, pos[0]+2):
+                for x in xrange(pos[0]+shiftx-1, pos[0]+shiftx+2):
                     for y in xrange(pos[1]-1, pos[1]+2):
                         self._back.blit(txtimg3, (x, y-bt))
 
             if txtimg:
-                self._fore.blit(txtimg, (pos[0], pos[1]-bt))
+                self._fore.blit(txtimg, (pos[0]+shiftx, pos[1]-bt))
                 size = txtimg.get_size()
 
             if size:
@@ -289,6 +289,7 @@ class MessageWindow(base.CWPySprite):
                 else:
                     area2.top -= cw.s(self.trim_top_noscale)
                 area1.left += shiftx
+                area2.left += shiftx
                 area1.top -= tt
                 self.image.blit(self._back, area1.topleft, area2)
                 self.image.blit(self._fore, area1.topleft, area2)

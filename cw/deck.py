@@ -151,9 +151,14 @@ class Deck(object):
         if flag:
             self.shuffle_bottom()
 
-    def add(self, ccard, header):
+    def add(self, ccard, header, is_replace=False):
         if header.type == "ItemCard":
-            self.set_hand(ccard)
+            if not is_replace:
+                # アイテムカードが1枚でも配付されると
+                # 手札は引き直される
+                # (削除時は引き直されない)
+                self._clear_hand()
+                self.set_hand(ccard)
         elif header.type == "SkillCard":
             uselimit, _maxn = header.get_uselimit()
 
@@ -276,14 +281,18 @@ class Deck(object):
             header = cw.cwpy.rsrc.actioncards[header.id]
             self.talon.append(header)
 
+    def _clear_hand(self):
+        """現在の手札を山札に戻す。"""
+        for header in self.hand[1::]:
+            self._remove(header)
+        self.shuffle()
+
     def draw(self, ccard):
         self._used = None
         maxn = self.get_handmaxnum(ccard)
         if self._throwaway or not self.hand:
             # 現在の手札を山札に戻す
-            for header in self.hand[1::]:
-                self._remove(header)
-            self.shuffle()
+            self._clear_hand()
 
             self.hand = []
             # アイテムカードを手札に加える
@@ -353,6 +362,14 @@ class Deck(object):
             self.hand.remove(header)
             if header.type == "ActionCard" and 0 <= header.id:
                 self.talon.insert(0, header)
+        elif header.type == "SkillCard" and not header in self.hand:
+            # アイテムカード配付等で手札から押し出され、
+            # 使用前に山札に戻されている場合がある
+            # アクションカードはそのままでよいが特殊技能は必ず消費させる
+            header = header.ref_original()
+            if header in self.talon:
+                self.talon.remove(header)
+                self.shuffle()
 
 def main():
     pass
