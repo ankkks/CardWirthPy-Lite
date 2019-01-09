@@ -1123,6 +1123,8 @@ class LevelEditDialog(wx.Dialog):
                     continue
 
                 ccard.set_level(clevel, regulate=True, backpack_party=party)
+                #PyLite:レベル上限所持判定
+                ccard.get_levelmax()
                 ccard.is_edited = True
                 if hasattr(ccard, "cardimg") and hasattr(ccard.cardimg, "set_levelimg"):
                     update = True

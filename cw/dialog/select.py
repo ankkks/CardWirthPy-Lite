@@ -2869,9 +2869,9 @@ class PlayerSelect(MultiViewSelect):
         self._move_allcards(header)
 
         # レベル3以上・"＿消滅予約"を持ってない場合、アルバムに残す
-        if header.level >= 3 and not header.leavenoalbum:
-            path = cw.xmlcreater.create_albumpage(header.fpath, nocoupon=True)
-            cw.cwpy.ydata.add_album(path)
+        #if header.level >= 3 and not header.leavenoalbum:
+        #    path = cw.xmlcreater.create_albumpage(header.fpath, nocoupon=True)
+        #    cw.cwpy.ydata.add_album(path)
 
         for partyrecord in cw.cwpy.ydata.partyrecord:
             partyrecord.vanish_member(header.fpath)

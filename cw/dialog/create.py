@@ -643,8 +643,15 @@ class AdventurerCreater(wx.Dialog):
         data.set_age(s)
         race = self.page2.get_race()
         data.set_race(race)
-        s = self.page1.imgpaths
-        data.set_images(s)
+        if self.page1.centering_shown:
+            paths = []
+            for info in self.page1.imgpaths:
+                info = info.copy()
+                info.postype = "Default" if not self.page1.cb_centering.GetValue() else "Center"
+                paths.append(info)
+        else:
+            paths = self.page1.imgpaths
+        data.set_images(paths)
         #型と特徴で解説を作る
         data.set_talent(talent)
         coupons = self.page5.get_coupons()
@@ -1089,7 +1096,7 @@ class AdventurerCreaterPage(wx.Panel):
 
 def _path_to_imageinfo(path):
     if isinstance(path, (str, unicode)):
-        return [cw.image.ImageInfo(path)]
+        return [cw.image.ImageInfo(path, postype="Center")]
     return path
 
 class NamePage(AdventurerCreaterPage):
@@ -1118,6 +1125,13 @@ class NamePage(AdventurerCreaterPage):
         self.ch_imgdpath = wx.Choice(self, size=(cw.wins(140), -1))
         font = cw.cwpy.rsrc.get_wxfont("combo", pixelsize=cw.wins(14))
         self.ch_imgdpath.SetFont(font)
+        self.cb_centering = cw.util.CWBackCheckBox(self, -1, cw.cwpy.msgs["centering_face"])
+        self.cb_centering.SetValue(True)
+        path = "Table/Book"
+        path = cw.util.find_resource(cw.util.join_paths(cw.cwpy.skindir, path), cw.cwpy.rsrc.ext_img)
+        bmp = cw.wins(cw.util.load_wxbmp(path, can_loaded_scaledimage=True))
+        self.cb_centering.set_background(bmp)
+        self.centering_shown = True
 
         self.name = ""
         self.input_name = ""
@@ -1175,6 +1189,8 @@ class NamePage(AdventurerCreaterPage):
             event.Skip(True)
         self.textctrl.Bind(wx.EVT_KILL_FOCUS, OnKillFocus)
 
+        self.draw(True)
+
     def _set_acceleratortable(self, leftright, updown):
         seq = [
             (wx.ACCEL_CTRL, wx.WXK_UP, self.upkeyid),
@@ -1201,6 +1217,7 @@ class NamePage(AdventurerCreaterPage):
         if self.autoname:
             self.Bind(wx.EVT_BUTTON, self.OnAutoName, self.autoname)
         self.ch_imgdpath.Bind(wx.EVT_CHOICE, self.OnChoiceImgDPath)
+        self.cb_centering.Bind(wx.EVT_CHECKBOX, self.OnCentering)
 
     def OnCtrlLeftKeyDown(self, event):
         _rect, method, _wheelmethod = self.clickables["PrevImage"]
@@ -1329,10 +1346,14 @@ class NamePage(AdventurerCreaterPage):
         self.ch_imgdpath.SetToolTipString(self.ch_imgdpath.GetLabelText())
         self.draw(True)
 
+    def OnCentering(self, event):
+        cw.cwpy.play_sound("page")
+        self.draw(True)
+
     def _do_layout(self):
         csize = self.GetClientSize()
         w1, _h1 = self.textctrl.GetSize()
-        w2, _h2 = self.ch_imgdpath.GetSize()
+        w2, h2 = self.ch_imgdpath.GetSize()
 
         self.textctrl.SetPosition(((csize[0]-w1)/2, cw.wins(90)))
         if self.autoname:
@@ -1341,8 +1362,25 @@ class NamePage(AdventurerCreaterPage):
 
         x = cw.wins(275) + cw.wins(cw.SIZE_CARDIMAGE[0])/2 - w2/2
         self.ch_imgdpath.SetPosition((x, cw.wins(225)))
+        w3, _h3 = self.cb_centering.GetSize()
+        if self.ch_imgdpath.IsShown():
+            self.cb_centering.SetPosition((x+(w2-w3), cw.wins(225)+h2+cw.wins(1)))
+        else:
+            self.cb_centering.SetPosition((x+(w2-w3), cw.wins(225)))
 
     def draw(self, update=False):
+        if update:
+            for info in self.imgpaths:
+                bmp = cw.util.load_wxbmp(info.path, True, can_loaded_scaledimage=True)
+                bmp2 = cw.wins(bmp)
+                if bmp2.GetSize() != cw.wins(cw.SIZE_CARDIMAGE):
+                    self.cb_centering.Show()
+                    self.centering_shown = True
+                    break
+            else:
+                self.cb_centering.Hide()
+                self.centering_shown = False
+
         dc = AdventurerCreaterPage.draw(self, update)
         cwidth = self.GetClientSize()[0]
         # welcome to the adventurers inn
@@ -1409,20 +1447,28 @@ class NamePage(AdventurerCreaterPage):
         if any(clickableline):
             self.clickable_table.append(clickableline)
 
+        x, y = cw.wins(275), cw.wins(130)
+
         # PrevImage
         bmp = cw.cwpy.rsrc.buttons["LMOVE"]
-        pos = cw.wins((250, 170))
+        pos = (x-cw.wins(20)-bmp.GetWidth(), y+(cw.wins(cw.SIZE_CARDIMAGE[1])-bmp.GetHeight())//2)
         self.draw_clickablebmp(dc, bmp, pos, "PrevImage", self.set_previmg, None)
         # NextImage
         bmp = cw.cwpy.rsrc.buttons["RMOVE"]
-        pos = cw.wins((365, 170))
+        pos = (x+cw.wins(cw.SIZE_CARDIMAGE[0]+20), y+(cw.wins(cw.SIZE_CARDIMAGE[1])-bmp.GetHeight())//2)
         self.draw_clickablebmp(dc, bmp, pos, "NextImage", self.set_nextimg, None)
         # image
-        dc.SetClippingRect(wx.Rect(cw.wins(275), cw.wins(130), cw.wins(cw.SIZE_CARDIMAGE[0]), cw.wins(cw.SIZE_CARDIMAGE[1])))
+        dc.SetClippingRect(wx.Rect(x, y, cw.wins(cw.SIZE_CARDIMAGE[0]), cw.wins(cw.SIZE_CARDIMAGE[1])))
+        basecardtype = "LargeCard"
         for info in self.imgpaths:
+            info = info.copy()
+            info.postype = "Default" if self.cb_centering.IsShown() and not self.cb_centering.GetValue() else "Center"
             bmp = cw.util.load_wxbmp(info.path, True, can_loaded_scaledimage=True)
             bmp2 = cw.wins(bmp)
-            cw.imageretouch.wxblit_2bitbmp_to_card(dc, bmp2, cw.wins(275), cw.wins(130), True, bitsizekey=bmp)
+            baserect = info.calc_basecardposition_wx(bmp2.GetSize(), noscale=False,
+                                                     basecardtype=basecardtype,
+                                                     cardpostype="NotCard")
+            cw.imageretouch.wxblit_2bitbmp_to_card(dc, bmp2, x + baserect.x, y + baserect.y, True, bitsizekey=bmp)
         dc.DestroyClippingRegion()
         self.set_clickablearea(cw.wins((275, 130)), cw.wins(cw.SIZE_CARDIMAGE), "Face", None, self.on_mousewheel)
 
@@ -2494,8 +2540,20 @@ class AdventurerDesignDialog(wx.Dialog):
     def OnOk(self, event):
         name = self.toppanel.namectrl.GetValue()
         desc = self.toppanel.descctrl.GetValue()
-        is_changedimgpath = self.toppanel.is_changedimgpath()
-        imgpaths = self.toppanel.imgpaths
+        if self.toppanel.centering_shown:
+            imgpaths = []
+            for info in self.toppanel.imgpaths:
+                info = info.copy()
+                if self.toppanel.cb_centering.GetValue():
+                    info.postype = "Center"
+                else:
+                    if info.postype == "Center":
+                        info.postype = "Default"
+                imgpaths.append(info)
+        else:
+            imgpaths = self.toppanel.imgpaths
+        is_changedimgpath = imgpaths != self.toppanel.oldimgpath
+
 
         def func(ccard, name, desc, is_changedimgpath, imgpaths):
             cw.cwpy.play_sound("harvest")
@@ -2539,6 +2597,19 @@ class DesignPanel(AdventurerCreaterPage):
         font = cw.cwpy.rsrc.get_wxfont("combo", pixelsize=cw.wins(14))
         self.ch_imgdpath.SetFont(font)
 
+        self.cb_centering = cw.util.CWBackCheckBox(self, -1, cw.cwpy.msgs["centering_face"])
+        for info in self.ccard.get_imagepaths():
+            if info.postype != "Center":
+                self.cb_centering.SetValue(False)
+                break
+        else:
+            self.cb_centering.SetValue(True)
+        path = "Table/Bill"
+        path = cw.util.find_resource(cw.util.join_paths(cw.cwpy.skindir, path), cw.cwpy.rsrc.ext_img)
+        bmp = cw.wins(cw.util.load_wxbmp(path, can_loaded_scaledimage=True))
+        self.cb_centering.set_background(bmp)
+        self.centering_shown = True
+
         font = cw.cwpy.rsrc.get_wxfont("datadesc", pixelsize=cw.wins(13))
         self.descctrl = wx.TextCtrl(self, style=wx.TE_MULTILINE|wx.SIMPLE_BORDER)
         self.descctrl.SetFont(font)
@@ -2553,7 +2624,7 @@ class DesignPanel(AdventurerCreaterPage):
         self.imgpaths = []
         for info in self.ccard.get_imagepaths():
             self.imgpaths.append(cw.image.ImageInfo(cw.util.join_yadodir(info.path), base=info, basecardtype="LargeCard"))
-        self._oldimgpath = self.imgpaths[:]
+        self.oldimgpath = self.imgpaths[:]
         self.can_loaded_scaledimage = self.ccard.data.getbool(".", "scaledimage", False)
 
         self.name = self.ccard.get_name()
@@ -2615,6 +2686,8 @@ class DesignPanel(AdventurerCreaterPage):
         self.namectrl.Bind(wx.EVT_KILL_FOCUS, OnKillFocus)
         self.descctrl.Bind(wx.EVT_KILL_FOCUS, OnKillFocus)
         self.ch_imgdpath.Bind(wx.EVT_KILL_FOCUS, OnKillFocus)
+
+        self.draw(True)
 
     def _set_acceleratortable(self, leftright, updown):
         seq = [
@@ -2688,13 +2761,14 @@ class DesignPanel(AdventurerCreaterPage):
             AdventurerCreaterPage.OnNRightKeyDown(self, event)
 
     def is_changedimgpath(self):
-        return self._oldimgpath <> self.imgpaths
+        return self.oldimgpath <> self.imgpaths
 
     def _bind(self):
         AdventurerCreaterPage._bind(self)
         self.Bind(wx.EVT_DROP_FILES, self.OnDropFiles)
         self.namectrl.Bind(wx.EVT_TEXT, self.OnInputName)
         self.ch_imgdpath.Bind(wx.EVT_CHOICE, self.OnChoiceImgDPath)
+        self.cb_centering.Bind(wx.EVT_CHECKBOX, self.OnCentering)
 
     def OnMouseWheel(self, event):
         if cw.util.has_modalchild(self):
@@ -2760,24 +2834,52 @@ class DesignPanel(AdventurerCreaterPage):
         self.ch_imgdpath.SetToolTipString(self.ch_imgdpath.GetLabelText())
         self.draw(True)
 
+    def OnCentering(self, event):
+        cw.cwpy.play_sound("page")
+        self.draw(True)
+
+
     def _do_layout(self):
         sizer_1 = wx.BoxSizer(wx.VERTICAL)
         sizer_1.SetMinSize(cw.wins((400, 370)))
 
+        sizer_2 = wx.BoxSizer(wx.HORIZONTAL)
+        space = cw.wins(cw.SIZE_CARDIMAGE)[0] + cw.wins(10)
+        sizer_2.Add((self.cb_centering.GetSize()), 0, wx.RIGHT, space)
+        sizer_2.Add(self.cb_centering, 0, 0, 0)
+
         if self.ch_imgdpath.IsShown():
-            sizer_1.Add(self.namectrl, 0, wx.TOP|wx.CENTER, cw.wins(55))
-            sizer_1.Add(self.ch_imgdpath, 0, wx.TOP|wx.CENTER, cw.wins(130))
-            h = self.ch_imgdpath.GetSize()[1]
-            sizer_1.Add(self.descctrl, 0, wx.TOP|wx.CENTER, cw.wins(45)-h)
+            #sizer_1.Add(self.namectrl, 0, wx.TOP|wx.CENTER, cw.wins(55))
+            #sizer_1.Add(self.ch_imgdpath, 0, wx.TOP|wx.CENTER, cw.wins(130))
+            #h = self.ch_imgdpath.GetSize()[1]
+            #sizer_1.Add(self.descctrl, 0, wx.TOP|wx.CENTER, cw.wins(45)-h)
+            sizer_1.Add(self.namectrl, 0, wx.TOP|wx.CENTER, cw.wins(57))
+            sizer_1.Add(sizer_2, 0, wx.TOP|wx.CENTER, cw.wins(115))
+            sizer_1.Add(self.ch_imgdpath, 0, wx.TOP|wx.CENTER, cw.wins(1))
+            sizer_1.Add(self.descctrl, 0, wx.TOP|wx.CENTER, cw.wins(25))
         else:
-            sizer_1.Add(self.namectrl, 0, wx.TOP|wx.CENTER, cw.wins(60))
-            sizer_1.Add(self.descctrl, 0, wx.TOP|wx.CENTER, cw.wins(158))
+            #sizer_1.Add(self.namectrl, 0, wx.TOP|wx.CENTER, cw.wins(60))
+            #sizer_1.Add(self.descctrl, 0, wx.TOP|wx.CENTER, cw.wins(158))
+            sizer_1.Add(self.namectrl, 0, wx.TOP|wx.CENTER, cw.wins(62))
+            sizer_1.Add(sizer_2, 0, wx.TOP|wx.CENTER, cw.wins(110))
+            sizer_1.Add(self.descctrl, 0, wx.TOP|wx.CENTER, cw.wins(31))
 
         self.SetSizer(sizer_1)
         sizer_1.Fit(self)
         self.Layout()
 
     def draw(self, update=False):
+        if update:
+            for info in self.imgpaths:
+                bmp = cw.util.load_wxbmp(info.path, True, can_loaded_scaledimage=True)
+                bmp2 = cw.wins(bmp)
+                if bmp2.GetSize() != cw.wins(cw.SIZE_CARDIMAGE):
+                    self.cb_centering.Show()
+                    self.centering_shown = True
+                    break
+            else:
+                self.cb_centering.Hide()
+                self.centering_shown = False
         dc = AdventurerCreaterPage.draw(self, update)
         cwidth = self.GetClientSize()[0]
 
@@ -2800,7 +2902,7 @@ class DesignPanel(AdventurerCreaterPage):
             y2 = 111
         else:
             y = cw.wins(45)
-            y2 = 116
+            y2 = 111
 
         # Name
         font = cw.cwpy.rsrc.get_wxfont("characre", pixelsize=cw.wins(14))
@@ -2809,35 +2911,44 @@ class DesignPanel(AdventurerCreaterPage):
         w = dc.GetTextExtent(s)[0]
         dc.DrawText(s, (cwidth - w) / 2, y)
         # Image
-        y += cw.wins(50)
+        #y += cw.wins(50)
+        if self.ch_imgdpath.IsShown():
+            y += cw.wins(54)
+        else:
+            y += cw.wins(49)
         s = cw.cwpy.msgs["entry_image"]
         w = dc.GetTextExtent(s)[0]
         dc.DrawText(s, (cwidth - w) / 2, y)
         # Comment
         if self.ch_imgdpath.IsShown():
-            y += cw.wins(145)
+            #y += cw.wins(145)
+            y += cw.wins(141)
         else:
-            y += cw.wins(125)
+            #y += cw.wins(125)
+            y += cw.wins(126)
         s = cw.cwpy.msgs["entry_comment"]
         w = dc.GetTextExtent(s)[0]
         dc.DrawText(s, (cwidth - w) / 2, y)
 
+        x, y = (cwidth - cw.wins(cw.SIZE_CARDIMAGE[0])) / 2, cw.wins(y2)
+
         # PrevImage
         bmp = cw.cwpy.rsrc.buttons["LMOVE"]
-        pos = cw.wins((135, y2+34))
+        pos = (x-cw.wins(20)-bmp.GetWidth(), y+(cw.wins(cw.SIZE_CARDIMAGE[1])-bmp.GetHeight())//2)
         self.draw_clickablebmp(dc, bmp, pos, "PrevImage", self.set_previmg, None)
         # NextImage
         bmp = cw.cwpy.rsrc.buttons["RMOVE"]
-        pos = cw.wins((260, y2+34))
+        pos = (x+cw.wins(cw.SIZE_CARDIMAGE[0]+20), y+(cw.wins(cw.SIZE_CARDIMAGE[1])-bmp.GetHeight())//2)
         self.draw_clickablebmp(dc, bmp, pos, "NextImage", self.set_nextimg, None)
         # image
-        x, y = (cwidth - cw.wins(74)) / 2, cw.wins(y2)
         dc.SetClippingRect(wx.Rect(x, y, cw.wins(cw.SIZE_CARDIMAGE[0]), cw.wins(cw.SIZE_CARDIMAGE[1])))
         if self.is_changedimgpath():
             can_loaded_scaledimage = True
         else:
             can_loaded_scaledimage = self.can_loaded_scaledimage
         for info in self.imgpaths:
+            info = info.copy()
+            info.postype = "TopLeft" if self.cb_centering.IsShown() and not self.cb_centering.GetValue() else "Center"
             bmp = cw.util.load_wxbmp(info.path, True, can_loaded_scaledimage=can_loaded_scaledimage)
             bmp2 = cw.wins(bmp)
 

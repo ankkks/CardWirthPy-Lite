@@ -809,6 +809,8 @@ def create_albumpage(path, lost=False, nocoupon=False):
         else:
             s = cw.cwpy.msgs["lost_coupon_2"]
         ce = etree.make_element("Coupon", s, {"value": "0"})
+        # PyLite：＿死亡クーポンがない
+        etree.append("Property/Coupons", etree.make_element("Coupon", u"＿死亡", {"value": "0"}))
         etree.append("Property/Coupons", ce)
 
     # 画像コピー
@@ -842,7 +844,8 @@ def create_adventurer(data):
     advname = cw.util.repl_dischar(d["name"])
     infos = write_castimagepath(advname, paths, True)
     imgpaths = map(lambda info: cw.binary.xmltemplate.get_xmltext("ImagePath",
-                    {"path":cw.binary.util.repl_escapechar(info.path), "indent": "   "}), infos)
+                    {"path":cw.binary.util.repl_escapechar(info.path),
+                     "postype": info.postype, "indent": "   "}), infos)
     d["imgpaths"] = "\n" + "\n".join(imgpaths)
     d["scaledimage"] = str(True)
 
@@ -1001,6 +1004,12 @@ def create_scenariolog(sdata, path, recording, logfilepath):
                     elif isinstance(item.data, cw.character.Player) and item.data in cw.cwpy.get_pcards():
                         e_name.set("type", "Player")
                         e_name.set("number", str(cw.cwpy.get_pcards().index(item.data)+1))
+                    elif isinstance(item.data, cw.data.Flag):
+                        e_name.set("type", "Flag")
+                        e_name.set("flag", item.data.name)
+                    elif isinstance(item.data, cw.data.Step):
+                        e_name.set("type", "Step")
+                        e_name.set("step", item.data.name)
                     e.append(e_name)
                 e_bgimg.append(e)
 

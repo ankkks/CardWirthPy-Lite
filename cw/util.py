@@ -3492,8 +3492,12 @@ class CWBackCheckBox(wx.CheckBox):
         dc.DrawBitmap(bmp, cw.wins(2), (csize[1]-bmp.GetHeight()) / 2, True)
         # text
         dc.SetTextForeground(wx.BLACK)
-        dc.SetFont(cw.cwpy.rsrc.get_wxfont("paneltitle", pixelsize=cw.wins(15)))
         s = self.GetLabel()
+        #TODO;PyLite;「中央寄せ」のデザイン調和
+        if s == cw.cwpy.msgs["centering_face"]:
+            dc.SetFont(cw.cwpy.rsrc.get_wxfont("characre", pixelsize=cw.wins(12)))
+        else:
+            dc.SetFont(cw.cwpy.rsrc.get_wxfont("paneltitle", pixelsize=cw.wins(15)))
         tsize = dc.GetTextExtent(s)
         dc.DrawText(s, bmp.GetWidth()+cw.wins(4), (csize[1]-tsize[1]) / 2)
         dc.SelectObject(wx.NullBitmap)

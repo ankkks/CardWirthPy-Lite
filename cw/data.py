@@ -2701,9 +2701,7 @@ class YadoData(object):
                     value = nature.levelmax
                     break
 
-            fcard.set_coupon(u"＠本来の上限", value)
-            if not fcard.has_coupon(u"＠レベル上限"):
-                fcard.set_coupon(u"＠レベル上限", max(value, fcard.level))
+            fcard.set_coupon(u"＠本来の上限", max(value, fcard.level))
 
             for coupon in fcard.get_coupons():
                 if r_gene.match(coupon):
@@ -3145,6 +3143,8 @@ class Party(object):
         for index, pcard in enumerate(cw.cwpy.get_pcards()):
             pcard.remove_numbercoupon()
             pcard.set_coupon(names[index], 0)
+            if pcard.level < pcard.get_limitlevel():
+                pcard.set_coupon(u"：レベル補正中", 0) # 1.28
             pcard.set_coupon(u"＠ＭＰ３", 0) # 1.29
 
     def remove_numbercoupon(self):

@@ -588,7 +588,8 @@ class TopPanel(wx.Panel):
             s = "Level: %d / %d" % (self.ccard.level, baselevel)
         else:
             s = "Level: %d" % (self.ccard.level)
-        if u"＠レベル上限" in coupons and coupons[u"＠レベル上限"] <= baselevel:
+        if (u"＠レベル上限" in coupons and coupons[u"＠レベル上限"] <= self.ccard.level) \
+                or (not u"＠レベル上限" in coupons and 10 <= self.ccard.level):
             # max
             dc.SetTextForeground(wx.RED)
             if 1 < len(cw.cwpy.setting.races):
@@ -596,6 +597,11 @@ class TopPanel(wx.Panel):
             else:
                 cw.util.draw_witharound_simple(dc, "max", cw.wins(25), cw.wins(20), backcolor)
             maxlevel = True
+        elif u"＠レベル上限" in coupons and coupons[u"＠レベル上限"] <= baselevel \
+                or (not u"＠レベル上限" in coupons and 10 <= baselevel):
+            #PyLite:グラフを出さないためフラグは立てておく
+            maxlevel = True
+
         dc.SetTextForeground(wx.BLACK)
         cw.util.draw_witharound_simple(dc, s, cw.wins(5), cw.wins(5), backcolor)
 
