@@ -1041,16 +1041,15 @@ class AdventurerHeader(object):
         """
         EP減少と子作り回数加算を行ったXMLファイルを書き出す。
         """
-        if self.album:
-            n = 10
-        else:
-            n = 0
-            for period in cw.cwpy.setting.periods:
-                if self.age == u"＿" + period.name:
-                    n = period.spendep
-                    break
-            if n == 0:
-                return
+        n = 0
+        for period in cw.cwpy.setting.periods:
+            if self.age == u"＿" + period.name:
+                n = period.spendep
+                if self.album:
+                    n = n // 2
+                break
+        if n == 0:
+            return
 
         self.ep -= n
         data = cw.data.yadoxml2etree(self.fpath)

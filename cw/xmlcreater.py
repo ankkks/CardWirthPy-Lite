@@ -967,7 +967,7 @@ def create_scenariolog(sdata, path, recording, logfilepath):
 
         elif bgtype == cw.sprite.background.BG_TEXT:
             text, namelist, face, tsize, color, bold, italic, underline, strike, vertical,\
-                btype, bcolor, bwidth, loaded, size, pos, flag, visible, layer, cellname = d
+                btype, bcolor, bwidth, loaded, updatetype, size, pos, flag, visible, layer, cellname = d
             attrs = {"visible": str(visible),
                      "loaded": str(loaded)}
             if cellname:
@@ -985,6 +985,8 @@ def create_scenariolog(sdata, path, recording, logfilepath):
             e = cw.data.make_element("Vertical", str(vertical))
             e_bgimg.append(e)
             e = make_colorelement("Color", color)
+            e_bgimg.append(e)
+            e = cw.data.make_element("UpdateType", updatetype)
             e_bgimg.append(e)
 
             if btype <> "None":
@@ -1010,6 +1012,8 @@ def create_scenariolog(sdata, path, recording, logfilepath):
                     elif isinstance(item.data, cw.data.Step):
                         e_name.set("type", "Step")
                         e_name.set("step", item.data.name)
+                    elif item.data == "Number":
+                        e_name.set("type", "Number")
                     e.append(e_name)
                 e_bgimg.append(e)
 

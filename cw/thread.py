@@ -83,6 +83,7 @@ class CWPy(_Singleton, threading.Thread):
         self.ydata = None
         # シナリオデータorシステムデータ
         self.sdata = None
+        self.classicdata = None
         # 選択中宿のパス
         self.yadodir = ""
         self.tempdir = ""
@@ -960,6 +961,8 @@ class CWPy(_Singleton, threading.Thread):
         return True
 
     def update(self):
+        if not self.statusbar:
+            return
         # 状態の補正
         if not self.statusbar.showbuttons:
             # 通常エリアで操作可能な状態であればステータスバーのボタンを表示

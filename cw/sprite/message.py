@@ -536,13 +536,13 @@ class MessageWindow(base.CWPySprite):
         """
         if not nametable:
             nametable = self.name_table
-        text, spcharinfo, _namelist, _namelistindex = _rpl_specialstr(full, s, nametable, self.get_stepvalue, self.get_flagvalue)
+        text, spcharinfo, _namelist, _namelistindex = _rpl_specialstr(full, "All", s, nametable, self.get_stepvalue, self.get_flagvalue)
         if full:
             return text, spcharinfo
         else:
             return text
 
-    def get_stepvalue(self, key, full, name_table, basenamelist, startindex, spcharinfo, namelist, namelistindex, stack):
+    def get_stepvalue(self, key, full, updatetype, name_table, basenamelist, startindex, spcharinfo, namelist, namelistindex, stack):
         if self.backlog:
             if key in self.step_table:
                 v = self.step_table[key]
@@ -551,7 +551,7 @@ class MessageWindow(base.CWPySprite):
         elif key in cw.cwpy.sdata.steps:
             v = cw.cwpy.sdata.steps[key]
         else:
-            v = _get_spstep(key)
+            v, namelistindex = _get_spstep(key, updatetype, basenamelist, namelist, namelistindex)
             if v is None:
                 return None, namelistindex
 
@@ -559,11 +559,11 @@ class MessageWindow(base.CWPySprite):
         s = v.get_valuename()
         if stack <= 0 and v.spchars:
             # 特殊文字の展開(Wsn.2)
-            s, _, _, namelistindex = _rpl_specialstr(full, s, name_table, self.get_stepvalue, self.get_flagvalue,
+            s, _, _, namelistindex = _rpl_specialstr(full, updatetype, s, name_table, self.get_stepvalue, self.get_flagvalue,
                                                      basenamelist, startindex, spcharinfo, namelist, namelistindex, stack+1)
         return s, namelistindex
 
-    def get_flagvalue(self, key, full, name_table, basenamelist, startindex, spcharinfo, namelist, namelistindex, stack):
+    def get_flagvalue(self, key, full, updatetype, name_table, basenamelist, startindex, spcharinfo, namelist, namelistindex, stack):
         if self.backlog:
             if key in self.flag_table:
                 v = self.flag_table[key]
@@ -578,7 +578,7 @@ class MessageWindow(base.CWPySprite):
         s = v.get_valuename()
         if stack <= 0 and v.spchars:
             # 特殊文字の展開(Wsn.2)
-            s, _, _, namelistindex = _rpl_specialstr(full, s, name_table, self.get_stepvalue, self.get_flagvalue,
+            s, _, _, namelistindex = _rpl_specialstr(full, updatetype, s, name_table, self.get_stepvalue, self.get_flagvalue,
                                                      basenamelist, startindex, spcharinfo, namelist, namelistindex, stack+1)
         return s, namelistindex
 
@@ -1133,13 +1133,18 @@ def get_pointlist(size, pos=(0, 0)):
     pos5 = pos
     return (pos1, pos2, pos3, pos4, pos5)
 
-def rpl_specialstr(s, basenamelist=None):
+def rpl_specialstr(s, basenamelist=None, updatetype="All"):
     """
     テキストセルや選択肢のテキスト内の
     特殊文字列(#, $)を置換した文字列を返す。
     """
     name_table = _create_nametable(False, None)
-    r = _rpl_specialstr(False, s, name_table, _get_stepvalue, _get_flagvalue, basenamelist=basenamelist)
+    try:
+        r = _rpl_specialstr(False, updatetype, s, name_table, _get_stepvalue, _get_flagvalue, basenamelist=basenamelist)
+    except:
+        cw.util.print_ex()
+        r = _rpl_specialstr(False, updatetype, s, name_table, _get_stepvalue, _get_flagvalue, basenamelist=None)
+
     return r[0], r[2]
 
 class _NameGetter(object):
@@ -1226,9 +1231,15 @@ def _create_nametable(full, talker):
                 del name_table[key]
     return name_table
 
-def _get_stepvalue(key, full, name_table, basenamelist, startindex, spcharinfo, namelist, namelistindex, stack):
+def _get_stepvalue(key, full, updatetype, name_table, basenamelist, startindex, spcharinfo, namelist, namelistindex, stack):
     if key in cw.cwpy.sdata.steps:
         v = cw.cwpy.sdata.steps[key]
+    else:
+        v, namelistindex = _get_spstep(key, updatetype, basenamelist, namelist, namelistindex)
+    if v is None:
+        return None, namelistindex
+
+    if updatetype == "Fixed":
         if not basenamelist is None:
             s = v.get_valuename(basenamelist[namelistindex].name)
         else:
@@ -1236,17 +1247,18 @@ def _get_stepvalue(key, full, name_table, basenamelist, startindex, spcharinfo, 
             namelist.append(NameListItem(v, v.value))
         namelistindex += 1
     else:
-        v = _get_spstep(key)
-        if v is None:
-            return None, namelistindex
+        s = v.get_valuename()
 
     if stack <= 0 and v.spchars:
         # 特殊文字の展開(Wsn.2)
-        s, _, _, namelistindex = _rpl_specialstr(full, s, name_table, _get_stepvalue, _get_flagvalue,
+        s, _, _, namelistindex = _rpl_specialstr(full, updatetype, s, name_table, _get_stepvalue, _get_flagvalue,
                                                  basenamelist, startindex, spcharinfo, namelist, namelistindex, stack+1)
     return s, namelistindex
 
-def _get_spstep(name):
+def get_spstep(name):
+    return _get_spstep(name, "Fixed", None, None, 0)[0]
+
+def _get_spstep(name, updatetype, basenamelist, namelist, namelistindex):
     if cw.cwpy.event.in_inusecardevent:
         cardversion = cw.cwpy.event.get_inusecard().wsnversion
     else:
@@ -1257,48 +1269,61 @@ def _get_spstep(name):
         if lname in u"??selectedplayer":
             # 選択メンバのパーティ内の番号(Wsn.2)
             # パーティ内の選択メンバがいない場合は"0"
-            if cw.cwpy.event.has_selectedmember():
-                sel = cw.cwpy.event.get_selectedmember()
+            if basenamelist is None:
+                if cw.cwpy.event.has_selectedmember():
+                    sel = cw.cwpy.event.get_selectedmember()
+                else:
+                    sel = None
+                pcards = cw.cwpy.get_pcards()
+                if sel and sel in pcards:
+                    value = pcards.index(sel)+1
+                else:
+                    value = 0
+                if not namelist is None:
+                    namelist.append(NameListItem("Number", value))
+
             else:
-                sel = None
-            pcards = cw.cwpy.get_pcards()
-            if sel and sel in pcards:
-                pn = u"%d" % (pcards.index(sel)+1)
-                return cw.data.Step(0, u"", [pn], u"", False)
-            else:
-                return cw.data.Step(0, u"", [u"0"], u"", False)
-        else:
+                value = basenamelist[namelistindex].name
+                namelistindex += 1
+            return cw.data.Step(value, name, ["0", "1", "2", "3", "4", "5", "6"], 0, False), namelistindex
+        elif lname in ["??player%d" % a for a in range(1, 6+1)]:
             # プレイヤーキャラクターの名前(??Player1～6)(Wsn.2)
             pcards = cw.cwpy.get_pcards()
             players = map(lambda a: u"??player%d" % a, xrange(1, len(pcards)+1))
+            names = [""] + list(map(lambda pcard: pcard.name, pcards))
             if lname in players:
-                pcard = pcards[players.index(lname)]
-                return cw.data.Step(0, u"", [pcard.name], u"", False)
+                value = players.index(lname)+1
+            else:
+                value = 0
+            return cw.data.Step(value, name, names, 0, False), namelistindex
 
-        if lname.startswith(u"??"):
-            return cw.data.Step(0, u"", [u""], u"", False)
+        elif lname.startswith(u"??"):
+            return cw.data.Step(0, u"", [u""], u"", False), namelistindex
 
-    return None
+    return None, namelistindex
 
-def _get_flagvalue(key, full, name_table, basenamelist, startindex, spcharinfo, namelist, namelistindex, stack):
+def _get_flagvalue(key, full, updatetype, name_table, basenamelist, startindex, spcharinfo, namelist, namelistindex, stack):
     if key in cw.cwpy.sdata.flags:
         v = cw.cwpy.sdata.flags[key]
-        if not basenamelist is None:
-            s = v.get_valuename(basenamelist[namelistindex].name)
+        if updatetype == "Fixed":
+            if not basenamelist is None:
+                s = v.get_valuename(basenamelist[namelistindex].name)
+            else:
+                s = v.get_valuename()
+                namelist.append(NameListItem(v, v.value))
+            namelistindex += 1
         else:
             s = v.get_valuename()
-            namelist.append(NameListItem(v, v.value))
-        namelistindex += 1
     else:
         return None, namelistindex
 
     if stack <= 0 and v.spchars:
         # 特殊文字の展開(Wsn.2)
-        s, _, _, namelistindex = _rpl_specialstr(full, s, name_table, _get_stepvalue, _get_flagvalue,
+        s, _, _, namelistindex = _rpl_specialstr(full, updatetype, s, name_table, _get_stepvalue, _get_flagvalue,
                                                  basenamelist, startindex, spcharinfo, namelist, namelistindex, stack+1)
     return s, namelistindex
 
-def _rpl_specialstr(full, s, name_table, get_step, get_flag, basenamelist=None,
+def _rpl_specialstr(full, updatetype, s, name_table, get_step, get_flag, basenamelist=None,
                     startindex=0, spcharinfo=None, namelist=None, namelistindex=0, stack=0):
     """
     特殊文字列(#, $)を置換した文字列を返す。
@@ -1324,7 +1349,7 @@ def _rpl_specialstr(full, s, name_table, get_step, get_flag, basenamelist=None,
             if nextpos < 0:
                 return 0, namelistindex
             fl = s[i+1:i+1+nextpos]
-            val, namelistindex = get(fl, full, name_table, basenamelist, buflen, spcharinfo, namelist, namelistindex, stack)
+            val, namelistindex = get(fl, full, updatetype, name_table, basenamelist, buflen, spcharinfo, namelist, namelistindex, stack)
             if val is None:
                 if not full:
                     # BUG: 存在しない状態変数を表示しようとすると

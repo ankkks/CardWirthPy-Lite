@@ -1417,10 +1417,10 @@ def fix_cwnext32bitbitmap(data):
         return data, True
     if s[1] != ord('M'):
         return data, True
-    _bfSize = s[2]
+    bfSize = s[2]
     _bfReserved1 = s[3]
     _bfReserved2 = s[4]
-    _bfOffBits = s[5]
+    bfOffBits = s[5]
     biSize = s[6]
     if biSize != 40:
         return data, True
@@ -1431,13 +1431,24 @@ def fix_cwnext32bitbitmap(data):
     if biBitCount != 32:
         return data, True
     biCompression = s[11]
-    _biSizeImage = s[12]
+    biSizeImage = s[12]
     _biXPixPerMeter = s[13]
     _biYPixPerMeter = s[14]
     biClrUsed = s[15]
     _biClrImporant = s[16]
     if 0 < biClrUsed:
-        data = data[:14+32] + struct.pack("<I", 0) + data[14+36:14+36+(biSize-36)] + data[14+biSize+biClrUsed*4:]
+        # オフセットは色数*4ないし色数*4*2だけ加算されている
+        # イメージサイズ-ヘッダサイズ-ファイルサイズでその値が算出できる
+        bfOffBits -= bfSize - 54 - biSizeImage
+        bfSize -= biClrUsed * 4
+        # イメージサイズは色数*4だけ加算されている、
+        # または加算されていない場合がある
+        # (加算されていない場合はオフセットのずれは色数*4*2になっている)
+        biSizeImage = bfSize - 54
+        si = struct.Struct("<I")
+        data = data[:2] + si.pack(bfSize) + data[6:10] + si.pack(bfOffBits) + data[14:34] +\
+            si.pack(biSizeImage) + data[38:46] + si.pack(0) + data[50:54] +\
+            data[54+biClrUsed*4:]
         return data, False
     return data, True
 

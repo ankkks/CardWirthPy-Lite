@@ -1804,48 +1804,53 @@ class RelationPage(AdventurerCreaterPage):
         self.set_clickablearea(pos, cw.wins(cw.SIZE_CARDIMAGE), "MotherFace", None, self.on_mousewheel)
 
         # 父親名前
-        font = cw.cwpy.rsrc.get_wxfont("dlgtitle", pixelsize=cw.wins(16))
+        font = cw.cwpy.rsrc.get_wxfont("paneltitle", pixelsize=cw.wins(16))
         dc.SetFont(font)
 
         if self.father:
+            if self.father.album:#PyLite:アルバムにいる場合は名前を青で表示
+                dc.SetTextForeground(wx.BLUE)
             s = self.father.name
         else:
             s = cw.cwpy.msgs["general_father"]
 
         cw.util.draw_center(dc, s, cw.wins((140, 220)))
+        dc.SetTextForeground(wx.BLACK)
 
         # 母親名前
         if self.mother:
+            if self.mother.album:
+                dc.SetTextForeground(wx.BLUE)
             s = self.mother.name
         else:
             s = cw.cwpy.msgs["general_mother"]
 
         cw.util.draw_center(dc, s, cw.wins((315, 220)))
+        dc.SetTextForeground(wx.BLACK)
+
         # 父親消費EP
-        font = cw.cwpy.rsrc.get_wxfont("paneltitle2", pixelsize=cw.wins(14))
+        font = cw.cwpy.rsrc.get_wxfont("paneltitle", pixelsize=cw.wins(14))
         dc.SetFont(font)
 
         if self.father:
+            for period in cw.cwpy.setting.periods:
+                if self.father.age == u"＿" + period.name:
+                    ep = period.spendep
+                    break
             if self.father.album:
-                ep = 10
-            else:
-                for period in cw.cwpy.setting.periods:
-                    if self.father.age == u"＿" + period.name:
-                        ep = period.spendep
-                        break
+                ep = ep // 2
 
             s = cw.cwpy.msgs["consumption_ep"] % (ep, self.father.ep)
             cw.util.draw_center(dc, s, cw.wins((140, 240)))
 
         # 母親消費EP
         if self.mother:
+            for period in cw.cwpy.setting.periods:
+                if self.mother.age == u"＿" + period.name:
+                    ep = period.spendep
+                    break
             if self.mother.album:
-                ep = 10
-            else:
-                for period in cw.cwpy.setting.periods:
-                    if self.mother.age == u"＿" + period.name:
-                        ep = period.spendep
-                        break
+                ep = ep // 2
 
             s = cw.cwpy.msgs["consumption_ep"] % (ep, self.mother.ep)
             cw.util.draw_center(dc, s, cw.wins((315, 240)))
@@ -1933,10 +1938,12 @@ class RelationPage(AdventurerCreaterPage):
                 if period.spendep > 0 and header.age == u"＿" + period.name and header.ep >= period.spendep:
                     append_header(self, header)
                     break
-
         for header in cw.cwpy.ydata.album:
-            if header.ep >= 10:
-                append_header(self, header)
+            for period in cw.cwpy.setting.periods:
+                if period.spendep > 0 and header.age == u"＿" + period.name and header.ep >= period.spendep:
+                    append_header(self, header)
+                    break
+
 
     def is_skip(self):
         if len(self.fathers) > 1 or len(self.mothers) > 1:

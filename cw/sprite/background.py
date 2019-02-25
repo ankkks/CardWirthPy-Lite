@@ -322,7 +322,6 @@ class BackGround(base.CWPySprite):
         self._inhrt_index = 0
 
         bginhrt2 = bginhrt
-        delfores = not bginhrt
         inhrt_e = None
         if bginhrt and len(elements) and elements[0].tag == "BgImage":
             e = elements[0]
@@ -342,25 +341,9 @@ class BackGround(base.CWPySprite):
                 # CWはこの状態で冒険を中断して再開すると事前に描画されていた背景が消えるが、
                 # CWPyでは実際に覆われて描画できなくなったもの以外は残すようにする
                 bginhrt2 = False
-                delfores = True
                 if flag:
                     # フラグは指定されていても無視される(CardWirth 1.28～1.50)
                     e.find("Flag").text = u""
-
-        if delfores:
-            # 背景非継承の場合は手前のセルはすべて強制削除
-            bgs2 = []
-            for bgtype, d in self.bgs:
-                if bgtype == BG_SEPARATOR:
-                    bgs2.append((bgtype, d))
-                else:
-                    layer = d[-2]
-                    if layer <> cw.LAYER_BACKGROUND:
-                        bgs2.append((bgtype, d))
-            self.bgs = bgs2
-            del self.foregroundlist[:]
-
-            self._inhrt_index = len(self.bgs)
 
         if bginhrt2:
             # 背景継承
@@ -371,6 +354,11 @@ class BackGround(base.CWPySprite):
                     if self._is_flagchanged(bgtype, d):
                         bginhrt2 = True
                         break
+
+        else:
+            self.bgs = []
+            del self.foregroundlist[:]
+            self._inhrt_index = 0
 
         if bginhrt2:
             # 背景継承
@@ -529,46 +517,58 @@ class BackGround(base.CWPySprite):
                 loaded = e.getbool(".", "loaded", True)
             else:
                 loaded = e.getbool(".", "loaded", False)
+            # テキストセルの更新をどこまで行うか(Wsn.4)
+            # Fixedで最初の表示内容に固定(CardWirth 1.50)
+            # Variablesで状態変数のみ更新(～CardWirthPy 3.1)
+            # Allで全て更新
+            # 互換性確保のためパラメータが存在しなかった場合はVariablesにする
+            updatetype = e.gettext("UpdateType", "Variables")
 
             e_names = e.find("Names")
             if e_names is None:
                 namelist = None
             else:
                 namelist = []
-                for e_name in e_names:
-                    type = e_name.getattr(".", "type", "")
-                    name = e_name.text if e_name.text else u""
-                    if type == "Yado":
-                        data = cw.cwpy.ydata
-                    elif type == "Party":
-                        data = cw.cwpy.ydata.party if cw.cwpy.ydata else None
-                    elif type == "Player":
-                        number = e_name.getint(".", "number", 0)-1
-                        pcards = cw.cwpy.get_pcards()
-                        if 0 <= number and number < len(pcards):
-                            data = pcards[number]
+                try:
+                    for e_name in e_names:
+                        type = e_name.getattr(".", "type", "")
+                        name = e_name.text if e_name.text else u""
+                        if type == "Yado":
+                            data = cw.cwpy.ydata
+                        elif type == "Party":
+                            data = cw.cwpy.ydata.party if cw.cwpy.ydata else None
+                        elif type == "Player":
+                            number = e_name.getint(".", "number", 0)-1
+                            pcards = cw.cwpy.get_pcards()
+                            if 0 <= number and number < len(pcards):
+                                data = pcards[number]
+                            else:
+                                data = None
+                        elif type == "Flag":
+                            name2 = e_name.getattr(".", "flag", "")
+                            name = cw.util.str2bool(name)
+                            if name2 in cw.cwpy.sdata.flags:
+                                data = cw.cwpy.sdata.flags[name2]
+                            else:
+                                data = None
+                        elif type == "Step":
+                            name2 = e_name.getattr(".", "step", "")
+                            name = int(name)
+                            if name2 in cw.cwpy.sdata.steps:
+                                data = cw.cwpy.sdata.steps[name2]
+                            else:
+                                data = cw.sprite.message.get_spstep(name2)
+                        elif type == "Number":
+                            name = int(e_name.text)
+                            data = "Number"
                         else:
                             data = None
-                    elif type == "Flag":
-                        name2 = e_name.getattr(".", "flag", "")
-                        name = cw.util.str2bool(name)
-                        if name2 in cw.cwpy.sdata.flags:
-                            data = cw.cwpy.sdata.flags[name2]
-                        else:
-                            data = None
-                    elif type == "Step":
-                        name2 = e_name.getattr(".", "step", "")
-                        name = int(name)
-                        if name2 in cw.cwpy.sdata.steps:
-                            data = cw.cwpy.sdata.steps[name2]
-                        else:
-                            data = None
-                    else:
-                        data = None
-                    namelist.append(cw.sprite.message.NameListItem(data, name))
+                        namelist.append(cw.sprite.message.NameListItem(data, name))
+                except:
+                    namelist = []
 
             return (text, namelist, face, tsize, color, bold, italic, underline, strike, vertical,
-                    btype, bcolor, bwidth, loaded, size, pos, flag, visible, layer, cellname)
+                    btype, bcolor, bwidth, loaded, updatetype, size, pos, flag, visible, layer, cellname)
 
         elif e.tag == "ColorCell":
             # カラーセル
@@ -859,7 +859,9 @@ class BackGround(base.CWPySprite):
 
     def _add_textcell(self, blitlist, bgs, oldbgs, d, nocheckvisible=False):
         text, namelist, face, tsize, color, bold, italic, underline, strike, vertical,\
-            btype, bcolor, bwidth, loaded, size, pos, flag, visible, layer, cellname = d
+            btype, bcolor, bwidth, loaded, updatetype, size, pos, flag, visible, layer, cellname = d
+        if not nocheckvisible and updatetype == "All":
+            namelist = None
         if not nocheckvisible:
             visible = cw.cwpy.sdata.flags.get(flag, True) and size <> (0, 0) and\
                 self.rect.colliderect(cw.s(pygame.Rect(pos, size)))
@@ -867,7 +869,8 @@ class BackGround(base.CWPySprite):
         if flagvalue and not loaded:
             # テキストセルは最初の表示で内容が固定される
             text2 = cw.util.decodewrap(text)
-            text2, namelist = cw.sprite.message.rpl_specialstr(text2, basenamelist=namelist)
+            text2, namelist = cw.sprite.message.rpl_specialstr(text2, basenamelist=namelist,
+                                                               updatetype=updatetype)
             # 2.0以降はloadedパラメータは使用しない
             #loaded = True
         else:
@@ -875,7 +878,7 @@ class BackGround(base.CWPySprite):
         if nocheckvisible:
             flagvalue = visible
         d = (text, namelist, face, tsize, color, bold, italic, underline, strike, vertical,
-             btype, bcolor, bwidth, loaded, size, pos, flag, flagvalue, layer, cellname)
+             btype, bcolor, bwidth, loaded, updatetype, size, pos, flag, flagvalue, layer, cellname)
         if visible:
             if btype == "Inline":
                 # 縁取り形式2のみは事前にセル生成が可能
