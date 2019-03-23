@@ -1411,7 +1411,7 @@ class DrawingSettingPanel(wx.Panel):
     def __init__(self, parent, for_local, get_localsettings, use_copybase):
         wx.Panel.__init__(self, parent)
         self._for_local = for_local
-        self._get_localsettings = get_localsettings
+        self._get_localsettings = get_localsettings if get_localsettings else lambda: cw.cwpy.setting.local
 
         if self._for_local:
             self.cb_important = wx.CheckBox(self, -1, u"このスキンの描画設定を基本設定よりも優先して使用する")
@@ -2707,9 +2707,12 @@ class FontSettingPanel(wx.Panel):
 
         # フォント配列のロード
         facenames = list(wx.FontEnumerator().GetFacenames())
+        faceset = set(facenames)
         cw.util.sort_by_attr(facenames)
         self.str_default = u"[付属フォント]" # デフォルトフォント名
         self._fontface_array = [self.str_default]
+        #self._fontface_array = []
+        self._has_default = [True] * len(self.bases)
         self._types = []
         for base in self.bases:
             self._types.append(u"[%s]" % (self.typenames[base]))
@@ -2750,7 +2753,7 @@ class FontSettingPanel(wx.Panel):
             grid.SetColSize(0, cw.ppis(155))
             editors = []
             for i, name in enumerate(seq):
-                editor = wx.grid.GridCellChoiceEditor(faces)
+                editor = wx.grid.GridCellChoiceEditor(faces(name))
                 grid.SetCellEditor(i, 0, editor)
                 editors.append(editor)
             return editors
@@ -2764,14 +2767,39 @@ class FontSettingPanel(wx.Panel):
         self.base.SetDefaultCellFont(wx.Font(cw.ppis(8), 71, wx.NORMAL, wx.NORMAL))#TODO スクロールバーが出てしまう
         #self.base.SetDefaultRowSize(cw.ppis(23))
         self.base.SetDoubleBuffered(True)
-        self.choicebases = create_grid(self.base, self.bases, self._fontface_array, 1, cw.ppis(100))
+
+
+        def has_defaultfont(name):
+            if name == "gothic":
+                fname = u"梅Hyゴシック"
+            elif name == "pgothic":
+                fname = u"梅Hyゴシック"
+            elif name == "uigothic":
+                fname = u"梅Hyゴシック"
+            elif name == "mincho":
+                fname = u"梅Hyゴシック"
+            elif name == "pmincho":
+                fname = u"梅Hyゴシック"
+            return fname in faceset
+
+        def faces_from_basefont(name):
+            if has_defaultfont(name):
+                return self._fontface_array
+            else:
+                self._has_default[self.bases.index(name)] = False
+                return self._fontface_array[1:]
+
+        #self.choicebases = create_grid(self.base, self.bases, self._fontface_array, 1, cw.ppis(100))
+        self.choicebases = create_grid(self.base, self.bases, faces_from_basefont, 1, cw.ppis(100))
         self.base.SetMinSize(self.base.GetBestSize())# (cw.ppis( (0, 4))))#余白を作らないとスクロールバーが出てしまう
 
         # 役割別フォント
         self.box_type = wx.StaticBox(self, -1, u"役割別フォント")
         self.type = wx.grid.Grid(self, -1, size=(1, 0), style=wx.BORDER)
         self.type.SetDoubleBuffered(True)
-        self.choicetypes = create_grid(self.type, self.types, self._types, 6, cw.ppis(120))
+        #self.choicetypes = create_grid(self.type, self.types, self._types, 6, cw.ppis(120))
+        #PyLite;(name)を追加したためにラムダを使わないとならない
+        self.choicetypes = create_grid(self.type, self.types, lambda _name:self._types, 6, cw.ppis(120))
         self.type.SetColLabelSize(cw.ppis(20))
         self.type.SetColSize(0, cw.ppis(160))
         self.type.SetColLabelValue(1, u"サイズ")
@@ -2838,7 +2866,7 @@ class FontSettingPanel(wx.Panel):
         for i, name, in enumerate(self.bases):
             str_font = local.basefont[name]
             if not str_font:
-                str_font = self.str_default#付属フォント
+                str_font = self.str_default if self._has_default[i] else u"**フォントが見つかりません**"#付属フォント
             self.base.SetCellValue(i, 0, str_font)
 
         create_grid(self.type, self.types)
@@ -2846,7 +2874,7 @@ class FontSettingPanel(wx.Panel):
         for i, name, in enumerate(self.bases):
             str_font = local.basefont[name]
             if not str_font:
-                str_font = self.str_default
+                str_font = self.str_default if self._has_default[i] else u"**フォントが見つかりません**"
             self.base.SetCellValue(i, 0, str_font)
 
         for i, name in enumerate(self.types):
@@ -2889,7 +2917,7 @@ class FontSettingPanel(wx.Panel):
         for i, basename in enumerate(self.bases):
             name = local.basefont_init[basename]
             if not name:
-                name = self.str_default
+                name = self.str_default if self._has_default[i] else u"**フォントが見つかりません**"
             self.base.SetCellValue(i, 0, name)
         for i, typename in enumerate(self.types):
             fonttype, name, pixels, bold, bold_upscr, italic = local.fonttypes_init[typename]
@@ -2939,7 +2967,7 @@ class FontSettingPanel(wx.Panel):
         basefont = {}
         for i, basename in enumerate(self.bases):
             value = self.base.GetCellValue(i, 0)
-            if value == self.str_default:
+            if value == self.str_default or value == u"**フォントが見つかりません**":
                 value = u""
             basefont[basename] = value
             basetable[u"[%s]" % (self.typenames[basename])] = basename
@@ -3040,7 +3068,7 @@ class FontSettingPanel(wx.Panel):
         def func(self):
             if self:
                 self._select_base(self.base.GetGridCursorRow())
-        cw.cwpy.frame.exec_func(func, self)
+        wx.CallAfter(func, self)
         event.Skip()
 
     def OnEditorCreatedBase(self, event):
@@ -3061,7 +3089,8 @@ class FontSettingPanel(wx.Panel):
             else:
                 d = {}
                 d["gothic"],d["uigothic"],d["mincho"],d["pmincho"],d["pgothic"] = ((u"梅Hyゴシック",)*5)
-            face = d[fonttype]
+
+            face = d.get(fonttype, "")
         return face
 
     def _select_type(self, i):
@@ -3081,7 +3110,7 @@ class FontSettingPanel(wx.Panel):
         def func(self):
             if self:
                 self._select_type(self.type.GetGridCursorRow())
-        cw.cwpy.frame.exec_func(func, self)
+        wx.CallAfter(func, self)
         event.Skip()
 
     def OnEditorCreatedType(self, event):

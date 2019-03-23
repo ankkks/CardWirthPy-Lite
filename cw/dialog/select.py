@@ -2782,8 +2782,7 @@ class PlayerSelect(MultiViewSelect):
         age = header.age
         index = cw.cwpy.setting.periodcoupons.index(age)
         #TODO 成長禁止処理
-        #ccard = cw.character.Character(header)
-        #if ccard.has_coupon(u"＿成長禁止"):
+        #if header.nogrow:
         #    cw.cwpy.play_sound("error")
         #    return
 

@@ -1443,7 +1443,11 @@ class StatusPanel(wx.ScrolledWindow):
         if 0 == value:
             return None, None, u""
 
-        if 10 <= value:
+        if 11 <= value:
+            colour = wx.Colour(255, 255, 255)
+            bmp = cw.cwpy.rsrc.wxstatuses[enhimage]
+            msg = (cw.cwpy.msgs["maximum_bonus"] + u" (%s)") % (enhname, dur)
+        elif 10 == value:
             colour = wx.Colour(255, 0, 0)
             bmp = cw.cwpy.rsrc.wxstatuses[enhimage]
             msg = (cw.cwpy.msgs["maximum_bonus"] + u" (%s)") % (enhname, dur)
@@ -1459,7 +1463,11 @@ class StatusPanel(wx.ScrolledWindow):
             colour = wx.Colour(79, 0, 0)
             bmp = cw.cwpy.rsrc.wxstatuses[enhimage]
             msg = (cw.cwpy.msgs["small_bonus"] + u" (%s)") % (enhname, dur)
-        elif -10 >= value:
+        elif -11 >= value:
+            colour = wx.Colour(255, 255, 255)
+            bmp = cw.cwpy.rsrc.wxstatuses[pnlimage]
+            msg = (cw.cwpy.msgs["maximum_penalty"] + u" (%s)") % (enhname, dur)
+        elif -10 == value:
             colour = wx.Colour(0, 0, 51)
             bmp = cw.cwpy.rsrc.wxstatuses[pnlimage]
             msg = (cw.cwpy.msgs["maximum_penalty"] + u" (%s)") % (enhname, dur)

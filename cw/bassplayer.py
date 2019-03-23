@@ -339,8 +339,17 @@ def _play(fpath, volume, loopcount, streamindex, fade, tempo=0, pitch=0):
     """
     global _bass, _bassmidi, _bassfx, _sfonts
     encoding = sys.getfilesystemencoding()
+    # BUG: BASS 2.4.13.8でBGMが無い時に"システム・改ページ.wav"等を鳴らすと
+    #      鳴り出しでノイズと遅延が発生する。
+    #      過去にBASS_STREAM_DECODEを使用するとループ時にノイズが発生する
+    #      ファイルがあったので回避策としてテンポ・ピッチの変化が無い時は
+    #      BASS FXを使用しないようにしていたが、BASS 2.4.13.8ではその問題は
+    #      無くなっており、却って前段落の問題が発生するようなので
+    #      必ずBASS_STREAM_DECODEを使用するように変更する。
+    # See Also: https://bitbucket.org/k4nagatsuki/cardwirthpy-reboot/issues/459
+    FORCE_FX = True
     flag = BASS_MUSIC_STOPBACK|BASS_MUSIC_POSRESET|BASS_MUSIC_PRESCAN
-    if tempo <> 0 or pitch <> 0:
+    if tempo <> 0 or pitch <> 0 or FORCE_FX:
         flag |= BASS_STREAM_DECODE
     if cw.cwpy.setting.bassmidi_sample32bit:
         flag |= BASS_SAMPLE_FLOAT
@@ -392,7 +401,7 @@ def _play(fpath, volume, loopcount, streamindex, fade, tempo=0, pitch=0):
                     loopinfo = (pos, -1)
                     break
 
-    if tempo <> 0 or pitch <> 0:
+    if tempo <> 0 or pitch <> 0 or FORCE_FX:
         stream = _bassfx.BASS_FX_TempoCreate(stream, BASS_FX_FREESOURCE)
 
     _loopcounts[streamindex] = loopcount
@@ -405,7 +414,7 @@ def _play(fpath, volume, loopcount, streamindex, fade, tempo=0, pitch=0):
             _bass.BASS_ChannelSetSync(stream, BASS_SYNC_END|BASS_SYNC_MIXTIME, 0, CC111LOOP, streamindex)
     else:
         _loopstarts[streamindex] = 0
-        _bass.BASS_ChannelSetSync(stream, BASS_SYNC_END|BASS_SYNC_MIXTIME, 0, CC111LOOP, streamindex)
+        _bass.BASS_ChannelSetSync(stream, BASS_SYNC_END|BASS_SYNC_MIXTIME, 0, CC111LOOP, c_void_p(streamindex))
 
     if tempo <> 0:
         _bass.BASS_ChannelSetAttribute(stream, BASS_ATTRIB_TEMPO, tempo) # -95%...0...+5000%
@@ -492,10 +501,10 @@ def _get_loopinfo(fpath, stream):
         loopstart = -1
         looplength = -1
         while comment:
-            if comment.startswith("LOOPSTART="):
-                loopstart = int(comment[len("LOOPSTART="):])
-            if comment.startswith("LOOPLENGTH="):
-                looplength = int(comment[len("LOOPLENGTH="):])
+            if comment.startswith(b"LOOPSTART="):
+                loopstart = int(comment[len(b"LOOPSTART="):])
+            if comment.startswith(b"LOOPLENGTH="):
+                looplength = int(comment[len(b"LOOPLENGTH="):])
             s += len(comment)+1
             comment = ctypes.string_at(s)
         if 0 <= loopstart:

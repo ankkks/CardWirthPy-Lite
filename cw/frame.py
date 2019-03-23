@@ -1288,10 +1288,20 @@ class MyApp(wx.App):
             exe = cw.SKIN_CONV_ARGS[0]
         if skincount == 0 or exe:
             # スキンの自動生成
-            self.skindlg = cw.dialog.skin.SkinConversionDialog(None, exe)
-            self.SetTopWindow(self.skindlg)
-            self.skindlg.Bind(wx.EVT_CLOSE, self.OnCloseSkinDialog, self.skindlg)
-            self.skindlg.Show()
+            try:
+                facenames = set(wx.FontEnumerator().GetFacenames())
+                fontpaths = cw.setting.Resource.get_fontpaths_s("Data/Font", facenames)
+                cw.setting.Resource.install_defaultfonts(fontpaths, facenames, {})
+                self.skindlg = cw.dialog.skin.SkinConversionDialog(None, exe)
+                self.SetTopWindow(self.skindlg)
+                self.skindlg.Bind(wx.EVT_CLOSE, self.OnCloseSkinDialog, self.skindlg)
+                self.skindlg.Show()
+            except cw.setting.NoFontError as ex:
+                s = ("CardWirthPyの実行に必要なフォントがありません。\n"
+                    "Data/Font以下に指定フォントをインストールしてください。")
+                wx.MessageBox(s, "メッセージ", wx.OK|wx.ICON_ERROR, None)
+            except:
+                cw.util.print_ex()
         else:
             # 通常起動
             frame = Frame(self)

@@ -141,24 +141,24 @@ class LocalSetting(object):
             "screenshot": ("uigothic", "", 18, False, False, False),
         }
 
-        # Windowsのフォントが使用可能であれば標準フォントを差し替える
-        if u"MS UI Gothic" in wx.FontEnumerator.GetFacenames():
-            self.basefont["uigothic"] = u"MS UI Gothic"
-        if u"ＭＳ 明朝" in wx.FontEnumerator.GetFacenames():
-            self.basefont["mincho"] = u"ＭＳ 明朝"
-        if u"ＭＳ Ｐ明朝" in wx.FontEnumerator.GetFacenames():
-            self.basefont["pmincho"] = u"ＭＳ Ｐ明朝"
-        if u"ＭＳ ゴシック" in wx.FontEnumerator.GetFacenames():
-            self.basefont["gothic"] = u"ＭＳ ゴシック"
-        if u"ＭＳ Ｐゴシック" in wx.FontEnumerator.GetFacenames():
-            self.basefont["pgothic"] = u"ＭＳ Ｐゴシック"
-
         if sys.platform == "win32":
             if u"Times New Roman" in wx.FontEnumerator.GetFacenames():
                 self.fonttypes["charaparam"] = "", u"Times New Roman", -1, True, True, True
                 self.fonttypes["dlgtitle"] = "", u"Times New Roman", -1, True, True, False
                 self.fonttypes["sbarpanel"] = "", u"Times New Roman", 15, True, True, True
 
+        # Windowsのフォントが使用可能であれば優先して使用する
+        facenames = set(wx.FontEnumerator().GetFacenames())
+        if u"MS UI Gothic" in facenames:
+            self.basefont["uigothic"] = u"MS UI Gothic"
+        if u"ＭＳ 明朝" in facenames:
+            self.basefont["mincho"] = u"ＭＳ 明朝"
+        if u"ＭＳ Ｐ明朝" in facenames:
+            self.basefont["pmincho"] = u"ＭＳ Ｐ明朝"
+        if u"ＭＳ ゴシック" in facenames:
+            self.basefont["gothic"] = u"ＭＳ ゴシック"
+        if u"ＭＳ Ｐゴシック" in facenames:
+            self.basefont["pgothic"] = u"ＭＳ Ｐゴシック"
 
         for t in inspect.getmembers(self, lambda t: not inspect.isroutine(t)):
             if not t[0].startswith("__"):
@@ -1300,22 +1300,80 @@ class Resource(object):
         fontdir = "Data/Font"
         fontdir_skin = cw.util.join_paths(self.skindir, "Resource/Font")
 
+        fnames = (("gothic.ttf", u"ＭＳ ゴシック"), ("gothic.ttf", u"MS UI Gothic"),
+                  ("gothic.ttf", u"ＭＳ 明朝"), ("gothic.ttf", u"ＭＳ Ｐゴシック"),
+                  ("gothic.ttf", u"ＭＳ Ｐ明朝"))
+
         d = {}
 
+        self.facenames = set(wx.FontEnumerator().GetFacenames())
 
-        path = cw.util.join_paths(fontdir_skin, "gothic.ttf")
-
-        if not os.path.isfile(path):
-            path = cw.util.join_paths(fontdir, "gothic.ttf")
-
+        for fname, alt in fnames:
+            path = cw.util.join_paths(fontdir_skin, fname)
             if not os.path.isfile(path):
-                #return d
-                #PyLite:TODO:付属フォントなしでも起動させる
-                raise NoFontError("gothic.ttf" + " not found.")
+                path = cw.util.join_paths(fontdir, fname)
+                if not os.path.isfile(path):
+                    if alt in self.facenames:
+                        continue
+                    else:
+                        # IPAフォントも代替フォントも存在しない場合はエラー
+                        raise NoFontError(fname + " not found.")
 
-            d[os.path.splitext("gothic.ttf")[0]] = path
+            d[os.path.splitext(fname)[0]] = path
 
         return d
+
+    @staticmethod
+    def get_fontpaths_s(fontdir, facenames):
+        d = {}
+        fnames = (("gothic.ttf", u"ＭＳ ゴシック"), ("uigothic.ttf", u"MS UI Gothic"),
+                  ("mincho.ttf", u"ＭＳ 明朝"), ("pgothic.ttf", u"ＭＳ Ｐゴシック"),
+                  ("pmincho.ttf", u"ＭＳ Ｐ明朝"))
+        for fname, alt in fnames:
+            path = cw.util.join_paths(fontdir, fname)
+            if not os.path.isfile(path):
+                if alt in facenames:
+                    continue
+                else:
+                    # IPAフォントも代替フォントも存在しない場合はエラー
+                    raise NoFontError(fname + " not found.")
+
+            d[os.path.splitext(fname)[0]] = path
+
+        return d
+
+    @staticmethod
+    def install_defaultfonts(fontpaths, facenames, d):
+        if sys.platform == "win32":
+            winplatform = sys.getwindowsversion()[3]
+
+            for name, path in fontpaths.items():
+                fontname = cw.util.get_truetypefontname(path)
+                if fontname in facenames or\
+                        fontname == u"Ume Hy Gothic" and (u"梅Hyゴシック" in facenames):
+                    d[name] = fontname
+                    continue
+
+                def func():
+                    gdi32 = ctypes.WinDLL("gdi32")
+                    if winplatform == 2:
+                        gdi32.AddFontResourceExW.argtypes = (ctypes.c_wchar_p, ctypes.wintypes.DWORD, ctypes.c_void_p)
+                        gdi32.AddFontResourceExW(path, 0x10, 0)
+                    else:
+                        gdi32.AddFontResourceW.argtypes = (ctypes.c_wchar_p)
+                        gdi32.AddFontResourceW(path)
+                        user32 = ctypes.windll.user32
+                        HWND_BROADCAST = 0xFFFF
+                        WM_FONTCHANGE = 0x001D
+                        user32.SendMessageA(HWND_BROADCAST, WM_FONTCHANGE, 0, 0)
+                thr = threading.Thread(target=func)
+                thr.start()
+
+                if fontname:
+                    if not d is None:
+                        d[name] = fontname
+                else:
+                    raise ValueError("Failed to get facename from %s" % name)
 
     def set_systemfonttable(self):
         """
@@ -1325,34 +1383,9 @@ class Resource(object):
         d = {}
 
         if sys.platform == "win32":
-            gdi32 = ctypes.windll.gdi32
-            winplatform = sys.getwindowsversion()[3]
-            self.facenames = set(wx.FontEnumerator().GetFacenames())
-
-            for name, path in self.fontpaths.iteritems():
-                fontname = cw.util.get_truetypefontname(path)
-                d["gothic"],d["uigothic"],d["mincho"],d["pmincho"],d["pgothic"] = ((u"Ume Hy Gothic",)*5)
-
-                def func():
-                    if winplatform == 2:
-                        gdi32.AddFontResourceExA(path, 0x10, 0)
-                    else:
-                        gdi32.AddFontResourceA(path)
-                        user32 = ctypes.windll.user32
-                        HWND_BROADCAST = 0xFFFF
-                        WM_FONTCHANGE = 0x001D
-                        user32.SendMessageA(HWND_BROADCAST, WM_FONTCHANGE, 0, 0)
-                thr = threading.Thread(target=func)
-                thr.start()
-
-                if fontname:
-                    d[name] = fontname
-                else:
-                    raise ValueError("Failed to get facename from %s" % name)
-
+            Resource.install_defaultfonts(self.fontpaths, self.facenames, d)
             self.facenames = set(wx.FontEnumerator().GetFacenames())
         else:
-            self.facenames = set(wx.FontEnumerator().GetFacenames())
             d["gothic"],d["uigothic"],d["mincho"],d["pmincho"],d["pgothic"] = ((u"梅Hyゴシック",)*5)
 
             for value in d.itervalues():
@@ -1388,7 +1421,7 @@ class Resource(object):
         if basename:
             fontname = self.setting().basefont[basename]
             if not fontname:
-                fontname = self.fontnames[basename]
+                fontname = self.fontnames.get(basename, "")
         return fontname, pixels, bold, bold_upscr, italic
 
     def get_wxfont(self, name="uigothic", size=None, pixelsize=None,
