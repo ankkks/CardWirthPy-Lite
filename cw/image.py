@@ -1080,7 +1080,7 @@ class CharacterCardImage(CardImage):
 
     def _put_enhanceimg(self, seq, bmp, value, duration):
         size = (bmp.get_width(), bmp.get_height())
-        if value >= 10:
+        if value >= 11:
             seq.append((pygame.Color(255, 255, 255), size))
         elif value == 10:
             seq.append((pygame.Color(255, 0, 0), size))
@@ -1091,7 +1091,7 @@ class CharacterCardImage(CardImage):
         elif value >= 1:
             seq.append((pygame.Color(79, 0, 0), size))
         elif value <= -11:
-            seq.append((pygame.Color(0, 0, 51), size))
+            seq.append((pygame.Color(255, 255, 255), size))
         elif value == -10:
             seq.append((pygame.Color(0, 0, 51), size))
         elif value <= -7:

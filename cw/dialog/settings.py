@@ -499,8 +499,8 @@ class SettingsPanel(wx.Panel):
         else:
             setting.wheelup_operation = cw.setting.WHEEL_SELECTION
 
-        value = self.pane_ui.cb_show_btndesc.GetValue()
-        setting.show_btndesc = value
+        #value = self.pane_ui.cb_show_btndesc.GetValue()
+        #setting.show_btndesc = value
         value = self.pane_ui.cb_statusbarmask.GetValue()
         if value <> setting.statusbarmask:
             setting.statusbarmask = value
@@ -2422,7 +2422,7 @@ class UISettingPanel(wx.Panel):
         # 通知オプション
         self.box_notice = wx.StaticBox(self, -1, u"通知と解説")
         self.cb_show_experiencebar = wx.CheckBox(self, -1, u"キャラクター情報に次のレベルアップまでの割合を表示")
-        self.cb_show_btndesc = wx.CheckBox(self, -1, u"ステータスバーで解説を表示する")
+        #self.cb_show_btndesc = wx.CheckBox(self, -1, u"ステータスバーで解説を表示する")
         self.cb_statusbarmask = wx.CheckBox(self, -1, u"イベント中にステータスバーの色を変える")
         self.cb_blink_statusbutton = wx.CheckBox(self, -1, u"通知のあるステータスボタンを点滅させる")
         self.cb_blink_partymoney = wx.CheckBox(self, -1, u"所持金変更時の視覚効果")
@@ -2482,7 +2482,7 @@ class UISettingPanel(wx.Panel):
         #self.cb_protect_staredcard.SetValue(setting.protect_staredcard)
         self.cb_protect_premiercard.SetValue(setting.protect_premiercard)
 
-        self.cb_show_btndesc.SetValue(setting.show_btndesc)
+        #self.cb_show_btndesc.SetValue(setting.show_btndesc)
         self.cb_statusbarmask.SetValue(setting.statusbarmask)
         self.cb_blink_statusbutton.SetValue(setting.blink_statusbutton)
         self.cb_blink_partymoney.SetValue(setting.blink_partymoney)
@@ -2526,7 +2526,7 @@ class UISettingPanel(wx.Panel):
         #self.cb_protect_staredcard.SetValue(setting.protect_staredcard_init)
         self.cb_protect_premiercard.SetValue(setting.protect_premiercard_init)
 
-        self.cb_show_btndesc.SetValue(setting.show_btndesc_init)
+        #self.cb_show_btndesc.SetValue(setting.show_btndesc_init)
         self.cb_statusbarmask.SetValue(setting.statusbarmask_init)
         self.cb_blink_statusbutton.SetValue(setting.blink_statusbutton_init)
         self.cb_blink_partymoney.SetValue(setting.blink_partymoney_init)
@@ -2611,7 +2611,7 @@ class UISettingPanel(wx.Panel):
         bsizer_battle.Add(self.cb_showstatustime, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
 
         bsizer_notice.Add(self.cb_show_experiencebar, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
-        bsizer_notice.Add(self.cb_show_btndesc, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        #bsizer_notice.Add(self.cb_show_btndesc, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_notice.Add(self.cb_statusbarmask, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_notice.Add(self.cb_blink_statusbutton, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
         bsizer_notice.Add(self.cb_blink_partymoney, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))

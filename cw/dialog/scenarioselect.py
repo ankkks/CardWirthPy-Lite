@@ -311,9 +311,13 @@ class ScenarioSelect(select.Select):
         self.Bind(wx.EVT_MENU, self.OnBookmark2, id=bookmarkkey)
         seq.append((wx.ACCEL_CTRL, ord('b'), bookmarkkey))
 
+        copynamekey = wx.NewId()
+        self.Bind(wx.EVT_MENU, self.OnCopyName, id=copynamekey)
+        seq.append((wx.ACCEL_CTRL, ord('C'), copynamekey))
+
         copyid = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnCopyDetail, id=copyid)
-        seq.append((wx.ACCEL_CTRL, ord('C'), copyid))
+        seq.append((wx.ACCEL_ALT, ord('C'), copyid))
 
         newfolderid = wx.NewId()
         self.Bind(wx.EVT_MENU, self.OnCreateDirBtn, id=newfolderid)
@@ -394,6 +398,19 @@ class ScenarioSelect(select.Select):
 
     def OnCopyDetail(self, event):
         s = self.get_detailtext()
+        if not s:
+            return
+        cw.cwpy.play_sound("equipment")
+        cw.util.to_clipboard(s)
+
+    def OnCopyName(self, event):
+        #PyLite;シナリオの名前だけ取得
+        if self.tree and self.tree.IsShown():
+            name = self.tree.GetItemText(self.tree.GetSelection())
+            #name = [str(i) for i in name]
+            s = u"".join(name)
+        else:
+            s = self.get_detailtext()
         if not s:
             return
         cw.cwpy.play_sound("equipment")
@@ -735,9 +752,10 @@ class ScenarioSelect(select.Select):
 
         findresult = not self.dirstack or self.dirstack[0][1] <> u"/find_result"
         self._createdir.Enable(findresult)
-        scenarioordir = bool(self.list) and not isinstance(self.list[self.index], FindResult) and findresult
+        deldir = bool(self.list) and not isinstance(self.list[self.index], FindResult)
+        scenarioordir = deldir and findresult
         self._move.Enable(scenarioordir)
-        self._delete.Enable(scenarioordir)
+        self._delete.Enable(deldir)
         self._rename.Enable(scenarioordir)
         self._opendir.Enable(self._can_opendir())
 
@@ -1336,13 +1354,6 @@ class ScenarioSelect(select.Select):
         if isinstance(header, FindResult):
             return
 
-        #TODO Liteとりあえずコピペ処置
-        findresult = not self.dirstack or self.dirstack[0][1] <> u"/find_result"
-        scenarioordir = bool(self.list) and not isinstance(self.list[self.index], FindResult) and findresult
-        if not scenarioordir:
-            cw.cwpy.play_sound("error")
-            return
-
         cw.cwpy.play_sound("signal")
         if isinstance(header, cw.header.ScenarioHeader):
             fpath = header.get_fpath()
@@ -1377,11 +1388,12 @@ class ScenarioSelect(select.Select):
             cw.util.remove(fpath, trashbox=True)
             if isdir:
                 self.db.remove_dir(fpath)
-            self.db.update(self.nowdir, cw.cwpy.setting.skintype)
+
+            if not isinstance(self.nowdir, FindResult):#PyLite 検索結果から削除した時はDBを更新しない
+                self.db.update(self.nowdir, cw.cwpy.setting.skintype)
 
             if self.tree.IsShown():
                 self._remove_treeitem(self.tree.GetSelection())
-
             self.list.pop(self.index)
             if self.list and len(self.list) <= self.index:
                 self.index = len(self.list)-1
@@ -1951,6 +1963,7 @@ class ScenarioSelect(select.Select):
             return u""
 
         lines = []
+
         if self.tree and self.tree.IsShown():
             lines.append(u"[%s]" % os.path.basename(self.scedir))
             vline = u"│"

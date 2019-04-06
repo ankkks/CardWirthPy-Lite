@@ -903,7 +903,8 @@ static PyObject *
 mul_alphaonly(PyObject *self, PyObject *args)
 {
     PyObject *string = NULL;
-    Py_ssize_t slen, alpha, i;
+    Py_ssize_t slen, i;
+    int alpha;
     unsigned char *source, *outdata;
     double alnum;
 
