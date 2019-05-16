@@ -38,6 +38,7 @@ class Frame(wx.Frame):
         cw.UP_WIN_M = cw.UP_WIN
 
         self.kill_list = []
+        self.db = None
 
         # トップフレーム
         setfullscreensize = False
@@ -472,21 +473,18 @@ class Frame(wx.Frame):
             if cw.cwpy.is_decompressing:
                 cw.cwpy.play_sound("error")
                 return
-            db = self._open_scenariodb()
+            db = self.open_scenariodb()
             if not db:
                 return
-            try:
-                headers = cw.dialog.scenarioinstall.to_scenarioheaders(paths, db, cw.cwpy.setting.skintype)
-                if not headers:
-                    return
-                cw.cwpy.play_sound("signal")
-                scedir = cw.cwpy.setting.get_scedir()
-                dlg = cw.dialog.scenarioinstall.ScenarioInstall(self, db, headers, cw.cwpy.setting.skintype, scedir)
-                self.move_dlg(dlg)
-                dlg.ShowModal()
-                self.kill_dlg(dlg)
-            finally:
-                db.close()
+            headers = cw.dialog.scenarioinstall.to_scenarioheaders(paths, db, cw.cwpy.setting.skintype)
+            if not headers:
+                return
+            cw.cwpy.play_sound("signal")
+            scedir = cw.cwpy.setting.get_scedir()
+            dlg = cw.dialog.scenarioinstall.ScenarioInstall(self, db, headers, cw.cwpy.setting.skintype, scedir)
+            self.move_dlg(dlg)
+            dlg.ShowModal()
+            self.kill_dlg(dlg)
 
     def OnDestroy(self, event):
         if self.debugger:
@@ -528,6 +526,8 @@ class Frame(wx.Frame):
         if cw.cwpy.ydata and cw.cwpy.ydata.is_changed():
             self.OnCLOSE(event)
         else:
+            if self.db:
+                self.db.close()
             self.Destroy()
 
     def OnMove(self, event):
@@ -644,7 +644,7 @@ class Frame(wx.Frame):
 
         cw.cwpy.exec_func(func)
 
-    def _open_scenariodb(self):
+    def open_scenariodb(self):
         # Scenariodb更新用のサブスレッドの処理が終わるまで待機
         while not cw.scenariodb.ScenariodbUpdatingThread.is_finished():
             pass
@@ -653,7 +653,8 @@ class Frame(wx.Frame):
             os.makedirs(u"Scenario")
 
         try:
-            return cw.scenariodb.Scenariodb()
+            self.db = cw.scenariodb.Scenariodb()
+            return self.db
         except:
             s = (u"シナリオデータベースへの接続に失敗しました。\n"
                  u"しばらくしてからもう一度やり直してください。")
@@ -663,7 +664,7 @@ class Frame(wx.Frame):
             return None
 
     def OnSCENARIOSELECT(self, event):
-        db = self._open_scenariodb()
+        db = self.open_scenariodb()
         if not db:
             return
 
@@ -976,6 +977,8 @@ class Frame(wx.Frame):
             parent.after_message()
 
         if shutdown:
+            if self.db:
+                self.db.close()
             self.Destroy()
         else:
             self.kill_dlg(dlg)

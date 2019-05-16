@@ -519,7 +519,7 @@ class _JpySubImage(cw.image.Image):
         # 透明度
         if self.paintmode == 3:
             if image.get_flags() & pygame.locals.SRCALPHA and (not isinstance(image.get_alpha(), int) or image.get_alpha() == 255):
-                image.fill((0, 0, 0, 255 - self.alpha), special_flags=pygame.locals.BLEND_RGBA_SUB)
+                image.fill((255, 255, 255, self.alpha), special_flags=pygame.locals.BLEND_RGBA_MULT)
             else:
                 image.set_alpha(self.alpha)
 
@@ -976,9 +976,6 @@ class JpdcImage(cw.image.Image):
             if rect2.colliderect(rect):
                 self.image.blit(image.subsurface(rect2.clip(rect)), cw.s((0, 0)))
 
-        if mask:
-            self.image.set_colorkey(self.image.get_at((0, 0)), pygame.locals.RLEACCEL)
-
         # 画像保存
         filename = config.get("jpdc:init", "savefilename", "")
         savecomment = config.get("jpdc:init", "savecomment", "")
@@ -1070,6 +1067,10 @@ class JpdcImage(cw.image.Image):
                 cw.cwpy.update_titlebar()
 
             cw.cwpy.background.reload_jpdcimage = False
+
+        if mask:
+            self.image = self.image.convert()
+            self.image.set_colorkey(self.image.get_at((0, 0)), pygame.locals.RLEACCEL)
 
     def wait(self, doanime):
         # 右クリックするまで待機

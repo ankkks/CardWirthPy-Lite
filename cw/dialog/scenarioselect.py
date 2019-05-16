@@ -1283,7 +1283,10 @@ class ScenarioSelect(select.Select):
         else:
             fpath = header
             name = os.path.basename(fpath)
-            s = u"「%s」の移動先を選択してください。\n大量のシナリオやサブフォルダがある場合、移動には時間がかかる可能性があります。" % name
+            if sys.platform == "win32" and name.lower().endswith(".lnk"):
+                s = u"ショートカット「%s」の移動先を選択してください。" % os.path.splitext(name)[0]
+            else:
+                s = u"「%s」の移動先を選択してください。\n大量のシナリオやサブフォルダがある場合、移動には時間がかかる可能性があります。" % name
 
         dlg = scenarioinstall.SelectScenarioDirectory(self, u"移動先の選択", s,
                                                       self.db, cw.cwpy.setting.skintype, self.scedir)
@@ -1489,6 +1492,7 @@ class ScenarioSelect(select.Select):
         self._processing = False
         if cw.cwpy.setting.show_paperandtree or not (self.tree and self.tree.IsShown()):
             self.draw(True)
+        self._update_saveddirstack()
         self.enable_btn()
 
     def _install_scenario(self, headers):
@@ -1823,7 +1827,6 @@ class ScenarioSelect(select.Select):
             self.ProcessEvent(btnevent)
 
     def OnDestroy(self, event):
-        self.db.close()
         if self.bookmarkmenu:
             self.bookmarkmenu.Destroy()
 

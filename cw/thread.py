@@ -959,6 +959,9 @@ class CWPy(_Singleton, threading.Thread):
     def update(self):
         if not self.statusbar:
             return
+
+        assert not self.event.in_cardeffectmotion
+
         # 状態の補正
         if not self.statusbar.showbuttons:
             # 通常エリアで操作可能な状態であればステータスバーのボタンを表示
@@ -2486,9 +2489,8 @@ class CWPy(_Singleton, threading.Thread):
                 else:
                     scedir = cw.cwpy.setting.get_scedir()
                     scedir = cw.util.join_paths(scedir, optscenario)
-                db = cw.scenariodb.Scenariodb()
+                db = self.frame.open_scenariodb()
                 header2 = db.search_path(scedir)
-                db.close()
                 if header2:
                     if header:
                         scepath1 = header.get_fpath()

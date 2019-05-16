@@ -1241,7 +1241,10 @@ def _get_stepvalue(key, full, updatetype, name_table, basenamelist, startindex, 
 
     if updatetype == "Fixed":
         if not basenamelist is None:
-            s = v.get_valuename(basenamelist[namelistindex].name)
+            try:#PyLite：シナリオ再開時にリストエラーが出ることがあるのでとりあえず回避
+                s = v.get_valuename(basenamelist[namelistindex].name)
+            except:
+                s = v.get_valuename()
         else:
             s = v.get_valuename()
             namelist.append(NameListItem(v, v.value))

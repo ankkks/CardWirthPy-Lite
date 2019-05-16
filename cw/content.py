@@ -2107,7 +2107,7 @@ class EffectContent(EventContentBase):
         """効果コンテント。"""
         if self.targetm == "CardTarget":
             # カードの使用対象(Wsn.2)
-            if cw.cwpy.event.in_inusecardevent:
+            if cw.cwpy.event.get_inusecard():
                 e_effectevent = cw.cwpy.event.get_effectevent()
                 e_effectevent.update_targets()
                 target = e_effectevent.targets
@@ -2186,14 +2186,17 @@ class EffectContent(EventContentBase):
                 finally:
                     if self.ignite:
                         target.remove_coupon(u"＠イベント対象")
-            elif self.ignite:
+            else:
                 assert isinstance(target, cw.sprite.card.MenuCard)
                 cw.cwpy.play_sound_with(self.eff.soundpath, subvolume=self.eff.volume, loopcount=self.eff.loopcount,
                                     channel=self.eff.channel, fade=self.eff.fade)
                 self.eff.animate(target)
                 cw.cwpy.draw(clip=target.rect)
                 cw.cwpy.event.get_effectevent().mcards.discard(target)
-                runevent = event.ignition_menucardevent(target, keycodes=self.keycodes)
+                if self.ignite:
+                    runevent = event.ignition_menucardevent(target, keycodes=self.keycodes)
+                else:
+                    runevent = False
                 if runevent:
                     runevent.run_scenarioevent()
                 else:
@@ -2871,7 +2874,7 @@ def is_addablecoupon(coupon):
     # "＠"で始まるクーポンは付与しない
     # ただしWSN形式には一部例外がある
     if coupon.startswith(u'＠'):
-        if cw.cwpy.event.in_inusecardevent:
+        if cw.cwpy.event.in_inusecardevent and cw.cwpy.event.get_inusecard():
             cardversion = cw.cwpy.event.get_inusecard().wsnversion
         else:
             cardversion = None
