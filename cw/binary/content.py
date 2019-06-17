@@ -578,6 +578,8 @@ class Content(base.CWBinaryBase):
             else:
                 f.write_bool(cw.util.str2bool(data.get("random")))
         elif tag == "Branch" and ctype == "Ability":
+            if data.getbool(".", "invert", False):
+                f.check_wsnversion("4", u"判定条件の反転")
             f.write_dword(int(data.get("value")))
             f.write_byte(base.CWBinaryBase.unconv_target_member(data.get("targetm"), f))
             f.write_dword(base.CWBinaryBase.unconv_card_physicalability(data.get("physical")))
@@ -597,16 +599,28 @@ class Content(base.CWBinaryBase):
         elif tag == "Branch" and ctype == "Cast":
             f.write_dword(int(data.get("id")))
         elif tag == "Branch" and ctype == "Item":
+            if data.getbool(".", "selectcard", False):
+                f.check_wsnversion("3", u"カードの選択")
+            if data.getbool(".", "invert", False):
+                f.check_wsnversion("4", u"判定条件の反転")
             f.write_dword(int(data.get("id")))
             f.write_dword(int(data.get("number")))
             f.write_byte(base.CWBinaryBase.unconv_target_scope(data.get("targets"), f))
         elif tag == "Branch" and ctype == "Skill":
+            if data.getbool(".", "selectcard", False):
+                f.check_wsnversion("3", u"カードの選択")
+            if data.getbool(".", "invert", False):
+                f.check_wsnversion("4", u"判定条件の反転")
             f.write_dword(int(data.get("id")))
             f.write_dword(int(data.get("number")))
             f.write_byte(base.CWBinaryBase.unconv_target_scope(data.get("targets"), f))
         elif tag == "Branch" and ctype == "Info":
             f.write_dword(int(data.get("id")))
         elif tag == "Branch" and ctype == "Beast":
+            if data.getbool(".", "selectcard", False):
+                f.check_wsnversion("3", u"カードの選択")
+            if data.getbool(".", "invert", False):
+                f.check_wsnversion("4", u"判定条件の反転")
             f.write_dword(int(data.get("id")))
             f.write_dword(int(data.get("number")))
             f.write_byte(base.CWBinaryBase.unconv_target_scope(data.get("targets"), f))
@@ -623,6 +637,8 @@ class Content(base.CWBinaryBase):
                 f.check_wsnversion("2", u"複数クーポンの指定")
             elif len(names) == 1:
                 coupon = names[0]
+            if data.getbool(".", "invert", False):
+                f.check_wsnversion("4", u"判定条件の反転")
             base.CWBinaryBase.check_coupon(f, coupon)
             f.write_string(coupon)
             f.write_dword(0)
@@ -720,6 +736,8 @@ class Content(base.CWBinaryBase):
             f.write_bool(cw.util.str2bool(data.get("average")))
             f.write_dword(int(data.get("value")))
         elif tag == "Branch" and ctype == "Status":
+            if data.getbool(".", "invert", False):
+                f.check_wsnversion("4", u"判定条件の反転")
             f.write_byte(base.CWBinaryBase.unconv_statustype(data.get("status"), f))
             f.write_byte(base.CWBinaryBase.unconv_target_member(data.get("targetm"), f))
         elif tag == "Branch" and ctype == "PartyNumber":
@@ -730,7 +748,7 @@ class Content(base.CWBinaryBase):
             pass
         elif tag == "Effect" and ctype == "Break":
             if not data.getbool("consumecard", True):
-                f.check_wsnversion("3", "カード消費の抑止")
+                f.check_wsnversion("3", u"カード消費の抑止")
         elif tag == "Call" and ctype == "Start":
             f.write_string(data.get("call"))
         elif tag == "Link" and ctype == "Package":
@@ -780,6 +798,8 @@ class Content(base.CWBinaryBase):
             f.write_string(data.get("to"))
         elif tag == "Branch" and ctype == "RandomSelect": # 1.30
             f.check_version(1.30, u"ランダム選択コンテント")
+            if data.getbool(".", "invert", False):
+                f.check_wsnversion("4", u"判定条件の反転")
             f.write_byte(base.CWBinaryBase.unconv_castranges(data.find("CastRanges")))
             levelmin = data.get("levelmin", None)
             levelmax = data.get("levelmax", None)
@@ -799,6 +819,8 @@ class Content(base.CWBinaryBase):
             f.check_version(1.50, u"キーコード所持分岐コンテント")
             if data.getbool(".", "selectcard", False):
                 f.check_wsnversion("3", u"カードの選択")
+            if data.getbool(".", "invert", False):
+                f.check_wsnversion("4", u"判定条件の反転")
             f.write_byte(base.CWBinaryBase.unconv_keycoderange(data.get("targetkc"), f))
             # Wsn.1方式
             etype = data.get("effectCardType", "All")
