@@ -901,7 +901,7 @@ class Event(object):
 
         if not (isinstance(self.error, AreaChangeError) or\
                 isinstance(self.error, ScenarioBadEndError)) and\
-                cw.cwpy.status <> "Title":
+                cw.cwpy.status not in ("Title", "GameOver"):
             if not cw.cwpy.is_gameover() and not cw.cwpy.event.is_stoped():
                 cw.cwpy.show_party()
                 cw.cwpy.disposition_pcards()

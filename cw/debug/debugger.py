@@ -1224,8 +1224,11 @@ class Debugger(wx.Frame):
         cw.cwpy.exec_func(cw.cwpy.hide_party)
 
     def OnBgmTool(self, event):
+        sdata = cw.cwpy.ydata.losted_sdata if cw.cwpy.ydata and cw.cwpy.ydata.losted_sdata else cw.cwpy.sdata
+        if not sdata:
+            return
         choices = [u"[BGM停止]"]
-        choices.extend(cw.cwpy.sdata.get_bgmpaths())
+        choices.extend(sdata.get_bgmpaths())
         dlg = wx.SingleChoiceDialog(
             self, u"再生するBGMを選択してください。",
             u"BGMの選択", choices)
@@ -1237,11 +1240,12 @@ class Debugger(wx.Frame):
             else:
                 path = ""
             def func(path):
-                if not cw.cwpy.is_playingscenario():
-                    path = cw.util.get_materialpathfromskin(path, cw.M_MSC)
-                for music in cw.cwpy.music:
-                    music.stop()
-                cw.cwpy.music[0].play(path)
+                fpath = cw.util.get_materialpath(path, cw.M_MSC, scedir=sdata.scedir, system=False,
+                                                 findskin=True)
+                if fpath:
+                    for music in cw.cwpy.music:
+                        music.stop()
+                    cw.cwpy.music[0].play(path)
             cw.cwpy.exec_func(func, path)
 
         dlg.Destroy()
@@ -2527,15 +2531,16 @@ class StackTraceView(wx.ListCtrl, wx.lib.mixins.listctrl.ListCtrlAutoWidthMixin)
                     self.list.append((nowrunning, cur_content))
                     self._has_curcontent = True
 
-            nowrunning = cw.cwpy.event.get_nowrunningevent()
-            event = cw.cwpy.event.get_event()
+            nowrunning = cw.cwpy.event.get_nowrunningevent() if cw.cwpy.is_playingscenario() else None
+            event = cw.cwpy.event.get_event() if cw.cwpy.is_playingscenario() else None
             if event:
                 e = event.cur_content
                 if not e is None and e.tag == "ContentsLine":
                     e = e[event.line_index]
             else:
                 e = None
-            cw.cwpy.frame.exec_func(func, self, nowrunning, e, cw.cwpy.event.stackinfo[:cw.cwpy.event.stackinfo_len])
+            stackinfo = cw.cwpy.event.stackinfo[:cw.cwpy.event.stackinfo_len] if cw.cwpy.is_playingscenario() else []
+            cw.cwpy.frame.exec_func(func, self, nowrunning, e, stackinfo)
         cw.cwpy.exec_func(func, self)
 
     def _get_item(self, evt):
@@ -2615,6 +2620,8 @@ class StackTraceView(wx.ListCtrl, wx.lib.mixins.listctrl.ListCtrlAutoWidthMixin)
         assert threading.currentThread() is cw.cwpy
         if cw.cwpy.frame.debugger is None:
             return
+        if not cw.cwpy.is_playingscenario():
+            return
 
         def func(self, item):
             if not self:
@@ -2635,6 +2642,8 @@ class StackTraceView(wx.ListCtrl, wx.lib.mixins.listctrl.ListCtrlAutoWidthMixin)
 
     def pop_stackinfo_cwpy(self):
         assert threading.currentThread() is cw.cwpy
+        if not cw.cwpy.is_playingscenario():
+            return
 
         def func(self):
             if not self:
@@ -2651,6 +2660,8 @@ class StackTraceView(wx.ListCtrl, wx.lib.mixins.listctrl.ListCtrlAutoWidthMixin)
 
     def replace_stackinfo_cwpy(self, index, item):
         assert threading.currentThread() is cw.cwpy
+        if not cw.cwpy.is_playingscenario():
+            return
 
         def func(self, index, item):
             if not self:
@@ -2677,6 +2688,8 @@ class StackTraceView(wx.ListCtrl, wx.lib.mixins.listctrl.ListCtrlAutoWidthMixin)
     def refresh_activeitem(self, nowrunning, cur_content):
         assert cw.cwpy <> threading.currentThread()
         if cur_content is None:
+            return
+        if not cw.cwpy.is_playingscenario():
             return
         name, icon = self._get_info(cur_content)
         if self._has_curcontent:

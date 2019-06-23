@@ -6,7 +6,7 @@ import bisect
 
 import pygame
 from pygame.locals import K_RETURN, K_ESCAPE, K_BACKSPACE, K_BACKSLASH, K_LEFT, K_RIGHT, K_UP, K_DOWN,\
-                          K_F1, K_F2, K_F3, K_F4, K_F5, K_F6, K_F7, K_F9,\
+                          K_F1, K_F2, K_F3, K_F4, K_F5, K_F6, K_F7, K_F8, K_F9,\
                           K_LSHIFT, K_RSHIFT, K_PRINT, KEYUP, KEYDOWN,\
                           MOUSEBUTTONUP, MOUSEBUTTONDOWN, USEREVENT
 
@@ -74,6 +74,9 @@ class EventHandler(object):
                 # F7キー
                 elif event.key == K_F7:
                     self.f7key_event()
+                # F8キー
+                elif event.key == K_F8:
+                    self.f8key_event()
                 # F9キー
                 elif event.key == K_F9:
                     self.f9key_event()
@@ -493,6 +496,20 @@ class EventHandler(object):
             cw.cwpy.statusbar.change(showbuttons=cw.cwpy.statusbar.showbuttons)
             cw.cwpy.draw(clip=cw.s(pygame.Rect(cw.RECT_STATUSBAR)))
 
+    def f8key_event(self):
+        """
+        F8キーイベント。添付テキストを開く。
+        """
+        if not self.can_input():
+            return
+        if not cw.cwpy.is_playingscenario() and not (cw.cwpy.ydata and cw.cwpy.ydata.losted_sdata):
+            return
+        sdata = cw.cwpy.ydata.losted_sdata if cw.cwpy.ydata and cw.cwpy.ydata.losted_sdata else cw.cwpy.sdata
+        if sdata.instructions:
+            cw.cwpy.call_modaldlg("INSTRUCTIONS")
+        else:
+            pass
+
     def f9key_event(self):
         """
         F9キーイベント。緊急避難。
@@ -708,6 +725,9 @@ class EventHandlerForMessageWindow(EventHandler):
                 # F7キー
                 elif event.key == K_F7:
                     self.f7key_event()
+                # F8キー
+                elif event.key == K_F8:
+                    self.f8key_event()
                 # F9キー
                 elif event.key == K_F9:
                     self.f9key_event()
@@ -1162,6 +1182,9 @@ class EventHandlerForBacklog(EventHandler):
                 # F7キー
                 elif event.key == K_F7:
                     self.f7key_event()
+                # F8キー
+                elif event.key == K_F8:
+                    self.f8key_event()
                 # F9キー
                 elif event.key == K_F9:
                     self.f9key_event()
@@ -1528,6 +1551,9 @@ class EventHandlerForEffectBooster(EventHandler):
                 # F7キー
                 elif event.key == K_F7:
                     self.f7key_event()
+                # F8キー
+                elif event.key == K_F8:
+                    self.f8key_event()
                 # F9キー
                 elif event.key == K_F9:
                     self.f9key_event()

@@ -86,6 +86,7 @@ class SystemData(object):
         self.in_endprocess = False
         self.background_image_mtime = {}
         self.moved_mcards = {}
+        self.instructions = []
 
         # "file.x2.bmp"などのスケーリングされたイメージを読み込むか
         self.can_loaded_scaledimage = True
@@ -252,7 +253,7 @@ class SystemData(object):
     def start(self):
         pass
 
-    def end(self):
+    def end(self, complete=False, failure=False):
         pass
 
     def save_breakpoints(self):
@@ -724,6 +725,9 @@ class ScenarioData(SystemData):
         # 特殊文字の画像パスの集合(正規表現)
         self._r_specialchar = re.compile(r"^font_(.)[.]bmp$")
 
+        # 添付テキストのパス
+        self.instructions = []
+
         self._areas = {}
         self._battles = {}
         self._packs = {}
@@ -1087,6 +1091,7 @@ class ScenarioData(SystemData):
         self._items.clear()
         self._skills.clear()
         self._beasts.clear()
+        self.instructions = []
 
         for dpath, _dnames, fnames in os.walk(self.tempdir):
             isdatadir = os.path.basename(dpath).lower() in _WSN_DATA_DIRS
@@ -1094,6 +1099,8 @@ class ScenarioData(SystemData):
                 continue
             for fname in fnames:
                 lf = fname.lower()
+                if lf.endswith(".txt"):
+                    self.instructions.append(cw.util.join_paths(dpath, fname))
 
                 if xmlonly and not lf.endswith(".xml"):
                     continue
@@ -1252,7 +1259,7 @@ class ScenarioData(SystemData):
         for header in cw.cwpy.ydata.party.get_allcardheaders():
             header.set_scenariostart()
 
-    def end(self):
+    def end(self, complete=False, failure=False):
         """
         シナリオの正規終了時の共通処理をまとめたもの。
         冒険の中断時やF9時には呼ばない。
@@ -1735,6 +1742,10 @@ class YadoData(object):
         self.skindirname = self.environment.gettext("Property/Skin", cw.cwpy.setting.skindirname)
         skintype = self.environment.gettext("Property/Type", cw.cwpy.setting.skintype)
         skinpath = cw.util.join_paths("Data/Skin", self.skindirname, "Skin.xml")
+
+        # イメージ
+        self.imgpaths = cw.image.get_imageinfos(self.environment.find("Property"))
+
         if not self.skindirname:
             # スキン指定無し
             supported_skin = False
@@ -1813,8 +1824,8 @@ class YadoData(object):
 
         self.yadodb.close()
 
-        # ゲームオーバーして破棄されたパーティ
-        self.losted_party = None
+        # ゲームオーバーに至ったシナリオのデータ
+        self.losted_sdata = None
 
         # ブックマーク
         self.bookmarks = []
@@ -3162,10 +3173,8 @@ class Party(object):
         for member in self.members:
             member.write_xml()
 
-    def lost1(self):
+    def lost(self):
         """ゲームオーバー時にパーティ全体を破棄する。
-        こちらはシナリオ終了時のメンバをアルバムに載せる処理の
-        実行前に実施し、あらかじめメンバのロスト処理を行う。
         """
         if cw.cwpy.ydata:
             cw.cwpy.ydata.changed()
@@ -3173,12 +3182,6 @@ class Party(object):
             pcard.lost()
         self.members = []
 
-    def lost2(self):
-        """ゲームオーバー時にパーティ全体を破棄する。
-        こちらの処理はゲームオーバー後「続ける」を選択した時のみ行われる。
-        """
-        if cw.cwpy.ydata:
-            cw.cwpy.ydata.changed()
         for card in self.backpack[:]:
             cw.cwpy.trade("TRASHBOX", header=card, from_event=True, sort=False, party=self)
 

@@ -234,6 +234,7 @@ class Frame(wx.Frame):
             "PARTYEDIT",   # パーティ情報ダイアログ
             "BATTLECOMMAND",  # 行動選択ダイアログ
             "SETTINGS",  # 設定ダイアログ
+            "INSTRUCTIONS",  # 添付テキストダイアログ
             "F9",  # 緊急避難ダイアログ
             )
         self.dlgeventtypes = {}
@@ -930,6 +931,22 @@ class Frame(wx.Frame):
         dlg.ShowModal()
         self.kill_dlg(dlg)
 
+    def OnINSTRUCTIONS(self, event):
+        seq = []
+        sdata = cw.cwpy.ydata.losted_sdata if cw.cwpy.ydata and cw.cwpy.ydata.losted_sdata else cw.cwpy.sdata
+        for fpath in sdata.instructions:
+            with open(fpath, "rb") as f:
+                content = f.read()
+                f.close()
+            fname = os.path.basename(fpath)
+            seq.append(cw.dialog.text.ReadmeData(fname, content))
+
+        cw.cwpy.play_sound("click")
+        dlg = cw.dialog.text.Readme(self, cw.cwpy.msgs["description"], seq)
+        self.move_dlg(dlg)
+        dlg.ShowModal()
+        self.kill_dlg(dlg)
+
     def OnF9(self, event):
         s = (cw.cwpy.msgs["f9_message"])
         dlg = cw.dialog.message.YesNoMessage(self, cw.cwpy.msgs["message"], s)
@@ -1229,11 +1246,20 @@ class Frame(wx.Frame):
 
                     rx, ry, rw, rh = xx - 2, yy - 2, ww + 4, bmp.GetHeight() + 4 + cw.s(pixelsize + 2) + 2
                     mem.DrawRectangle(rx, ry, rw, rh)
+                    #mem.SetClippingRegion(rx, ry, rw, rh)
+                    mem.SetClippingRect(wx.Rect(rx, ry, rw, rh))#PyLite
                     if cw.cwpy.setting.ssinfobackimage and os.path.isfile(cw.cwpy.setting.ssinfobackimage):
-                        mem.SetClippingRect(wx.Rect(rx, ry, rw, rh))
                         backimage = cw.util.load_wxbmp(cw.cwpy.setting.ssinfobackimage, False)
                         cw.util.fill_bitmap(mem, cw.s(backimage), csize=(rw, rh), cpos=(rx, ry))
-                        mem.DestroyClippingRegion()
+                    else:
+                        fpath = cw.util.find_resource(cw.util.join_paths(cw.cwpy.skindir,
+                                                                         "Resource/Image/Other/SCREENSHOT_HEADER"),
+                                                      cw.M_IMG)
+                        if fpath:
+                            backimage = cw.util.load_wxbmp(fpath, False)
+                            cw.util.fill_bitmap(mem, cw.s(backimage), csize=(rw, rh), cpos=(rx, ry))
+                    mem.DestroyClippingRegion()
+
                     mem.DrawBitmap(bmp, xx, yy + cw.s(pixelsize + 2) + 2, False)
 
                     cw.util.draw_antialiasedtext(mem, title, int(xx + cw.s(5)), int(yy + 1),
@@ -1255,6 +1281,7 @@ class Frame(wx.Frame):
 
     def change_cardcontrolarea(self):
         """カード移動操作を行う特殊エリアに移動。"""
+        #PyLite TODO:ダイアログの重さの原因
         if cw.cwpy.areaid in cw.AREAS_TRADE:
             return cw.cwpy.areaid
         elif cw.cwpy.status == "Yado":

@@ -192,6 +192,10 @@ class CWPy(_Singleton, threading.Thread):
         # アニメーション中のスプライト
         self.animations = set()
 
+        # 一時的に全てのカード速度を上書きする
+        # -1の時は無効
+        self.force_dealspeed = -1
+
         # JPDC撮影などで表示内容が変化するべきスプライト
         self.file_updates = set()
         # 背景の更新が発生しているか
@@ -496,12 +500,19 @@ class CWPy(_Singleton, threading.Thread):
             if self.ydata.party:
                 d["party"] = self.ydata.party.name
 
-        if self.status.startswith("Scenario"):
-            d["scenario"] = self.sdata.name
-            d["author"] = self.sdata.author
-            d["path"] = self.sdata.fpath
-            d["file"] = os.path.basename(self.sdata.fpath)
-            versionhint = self.sdata.get_versionhint()
+        if self.status.startswith("Scenario") or self.status == "GameOver":
+            sdata = self.ydata.losted_sdata if self.ydata and self.ydata.losted_sdata else self.sdata
+            d["scenario"] = sdata.name
+            d["author"] = sdata.author
+            d["path"] = sdata.fpath
+            d["file"] = os.path.basename(sdata.fpath)
+            versionhint = sdata.get_versionhint()
+            #PyLite todo nen
+            #d["scenario"] = self.sdata.name
+            #d["author"] = self.sdata.author
+            #d["path"] = self.sdata.fpath
+            #d["file"] = os.path.basename(self.sdata.fpath)
+            #versionhint = self.sdata.get_versionhint()
             d["compatibility"] = self.sct.to_basehint(versionhint)
 
         if with_datetime:
@@ -1779,7 +1790,13 @@ class CWPy(_Singleton, threading.Thread):
         isbattle = "ScenarioBattle" in (name, self.status)
         quickhide = (self.setting.all_quickdeal and not isbattle)
         self.status = name
-        self.hide_cards(True, quickhide=quickhide)
+        force_dealspeed = self.force_dealspeed
+        if quickhide:
+            self.force_dealspeed = self.setting.dealspeed if self.setting.quickdeal else -1
+        try:
+            self.hide_cards(True, quickhide=quickhide)
+        finally:
+            self.force_dealspeed = force_dealspeed
         self.pre_areaids = []
         self.pre_dialogs = []
         self.pre_mcards = []
@@ -1859,6 +1876,10 @@ class CWPy(_Singleton, threading.Thread):
         """タイトル画面へ遷移。"""
         del self.pre_dialogs[:]
         del self.pre_areaids[:]
+        if self.ydata and self.ydata.losted_sdata:
+            self.ydata.losted_sdata.end(failure=True)
+            self.ydata.losted_sdata = None
+            self.load_party(None, chgarea=False)
         self.set_status("Title")
         self._init_attrs()
         self.update_titlebar()
@@ -1887,9 +1908,12 @@ class CWPy(_Singleton, threading.Thread):
     def set_yado(self):
         """宿画面へ遷移。"""
         # ゲームオーバーしたパーティの破棄処理を行う
-        if self.ydata.losted_party:
-            self.ydata.losted_party.lost2()
-            self.ydata.losted_party = None
+        if self.ydata and self.ydata.losted_sdata:
+            self.ydata.party.lost()
+            self.ydata.losted_sdata.end()
+            self.ydata.losted_sdata = None
+            self.load_party(None, chgarea=False)
+
         self.set_status("Yado")
         self.background.clear_background()
         msglog = self.sdata.backlog
@@ -1996,7 +2020,7 @@ class CWPy(_Singleton, threading.Thread):
                             s = u"シナリオに開始エリアが設定されていません。"
                             self.call_modaldlg("ERROR", text=s)
                             self.check_level(True)
-                            self.sdata.end()
+                            self.sdata.end(failure=True)
                             self.set_yado()
                             return
 
@@ -2006,7 +2030,7 @@ class CWPy(_Singleton, threading.Thread):
                                 s = u"対応していないWSNバージョン(%s)のシナリオです。\n正常に動作しない可能性がありますが、開始しますか？" % (dataversion)
                                 self.call_modaldlg("YESNO", text=s)
                                 if self.get_yesnoresult() <> wx.ID_OK:
-                                    self.sdata.end()
+                                    self.sdata.end(failure=True)
                                     self.set_yado()
                                     return
 
@@ -2021,7 +2045,13 @@ class CWPy(_Singleton, threading.Thread):
                                 if music.path <> music.get_path(musicpath, inusecard):
                                     music.stop()
 
-                        self.change_area(areaid, not loaded, loaded, quickdeal=quickdeal, doanime=not resume, resume=True)
+                        force_dealspeed = self.force_dealspeed
+                        if quickdeal:
+                            self.force_dealspeed = self.setting.dealspeed if self.setting.quickdeal else -1
+                        try:
+                            self.change_area(areaid, not loaded, loaded, quickdeal=quickdeal, doanime=not resume, resume=True)
+                        finally:
+                            self.force_dealspeed = force_dealspeed
 
                         if musicpaths:
                             for i, (musicpath, subvolume, loopcount, inusecard) in enumerate(musicpaths):
@@ -2063,7 +2093,6 @@ class CWPy(_Singleton, threading.Thread):
 
     def set_gameover(self):
         """ゲームオーバー画面へ遷移。"""
-        cw.cwpy.sdata.in_endprocess = True
 
         cw.cwpy.advlog.gameover()
         self.hide_party()
@@ -2078,10 +2107,8 @@ class CWPy(_Singleton, threading.Thread):
         pygame.event.clear()
         if self._need_disposition:
             self.disposition_pcards()
-        party = self.ydata.party
-        party.lost1()
+
         del self.sdata.friendcards[:]
-        self.sdata.end()
 
         for music in self.music:
             music.stop()
@@ -2090,11 +2117,9 @@ class CWPy(_Singleton, threading.Thread):
                 self.lastsound_scenario[i].stop(True)
                 self.lastsound_scenario[i] = None
 
-        self.ydata.load_party(None)
-        self.ydata.losted_party = party
-        msglog = self.sdata.backlog
+        self.ydata.losted_sdata = self.sdata
         self.sdata = cw.data.SystemData()
-        self.sdata.backlog = msglog
+        self.sdata.backlog = self.ydata.losted_sdata.backlog
         self.update_titlebar()
         self.statusbar.change()
         self.change_area(1, nocheckvisible=True)
@@ -2131,7 +2156,7 @@ class CWPy(_Singleton, threading.Thread):
 
         self.sdata.in_endprocess = True
 
-        cw.cwpy.advlog.f9()
+        self.advlog.f9()
         self.sdata.is_playing = False
         self.statusbar.change(False)
         self.pre_dialogs = []
@@ -2401,8 +2426,11 @@ class CWPy(_Singleton, threading.Thread):
 
         def end_scenario():
             # シナリオを強制終了
-            if self.is_playingscenario():
-                self.sdata.end()
+            if self.ydata and self.ydata.losted_sdata:
+                self.ydata.losted_sdata.end(failure=True)
+                self.ydata.losted_sdata = None
+            elif self.is_playingscenario():
+                self.sdata.end(failure=True)
             self.sdata.is_playing = False
 
             self.exec_func(init_resources)
@@ -2479,6 +2507,7 @@ class CWPy(_Singleton, threading.Thread):
                 self.lastsound_scenario[i] = None
         self.ydata = cw.data.YadoData(self.yadodir, self.tempdir)
         self.setting.lastyado = yadodirname
+        self.setting.insert_yadoorder(yadodirname)
 
         if self.ydata.party:
             header = self.ydata.party.get_sceheader()
@@ -2558,6 +2587,7 @@ class CWPy(_Singleton, threading.Thread):
         """
         if not (self.setting.quickdeal or self.setting.all_quickdeal):
             quickdeal = False
+            self.force_dealspeed = -1
         self._dealing = True
 
         if self.is_autospread():
@@ -2613,6 +2643,7 @@ class CWPy(_Singleton, threading.Thread):
         """
         if not (self.setting.quickdeal or self.setting.all_quickdeal):
             quickhide = False
+            self.force_dealspeed = -1
         self._dealing = True
         if updatelist:
             # 選択を解除する
@@ -2734,10 +2765,15 @@ class CWPy(_Singleton, threading.Thread):
             updates.append(mcard)
         if deal:
             if cw.cwpy.setting.all_quickdeal:
-                cw.animation.animate_sprites(updates, "hide")
-                for mcard in updates:
-                    mcard.update_image()
-                cw.animation.animate_sprites(updates, "deal")
+                force_dealspeed = self.force_dealspeed
+                self.force_dealspeed = self.setting.dealspeed if self.setting.quickdeal else -1
+                try:
+                    cw.animation.animate_sprites(updates, "hide")
+                    for mcard in updates:
+                        mcard.update_image()
+                    cw.animation.animate_sprites(updates, "deal")
+                finally:
+                    self.force_dealspeed = force_dealspeed
             else:
                 for mcard in updates:
                     cw.animation.animate_sprite(mcard, "hide")
@@ -3053,8 +3089,10 @@ class CWPy(_Singleton, threading.Thread):
             oldchanged = True
 
         # 宿にいる時は常に高速切替有効
+        force_dealspeed = self.force_dealspeed
         if self.setting.all_quickdeal and not self.is_playingscenario():
             quickdeal = True
+            self.force_dealspeed = self.setting.dealspeed if self.setting.quickdeal else -1
 
         # デバッガ等で強制的にエリア移動するときは特殊エリアを解除する
         if not specialarea:
@@ -3078,7 +3116,7 @@ class CWPy(_Singleton, threading.Thread):
         self.set_sprites(bginhrt=bginhrt, ttype=ttype, doanime=doanime, data=data,
                          nocheckvisible=nocheckvisible)
 
-        if not self.is_playingscenario() and not self.is_showparty:
+        if not self.is_playingscenario() and not self.is_showparty and self.status != "GameOver":
             # 宿にいる場合は常に全回復状態にする
             for pcard in self.get_pcards():
                 pcard.set_fullrecovery()
@@ -3099,6 +3137,7 @@ class CWPy(_Singleton, threading.Thread):
                 self.deal_cards(quickdeal=quickdeal, startbattle=startbattle)
             else:
                 self.draw()
+            self.force_dealspeed = force_dealspeed
 
             if self.is_playingscenario() and self.sdata.in_f9:
                 # カード描画中にF9された場合はここへ来る
@@ -3114,6 +3153,7 @@ class CWPy(_Singleton, threading.Thread):
             self.sdata.start_event(keynum=1)
         else:
             self.deal_cards(quickdeal=quickdeal, startbattle=startbattle)
+            self.force_dealspeed = force_dealspeed
             if not startbattle and not pygame.event.peek(pygame.locals.USEREVENT):
                 self.show_party()
 
@@ -3257,7 +3297,12 @@ class CWPy(_Singleton, threading.Thread):
                 if cw.cwpy.ydata:
                     changed = cw.cwpy.ydata.is_changed()
                 self.clear_fcardsprites()
-                self.change_area(areaid, quickdeal=True, specialarea=True)
+                force_dealspeed = self.force_dealspeed
+                self.force_dealspeed = self.setting.dealspeed if self.setting.quickdeal else -1
+                try:
+                    self.change_area(areaid, quickdeal=True, specialarea=True)
+                finally:
+                    self.force_dealspeed = force_dealspeed
                 if cw.cwpy.ydata:
                     cw.cwpy.ydata._changed = changed
                 if areaid == cw.AREA_BREAKUP:
@@ -3367,7 +3412,7 @@ class CWPy(_Singleton, threading.Thread):
 
             # パーティ解散エリア解除の場合
             if self.areaid == cw.AREA_BREAKUP:
-                self.topgrp.empty() # TODO: layer
+                self.topgrp.empty()
                 for i, pcard in enumerate(self.get_pcards()):
                     pcard.index = i
                     pcard.layer = (pcard.layer[0], pcard.layer[1], i, pcard.layer[3])
@@ -3393,7 +3438,13 @@ class CWPy(_Singleton, threading.Thread):
             else:
                 if cw.cwpy.ydata:
                     changed = cw.cwpy.ydata.is_changed()
-                self.change_area(areaid, data=data, quickdeal=True, specialarea=True)
+                # PyLite: TODO :バグってそう
+                force_dealspeed = self.force_dealspeed
+                self.force_dealspeed = self.setting.dealspeed if self.setting.quickdeal else -1
+                try:
+                    self.change_area(areaid, data=data, quickdeal=True, specialarea=True)
+                finally:
+                    self.force_dealspeed = force_dealspeed
                 if cw.cwpy.ydata:
                     cw.cwpy.ydata._changed = changed
         elif self.is_battlestatus():
@@ -3465,7 +3516,7 @@ class CWPy(_Singleton, threading.Thread):
         else:
             index = -1
 
-        self.topgrp.empty() # TODO: layer
+        self.topgrp.empty()
 
         def get_image():
             return self.rsrc.pygamedialogs["REPLACE_POSITION"]
@@ -3571,7 +3622,7 @@ class CWPy(_Singleton, threading.Thread):
 
     def clear_numberofcards(self):
         """所持枚数表示を消去する。"""
-        self.topgrp.empty() # TODO: layer
+        self.topgrp.empty()
 
 
 #-------------------------------------------------------------------------------
@@ -3701,7 +3752,7 @@ class CWPy(_Singleton, threading.Thread):
         self._show_allselectedcards = False
         if user:
             if user.inusecardimg:
-                user.inusecardimg.group.remove(user.inusecardimg) # TODO: layer
+                user.inusecardimg.group.remove(user.inusecardimg)
                 self.inusecards.remove(user.inusecardimg)
                 self.add_lazydraw(user.inusecardimg.rect)
                 user.inusecardimg = None
@@ -3712,7 +3763,7 @@ class CWPy(_Singleton, threading.Thread):
                 card.inusecardimg = None
 
             for card in self.inusecards:
-                card.group.remove(card) # TODO: layer
+                card.group.remove(card)
                 self.add_lazydraw(card.rect)
             self.inusecards = []
 
@@ -3728,7 +3779,7 @@ class CWPy(_Singleton, threading.Thread):
                         cw.animation.animate_sprite(card.user, "hide")
                         cw.animation.animate_sprite(card.user, "deal")
                 else:
-                    card.group.remove(card) # TODO: layer
+                    card.group.remove(card)
                     self.inusecards.remove(card)
                     self.add_lazydraw(card.rect)
 
@@ -3911,7 +3962,7 @@ class CWPy(_Singleton, threading.Thread):
         else:
             self.cardgrp.remove(self.pcards)
             self.pcards = []
-            if loadsprites:
+            if loadsprites and self.ydata.party:
                 e = self.ydata.party.members[0]
                 pcardsnum = len(self.ydata.party.members) - 1
                 pos_noscale = (9 + 95 * pcardsnum + 9 * pcardsnum, 285)
@@ -3956,7 +4007,7 @@ class CWPy(_Singleton, threading.Thread):
                 seq.extend(self.topgrp.sprites())
             cw.animation.animate_sprites(seq, "hide")
             if breakuparea:
-                self.topgrp.empty() # TODO: layer
+                self.topgrp.empty()
 
             for pcard in pcards:
                 pcard.remove_numbercoupon()

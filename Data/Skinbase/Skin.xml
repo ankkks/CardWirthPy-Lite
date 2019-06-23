@@ -584,8 +584,7 @@
     <Message key="history_etc">etc...</Message>
     <Message key="grow_adventurer_description">キャラクターを成長させ、年代を進めます。成長によって能力値が変化する場合があります。
 現在以上に成長できない場合は、永眠させるか選択できます。</Message>
-    <Message key="delete_adventurer_description">キャラクターの登録を抹消します。手持ちのカードはカード置場に移ります。
-一定の条件を満たしている場合は、アルバムに残ります。</Message>
+    <Message key="delete_adventurer_description">キャラクターの登録を抹消します。手持ちのカードはカード置場に移ります。</Message>
     <Message key="confirm_grow">%sを%sから%sへ成長させます。よろしいですか？</Message>
     <Message key="confirm_die">%sを永眠させます。よろしいですか？</Message>
     <Message key="die_message">%sは、永遠の眠りに就きました…</Message>
@@ -782,7 +781,11 @@
     <Message key="complete">終了</Message>
     <!-- 2.0 ここまで -->
     <Message key="beast_invocation_failed">発動条件を満たしていません。</Message>
+    <Message key="centering_face">Center</Message>
     <!-- 3.0 ここまで -->
+    <Message key="select_signboard">看板の選択</Message>
+    <Message key="delete_signboard">看板の削除</Message>
+    <!-- 4.0 ここまで -->
   </Messages>
   <Settings importantdrawing="False" importantfont="False" />
 </Skin>

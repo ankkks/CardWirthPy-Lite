@@ -10,6 +10,10 @@ import pygame.locals
 import cw
 import base
 
+# 表示後に空白時間を入れる文字
+_WAIT_CHARS = u"、。，．？！｡､!?"
+# 直後に空白文字がある場合に限り表示後に空白時間を入れる文字
+_WAIT_CHARS_BEFORE_SPACE = u"・：；ー―～…‥’”）〕］｝〉》」』】｣･),.:;]}"
 
 class MessageWindow(base.CWPySprite):
     def __init__(self, text, names, imgpaths=[][:], talker=None,
@@ -67,12 +71,12 @@ class MessageWindow(base.CWPySprite):
 
         self._init_image(size_noscale, pos_noscale)
 
+        # メッセージスピード
+        self.speed = cw.cwpy.setting.messagespeed
         # 描画する文字画像のリスト作成
         self.charimgs = self.create_charimgs(init=True)
         # メッセージ描画中か否かのフラグ
         self.is_drawing = True
-        # メッセージスピード
-        self.speed = cw.cwpy.setting.messagespeed
         # SelectionBarインスタンスリスト
         self.selections = []
         # frame
@@ -184,15 +188,22 @@ class MessageWindow(base.CWPySprite):
         self._fore = None
 
     def update_scale(self):
+        self.speed = cw.cwpy.setting.messagespeed
         if self.specialchars:
             self.specialchars.reset()
         self._init_image(self.rect_noscale.size, self.rect_noscale.topleft)
+        imgslen = len(self.charimgs)
         self.charimgs = self.create_charimgs(init=False)
         self.selections = []
 
-        self.is_drawing = True
-        self.frame = 0
-        self.draw_all()
+        if self.is_drawing and 1 <= cw.cwpy.setting.messagespeed:
+            self.frame = 0
+            while imgslen < len(self.charimgs):
+                self.draw_char()
+        else:
+            self.is_drawing = True
+            self.frame = 0
+            self.draw_all()
 
     @staticmethod
     def clear_selections():
@@ -222,10 +233,6 @@ class MessageWindow(base.CWPySprite):
             self.draw_char()
 
     def draw_char(self):
-        if self.speed and self.frame % self.speed:
-            self.frame += 1
-            return
-
         if self.charimgs and not self._fore:
             if self.centering_y:
                 # 中央寄せ時の縦幅 = 描画した文字の下端-上端
@@ -239,12 +246,15 @@ class MessageWindow(base.CWPySprite):
             self._fore.fill((0, 0, 0, 0))
             self._back = self._fore.copy()
 
-        chridx = self.frame / self.speed
-        if chridx < len(self.charimgs):
+        if self.charimgs:
             font = cw.cwpy.rsrc.fonts["message"]
             lineheight = font.get_height()
 
-            pos, txtimg, txtimg2, txtimg3, linerect = self.charimgs[chridx]
+            pos, txtimg, txtimg2, txtimg3, linerect, frame = self.charimgs[0]
+            if self.frame < frame:
+                self.frame += 1
+                return
+            self.charimgs.pop(0)
             size = None
 
             if self.centering_x:
@@ -381,6 +391,10 @@ class MessageWindow(base.CWPySprite):
         images = []
         self._linerect = None
 
+        # 表示タイミング
+        frame_base = 0
+        speed = self.speed*cw.cwpy.setting.fps / cw.cwpy.setting.fps
+
         # 左右接続のために伸ばす文字
         r_join = re.compile(u"[―─＿￣]")
 
@@ -407,9 +421,19 @@ class MessageWindow(base.CWPySprite):
             self.blockbottom_noscale = max(y+height, self.blockbottom_noscale)
 
         y_noscale = yp_noscale
+        additional_wait = False
+        additional_wait_after_space = False
         for index, char in enumerate(self.text):
+            def add_wait(space, is_waitchar):
+                if not is_waitchar:
+                    if additional_wait or (additional_wait_after_space and space):
+                        wait = max(4, speed * 2)
+                        return frame_base + wait, False, False
+                return frame_base, False, False
+
             # 改行処理
             if char == "\n":
+                frame_base, additional_wait, additional_wait_after_space = add_wait(True, False)
                 cnt += 1
                 pos = posp[0], lineheight * cnt + posp[1]
                 y_noscale = lineheight_noscale * cnt + yp_noscale
@@ -443,24 +467,31 @@ class MessageWindow(base.CWPySprite):
                         h //= scr_scale
 
                         if userfont:
+                            frame_base, additional_wait, additional_wait_after_space = add_wait(False, False)
                             cpos = (pos[0]+cw.s(1), pos[1]+cw.s(1))
                             put_xinfo(pos[0], cw.s(charimg.get_width()))
                             put_topbottom(y_noscale+1, h)
-                            images.append((cpos, None, cw.s(charimg), None, self._linerect))
+                            frame_base += speed
+                            frame = round(frame_base)
+                            images.append((cpos, None, cw.s(charimg), None, self._linerect, frame))
                             pos = pos[0] + cw.s(20), pos[1]
                             skip = True
                             log_seq.append(orig_chars)
                             continue
 
+                        frame_base, additional_wait, additional_wait_after_space = add_wait(False, True)
                         put_xinfo(pos[0], cw.s(charimg.get_width()))
                         put_topbottom(y_noscale-1, lineheight_noscale+2)
                         image2 = cw.s(charimg)
                         image2 = image2.convert_alpha()
                         image2.fill(colour, special_flags=pygame.locals.BLEND_RGBA_MULT)
-                        images.append((pos, None, decorate(image2, basecolour=colour), None, self._linerect))
+                        frame_base += speed
+                        frame = round(frame_base)
+                        images.append((pos, None, decorate(image2, basecolour=colour), None, self._linerect, frame))
                         pos = pos[0] + cw.s(20), pos[1]
                         skip = True
                         log_seq.append(orig_chars)
+                        additional_wait_after_space = True
                         continue
 
                 # 文字色変更
@@ -479,6 +510,10 @@ class MessageWindow(base.CWPySprite):
 
             if char:
                 put_xinfo(pos[0], cwidth)
+            if char:
+                frame_base, additional_wait, additional_wait_after_space =\
+                    add_wait(char.isspace(), char in _WAIT_CHARS or char in _WAIT_CHARS_BEFORE_SPACE)
+
             if char and not char.isspace():
                 put_topbottom(y_noscale-1, lineheight_noscale+2)
 
@@ -507,7 +542,14 @@ class MessageWindow(base.CWPySprite):
                 if image:
                     px += (cwidth-image.get_width() + cw.s(2)) / 2
                 py += (lineheight-cheight) / 2
-                images.append(((px, py), image, image2, image3, self._linerect))
+                frame_base += speed
+                frame = int(round(frame_base))
+                images.append(((px, py), image, image2, image3, self._linerect, frame))
+
+                if char in _WAIT_CHARS:
+                    additional_wait = True
+                elif char in _WAIT_CHARS_BEFORE_SPACE:
+                    additional_wait_after_space = True
 
             pos = pos[0] + cwidth, pos[1]
 
@@ -656,12 +698,12 @@ class SelectWindow(MessageWindow):
         self.talker = None
         self.talker_name = None
         self._init_image(size_noscale, pos_noscale)
+        # メッセージスピード
+        self.speed = cw.cwpy.setting.messagespeed
         # 描画する文字画像のリスト作成
         self.charimgs = self.create_charimgs((14, 9), init=True)
         # frame
         self.frame = 0
-        # メッセージスピード
-        self.speed = cw.cwpy.setting.messagespeed or 1
         # メッセージ描画中か否かのフラグ
         self.is_drawing = True
         # SelectionBarインスタンスリスト

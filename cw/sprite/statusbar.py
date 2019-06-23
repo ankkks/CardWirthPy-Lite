@@ -134,7 +134,7 @@ class StatusBar(base.CWPySprite):
                 lmargin += 123
             self._create_partymoney((cw.s(474) - rmargin, cw.s(6)))
             rmargin += cw.s(34)
-            if showbuttons and cw.cwpy.is_playingscenario() and cw.cwpy.sdata.has_infocards():
+            if cw.cwpy.setting.display_noticeinfo and cw.cwpy.is_playingscenario() and cw.cwpy.sdata.has_infocards():
                 self._create_infocards((cw.s(474) - rmargin, cw.s(2)))
         elif cw.cwpy.is_battlestatus():
             if cw.cwpy.setting.show_roundautostartbutton:

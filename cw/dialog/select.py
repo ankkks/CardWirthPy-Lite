@@ -654,7 +654,7 @@ class YadoSelect(MultiViewSelect):
         self._bg = None
 
         # 宿情報
-        self._names, self._list, self._list2, self._skins, self._classic, self._isshortcuts = self.get_yadolist()
+        self._names, self._list, self._list2, self._skins, self._classic, self._isshortcuts, self._imgpaths = self.get_yadolist()
         self.index = 0
         for index, path in enumerate(self._list):
             if cw.cwpy.setting.lastyado == os.path.basename(path):
@@ -674,14 +674,15 @@ class YadoSelect(MultiViewSelect):
         font = cw.cwpy.rsrc.get_wxfont("paneltitle2", pixelsize=cw.wins(13))
         self.sort_label = wx.StaticText(self, -1, label=cw.cwpy.msgs["sort_title"])
         self.sort_label.SetFont(font)
-        choices = (cw.cwpy.msgs["sort_name"],
+        choices = (cw.cwpy.msgs["sort_no"],
+                   cw.cwpy.msgs["sort_name"],
                    cw.cwpy.msgs["skin"])
         self.sort = wx.Choice(self, size=(-1, cw.wins(20)), choices=choices)
         self.sort.SetFont(cw.cwpy.rsrc.get_wxfont("combo", pixelsize=cw.wins(14)))
         if cw.cwpy.setting.sort_yado == "Name":
-            self.sort.Select(0)
-        elif cw.cwpy.setting.sort_yado == "Skin":
             self.sort.Select(1)
+        elif cw.cwpy.setting.sort_yado == "Skin":
+            self.sort.Select(2)
         else:
             self.sort.Select(0)
 
@@ -853,12 +854,12 @@ class YadoSelect(MultiViewSelect):
             return
 
         index = self.sort.GetSelection()
-        if index == 0:
+        if index == 1:
             sorttype = "Name"
-        elif index == 1:
+        elif index == 2:
             sorttype = "Skin"
         else:
-            sorttype = "Name"
+            sorttype = "None"
 
         if cw.cwpy.setting.sort_yado <> sorttype:
             cw.cwpy.play_sound("page")
@@ -869,11 +870,11 @@ class YadoSelect(MultiViewSelect):
     def _sort_objs(self, objs):
         sorttype = cw.cwpy.setting.sort_yado
         if sorttype == "Name":
-            cw.util.sort_by_attr(objs, "name", "skin", "yadodir")
+            cw.util.sort_by_attr(objs, "name", "skin", "order", "yadodir")
         elif sorttype == "Skin":
-            cw.util.sort_by_attr(objs, "skin", "name", "yadodir")
+            cw.util.sort_by_attr(objs, "skin", "name", "order", "yadodir")
         else:
-            cw.util.sort_by_attr(objs, "name", "skin", "yadodir")
+            cw.util.sort_by_attr(objs, "order", "name", "skin", "yadodir")
 
     def OnMouseWheel(self, event):
         if cw.util.has_modalchild(self):
@@ -890,16 +891,21 @@ class YadoSelect(MultiViewSelect):
 
     def _list_to_obj(self):
         class YadoObj(object):
-            def __init__(self, name, yadodir, advnames, skin, classic, isshortcut):
+            def __init__(self, name, yadodir, advnames, skin, classic, isshortcut, imgpaths):
                 self.name = name
                 self.yadodir = yadodir
                 self.advnames = advnames
                 self.skin = skin
                 self.classic = classic
                 self.isshortcut = isshortcut
+                if isshortcut:
+                    self.order = cw.cwpy.setting.yado_order.get(os.path.basename(isshortcut), 0x7fffffff)
+                else:
+                    self.order = cw.cwpy.setting.yado_order.get(os.path.basename(yadodir), 0x7fffffff)
+                self.imgpaths = imgpaths
 
         seq = []
-        for t in zip(self._names, self._list, self._list2, self._skins, self._classic, self._isshortcuts):
+        for t in zip(self._names, self._list, self._list2, self._skins, self._classic, self._isshortcuts, self._imgpaths):
             seq.append(YadoObj(*t))
         return seq
 
@@ -910,6 +916,7 @@ class YadoSelect(MultiViewSelect):
         self.skins = []
         self.classic = []
         self.isshortcuts = []
+        self.imgpaths = []
         for obj in objs:
             self.names.append(obj.name)
             self.list.append(obj.yadodir)
@@ -917,6 +924,7 @@ class YadoSelect(MultiViewSelect):
             self.skins.append(obj.skin)
             self.classic.append(obj.classic)
             self.isshortcuts.append(obj.isshortcut)
+            self.imgpaths.append(obj.imgpaths)
 
     def save_views(self, multi):
         cw.cwpy.setting.show_multiplebases = multi
@@ -1064,6 +1072,7 @@ class YadoSelect(MultiViewSelect):
                         env = cw.util.join_paths(newpath, "Environment.xml")
                         data.write(env)
                         cw.cwpy.play_sound("harvest")
+                        cw.cwpy.setting.insert_yadoorder(os.path.basename(newpath))
                         self.update_list(newpath)
                     else:
                         cw.cwpy.play_sound("error")
@@ -1128,6 +1137,7 @@ class YadoSelect(MultiViewSelect):
                     cw.util.release_mutex()
                     cw.cwpy.play_sound("signal")
                     path = self.list[self.index]
+                    dname = os.path.basename(path)
                     if self.isshortcuts[self.index]:
                         yname = u"%sへのショートカット" % (self.names[self.index])
                     else:
@@ -1144,6 +1154,7 @@ class YadoSelect(MultiViewSelect):
                         if not self.classic[self.index]:
                             cw.util.remove(cw.util.join_paths(u"Data/Temp/Local", path))
                         cw.cwpy.play_sound("dump")
+                        cw.cwpy.setting.yado_order.pop(dname, None)
                         if self.index+1 < len(self.list):
                             self.update_list(self.list[self.index+1])
                         elif 0 < self.index:
@@ -1169,6 +1180,7 @@ class YadoSelect(MultiViewSelect):
 
         if dlg.ShowModal() == wx.ID_OK:
             cw.cwpy.play_sound("harvest")
+            cw.cwpy.setting.insert_yadoorder(os.path.basename(dlg.yadodir))
             self.update_list(dlg.yadodir, clear_narrowcondition=True)
 
         dlg.Destroy()
@@ -1242,6 +1254,7 @@ class YadoSelect(MultiViewSelect):
                 else:
                     return cw.cwpy.rsrc.dialogs["PLAYING"]
 
+        cardw, cardh = cw.wins(cw.SIZE_CARDIMAGE)
         if self.views == 1:
             # 単独表示
             if self.classic[self.index]:
@@ -1253,13 +1266,31 @@ class YadoSelect(MultiViewSelect):
                 dc.DrawText(s, (bmpw-w)/2, cw.wins(20))
 
             # 宿画像
-            path = "Resource/Image/Card/COMMAND0"
-            path = cw.util.find_resource(cw.util.join_paths(skindir, path), cw.cwpy.rsrc.ext_img)
-            bmp = cw.wins(cw.util.load_wxbmp(path, True, can_loaded_scaledimage=True))
-            dc.DrawBitmap(bmp, (bmpw-cw.wins(74))/2, cw.wins(65), True)
+            imgx = (bmpw-cardw) // 2
+            imgy = cw.wins(70)
+            imgpaths = self.imgpaths[self.index]
+            if imgpaths:
+                #dc.SetClippingRegion(wx.Rect(imgx, imgy, cardw, cardh))
+                dc.SetClippingRect(wx.Rect(imgx, imgy, cardw, cardh))
+                for info in imgpaths:
+                    if not info.path:
+                        continue
+                    path = cw.util.join_paths(self.list[self.index], info.path)
+                    bmp_noscale = cw.util.load_wxbmp(path, True, can_loaded_scaledimage=True)
+                    bmp = cw.wins(bmp_noscale)
+                    baserect = info.calc_basecardposition_wx(bmp.GetSize(), noscale=False,
+                                                             basecardtype="Bill",
+                                                             cardpostype="NotCard")
+                    dc.DrawBitmap(bmp, imgx + baserect.x, imgy + baserect.y, True)
+                dc.DestroyClippingRegion()
+            else:
+                path = "Resource/Image/Card/COMMAND0"
+                path = cw.util.find_resource(cw.util.join_paths(skindir, path), cw.cwpy.rsrc.ext_img)
+                bmp = cw.wins(cw.util.load_wxbmp(path, True, can_loaded_scaledimage=True))
+                dc.DrawBitmap(bmp, (bmpw-cw.wins(74))/2, cw.wins(65), True)
             if self.isshortcuts[self.index]:
                 bmp = cw.cwpy.rsrc.dialogs["LINK"]
-                dc.DrawBitmap(bmp, (bmpw-cw.wins(74))/2-cw.wins(3), cw.wins(135), True)
+                dc.DrawBitmap(bmp, imgx, imgy, True)
 
             # 宿名前
             dc.SetTextForeground(wx.BLACK)
@@ -1314,10 +1345,28 @@ class YadoSelect(MultiViewSelect):
                 skindir = self.skins[index]
 
                 # 宿画像
-                path = "Resource/Image/Card/COMMAND0"
-                path = cw.util.find_resource(cw.util.join_paths(skindir, path), cw.cwpy.rsrc.ext_img)
-                bmp = cw.wins(cw.util.load_wxbmp(path, True, can_loaded_scaledimage=True))
-                dc.DrawBitmap(bmp, cw.wins(5)+x, cw.wins(20)+y, True)
+                imgpaths = self.imgpaths[index]
+                imgx = cw.wins(5)+x
+                imgy = cw.wins(20)+y
+                if imgpaths:
+                    #dc.SetClippingRegion(wx.Rect(imgx, imgy, cardw, cardh))
+                    dc.SetClippingRect(wx.Rect(imgx, imgy, cardw, cardh))
+                    for info in imgpaths:
+                        if not info.path:
+                            continue
+                        path = cw.util.join_paths(self.list[index], info.path)
+                        bmp_noscale = cw.util.load_wxbmp(path, True, can_loaded_scaledimage=True)
+                        bmp = cw.wins(bmp_noscale)
+                        baserect = info.calc_basecardposition_wx(bmp.GetSize(), noscale=False,
+                                                                 basecardtype="Bill",
+                                                                 cardpostype="NotCard")
+                        dc.DrawBitmap(bmp, imgx + baserect.x, imgy + baserect.y, True)
+                    dc.DestroyClippingRegion()
+                else:
+                    path = "Resource/Image/Card/COMMAND0"
+                    path = cw.util.find_resource(cw.util.join_paths(skindir, path), cw.cwpy.rsrc.ext_img)
+                    bmp = cw.wins(cw.util.load_wxbmp(path, True, can_loaded_scaledimage=True))
+                    dc.DrawBitmap(bmp, imgx, imgy, True)
                 if self.isshortcuts[index]:
                     bmp = cw.cwpy.rsrc.dialogs["LINK"]
                     dc.DrawBitmap(bmp, cw.wins(2)+x, cw.wins(85)+y, True)
@@ -1478,6 +1527,7 @@ class YadoSelect(MultiViewSelect):
                     shutil.move(path, topath)
 
                 cw.cwpy.play_sound("page")
+                cw.cwpy.setting.insert_yadoorder(os.path.basename(yadodir))
                 self.update_list(yadodir, clear_narrowcondition=True)
             finally:
                 cw.util.release_mutex()
@@ -1570,7 +1620,7 @@ class YadoSelect(MultiViewSelect):
             self._processing = True
             self.narrow.SetValue(u"")
             self._processing = False
-        self._names, self._list, self._list2, self._skins, self._classic, self._isshortcuts = self.get_yadolist()
+        self._names, self._list, self._list2, self._skins, self._classic, self._isshortcuts, self._imgpaths = self.get_yadolist()
         self.list = self._list
 
         if yadodir:
@@ -1588,6 +1638,7 @@ class YadoSelect(MultiViewSelect):
         skins = []
         classic = []
         isshortcuts = []
+        imgpaths = []
 
         skin_support = {}
 
@@ -1622,10 +1673,11 @@ class YadoSelect(MultiViewSelect):
                 else:
                     skins.append(cw.cwpy.skindir)
 
-                path  = cw.util.join_paths(u"Yado", dname)
+                path = cw.util.join_paths(u"Yado", dname)
                 yadodirs.append(path)
                 classic.append(False)
                 isshortcuts.append("")
+                imgpaths.append(cw.image.get_imageinfos_p(prop))
                 continue
 
             path = cw.util.join_paths(u"Yado", dname)
@@ -1645,6 +1697,7 @@ class YadoSelect(MultiViewSelect):
                     isshortcuts.append(cw.util.join_paths(u"Yado", dname))
                 else:
                     isshortcuts.append("")
+                imgpaths.append([])
                 continue
 
         advnames = []
@@ -1709,7 +1762,7 @@ class YadoSelect(MultiViewSelect):
 
             advnames.append(seq)
 
-        return names, yadodirs, advnames, skins, classic, isshortcuts
+        return names, yadodirs, advnames, skins, classic, isshortcuts, imgpaths
 
 
 #-------------------------------------------------------------------------------
@@ -2117,11 +2170,27 @@ class PartySelect(MultiViewSelect):
             if sceheader:
                 bmp, bmp_noscale, imgpaths = sceheader.get_wxbmps()
             else:
-                path = "Resource/Image/Card/COMMAND0"
-                path = cw.util.find_resource(cw.util.join_paths(cw.cwpy.skindir, path), cw.cwpy.rsrc.ext_img)
-                bmp_noscale = [cw.util.load_wxbmp(path, True, can_loaded_scaledimage=True)]
-                bmp = [cw.wins(bmp_noscale[0])]
-                imgpaths = [cw.image.ImageInfo(path=path)]
+                if cw.cwpy.ydata.imgpaths:
+                    imgpaths = []
+                    bmp = []
+                    bmp_noscale = []
+                    imgpaths = []
+                    for info in cw.cwpy.ydata.imgpaths:
+                        if not info.path:
+                            continue
+                        fpath = cw.util.join_paths(cw.cwpy.ydata.yadodir, info.path)
+                        bmp_noscale2 = cw.util.load_wxbmp(fpath, True, can_loaded_scaledimage=True)
+                        bmp2 = cw.wins(bmp_noscale2)
+                        bmp.append(bmp2)
+                        bmp_noscale.append(None)
+                        imgpaths.append(info)
+                        pass
+                else:
+                    path = "Resource/Image/Card/COMMAND0"
+                    path = cw.util.find_resource(cw.util.join_paths(cw.cwpy.skindir, path), cw.cwpy.rsrc.ext_img)
+                    bmp_noscale = [cw.util.load_wxbmp(path, True, can_loaded_scaledimage=True)]
+                    bmp = [cw.wins(bmp_noscale[0])]
+                    imgpaths = [cw.image.ImageInfo(path=path)]
 
             paths = header.get_memberpaths()
             bmp2 = []
@@ -2203,8 +2272,12 @@ class PartySelect(MultiViewSelect):
                 baserect = info.calc_basecardposition_wx(b.GetSize(), noscale=False,
                                                          basecardtype="Bill",
                                                          cardpostype="NotCard")
-                cw.imageretouch.wxblit_2bitbmp_to_card(dc, b, ix+baserect.x, iy+baserect.y, True, bitsizekey=bns)
+                if bns is None:
+                    dc.DrawBitmap(b, ix+baserect.x, iy+baserect.y, True)
+                else:
+                    cw.imageretouch.wxblit_2bitbmp_to_card(dc, b, ix+baserect.x, iy+baserect.y, True, bitsizekey=bns)
             dc.DestroyClippingRegion()
+
             # パーティの先頭メンバを小さく表示する
             px = bmpw/2
             py = cw.wins(125+47)
@@ -2264,7 +2337,10 @@ class PartySelect(MultiViewSelect):
                     baserect = info.calc_basecardposition_wx(b.GetSize(), noscale=False,
                                                              basecardtype="Bill",
                                                              cardpostype="NotCard")
-                    cw.imageretouch.wxblit_2bitbmp_to_card(dc, b, ix+baserect.x, iy+baserect.y, True, bitsizekey=bns)
+                    if bns is None:
+                        dc.DrawBitmap(b, ix+baserect.x, iy+baserect.y, True)
+                    else:
+                        cw.imageretouch.wxblit_2bitbmp_to_card(dc, b, ix+baserect.x, iy+baserect.y, True, bitsizekey=bns)
                 dc.DestroyClippingRegion()
                 # パーティの先頭メンバを小さく表示する
                 px = ix + cw.wins(37)

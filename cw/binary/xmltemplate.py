@@ -50,7 +50,7 @@ $indent <BeastCards>$beasts
 $indent </BeastCards>
 $indent</Adventurer>"""
 
-ImagePath = """$indent<ImagePath>$path</ImagePath>"""
+ImagePath = """$indent<ImagePath positiontype="$postype">$path</ImagePath>"""
 
 Album = """$indent<Album>
 $indent <Property>
@@ -171,6 +171,8 @@ $indent <Property>
 $indent  <Name>$name</Name>
 $indent  <Skin>$skinname</Skin>
 $indent  <Type>$skintype</Type>
+$indent  <ImagePaths>$imgpaths
+$indent  </ImagePaths>
 $indent  <Cashbox>$cashbox</Cashbox>
 $indent  <NowSelectingParty autoload="$is_autoloadparty">$selectingparty</NowSelectingParty>
 $indent </Property>

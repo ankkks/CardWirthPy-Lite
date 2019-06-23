@@ -110,6 +110,7 @@ class CharacterEditDialog(wx.Dialog):
             sizer_recalc.Add(self.recalc_maxlife, 0, 0, cw.ppis(0))
             sizer_recalc.Add(self.recalc_parameter, 0, wx.TOP, cw.ppis(1))
             sizer_recalc.Add(self.recalc_coupons, 0, wx.TOP, cw.ppis(1))
+            sizer_recalc.Add(self.debug_coupon, 0, wx.TOP, cw.ppis(1))
             sizer_left.Add(sizer_recalc, 0, wx.TOP, cw.ppis(5))
 
         sizer_right = wx.BoxSizer(wx.VERTICAL)
@@ -634,7 +635,7 @@ class CharaInfo(object):
             for making in makings:
                 seq.append((making, 0))
             if self.debug_coupon:
-                seq.append(("＠デバグ", 0))
+                seq.append((u"＠デバグ", 0))
 
             if self.recalc_coupons:
                 for f in cw.cwpy.setting.periods:
