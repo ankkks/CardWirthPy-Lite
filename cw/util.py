@@ -244,7 +244,9 @@ class MusicInterface(object):
         self.set_volume()
 
     def get_path(self, path, inusecard=False):
-        if inusecard:
+        if os.path.isabs(path):
+            return path
+        elif inusecard:
             path = cw.util.join_yadodir(path)
             self.inusecard = True
         else:
@@ -527,6 +529,20 @@ def copy_scaledimagepaths(frompath, topath, can_loaded_scaledimage):
             if os.path.isfile(fname):
                 fname2 = u"%s.x%d%s" % (tospext[0], scale, tospext[1])
                 shutil.copy2(fname, fname2)
+
+def remove_scaledimagepaths(fpath, can_loaded_scaledimage, trashbox=False):
+    """fpathと共にfpathがスケーリングされたイメージファイルを全て削除する。
+    """
+    if not os.path.isfile(fpath):
+        return
+    remove(fpath, trashbox=trashbox)
+    fpathext = os.path.splitext(fpath)
+    if can_loaded_scaledimage and fpathext[1].lower() in cw.EXTS_IMG:
+        for scale in cw.SCALE_LIST:
+            fname = "%s.x%d%s" % (fpathext[0], scale, fpathext[1])
+            fname = cw.cwpy.rsrc.get_filepath(fname)
+            if fname and os.path.isfile(fname):
+                remove(fname, trashbox=trashbox)
 
 def find_scaledimagepath(path, up_scr, can_loaded_scaledimage, noscale):
     """ファイル名に".xN"をつけたイメージを探して(ファイル名, スケール値)を返す。
@@ -1317,11 +1333,12 @@ def screenshot_header(title, w):
     imgs = []
     for color in (fore, back):
         subimg = font.render(title, True, color)
-        swmax = w - cw.s(10)*2
+        swmax = w - cw.s(5)*2
         if swmax < subimg.get_width():
             size = (swmax, subimg.get_height())
             subimg = cw.image.smoothscale(subimg, size)
         imgs.append(subimg)
+    imgs[1].fill((255, 255, 255, 80), special_flags=pygame.locals.BLEND_RGBA_MULT)
     return imgs[0], imgs[1], fh, lh
 
 def screenshot():
@@ -1367,8 +1384,16 @@ def create_screenshot(titledic):
         if cw.cwpy.setting.ssinfobackimage and os.path.isfile(cw.cwpy.setting.ssinfobackimage):
             subimg3 = load_image(cw.cwpy.setting.ssinfobackimage, False)
             fill_image(bmp, cw.s(subimg3), (w, lh))
+        else:
+            fpath = cw.util.find_resource(cw.util.join_paths(cw.cwpy.skindir,
+                                                             "Resource/Image/Other/SCREENSHOT_HEADER"),
+                                          cw.M_IMG)
+            if fpath:
+                subimg3 = load_image(fpath, False)
+                fill_image(bmp, cw.s(subimg3), (w, lh))
+
         bmp.blit(scr, (cw.s(0), lh))
-        x = cw.s(10)
+        x = cw.s(5)
         y = (lh - fh) / 2
         for xx in xrange(-1, 1+1):
             for yy in xrange(-1, 1+1):
@@ -1441,14 +1466,22 @@ def create_cardscreenshot(titledic):
         bmp.fill(cw.cwpy.setting.ssinfobackcolor, rect=pygame.Rect(cw.s(0), cw.s(0), w, h))
 
         # 背景画像
-        if title and cw.cwpy.setting.ssinfobackimage and os.path.isfile(cw.cwpy.setting.ssinfobackimage):
-            subimg3 = load_image(cw.cwpy.setting.ssinfobackimage, False)
-            fill_image(bmp, cw.s(subimg3), (w, lh))
+        if title:
+            if cw.cwpy.setting.ssinfobackimage and os.path.isfile(cw.cwpy.setting.ssinfobackimage):
+                subimg3 = load_image(cw.cwpy.setting.ssinfobackimage, False)
+                fill_image(bmp, cw.s(subimg3), (w, lh))
+            else:
+                fpath = cw.util.find_resource(cw.util.join_paths(cw.cwpy.skindir,
+                                                                 "Resource/Image/Other/SCREENSHOT_HEADER"),
+                                              cw.M_IMG)
+                if fpath:
+                    subimg3 = load_image(fpath, False)
+                    fill_image(bmp, cw.s(subimg3), (w, lh))
 
         # イメージの作成
         sy = cw.s(0)
         if title:
-            x, y = cw.s(10), (lh - fh) / 2
+            x, y = cw.s(5), (lh - fh) / 2
             for xx in xrange(-1, 1+1):
                 for yy in xrange(-1, 1+1):
                     if xx <> x or yy <> y:
@@ -1637,6 +1670,10 @@ def find_resource(path, mtype):
             path2 = cw.cwpy.rsrc.get_filepath(path2)
         if os.path.isfile(path2):
             return path2
+    if is_descendant(path, cw.cwpy.skindir):
+        path = join_paths("Data/SkinBase", relpath(path, cw.cwpy.skindir))
+        return find_resource(path, mtype)
+
     return u""
 
 def get_inusecardmaterialpath(path, mtype, inusecard=None, findskin=True):
@@ -1902,6 +1939,22 @@ def send_trashbox(path):
         os.remove(path)
     elif os.path.isdir(path):
         shutil.rmtree(path)
+
+def remove_emptydir(dpath):
+    """
+    dpathが中身の無いディレクトリであれば削除する。
+    """
+    if os.path.isdir(dpath):
+        for dpath2, dnames, fnames in os.walk(dpath):
+            if len(fnames):
+                # 中身が存在する
+                return
+        remove(dpath)
+
+
+OVERWRITE_ALWAYS = 0
+NO_OVERWRITE = 1
+OVERWRITE_WITH_LATEST_FILES = 2
 
 
 #-------------------------------------------------------------------------------
@@ -3283,7 +3336,10 @@ def create_fileselection(parent, target, message, wildcard="*.*", seldir=False, 
     getbasedir: 相対パスを扱う場合は基準となるパスを返す関数。
     """
     def OnOpen(event):
-        fpath = target.GetValue()
+        if target is None:
+            fpath = ""
+        else:
+            fpath = target.GetValue()
         dpath = fpath
         if getbasedir and not os.path.isabs(dpath):
             dpath = os.path.join(getbasedir(), dpath)
@@ -3296,7 +3352,8 @@ def create_fileselection(parent, target, message, wildcard="*.*", seldir=False, 
                     dpath2 = cw.util.relpath(dpath, base)
                     if not dpath2.startswith(".." + os.path.sep):
                         dpath = dpath2
-                target.SetValue(dpath)
+                if target is not None:
+                    target.SetValue(dpath)
                 if callback:
                     callback(dpath)
         else:
@@ -3310,14 +3367,15 @@ def create_fileselection(parent, target, message, wildcard="*.*", seldir=False, 
                     fpath2 = cw.util.relpath(fpath, base)
                     if not fpath2.startswith(".." + os.path.sep):
                         fpath = fpath2
-                target.SetValue(fpath)
+                if target is not None:
+                    target.SetValue(fpath)
                 if callback:
                     callback(fpath)
 
     if winsize:
-        size = (cw.wins(25), -1)
+        size = (cw.wins(20), -1)
     else:
-        size = (cw.ppis(25), -1)
+        size = (cw.ppis(20), -1)
     button = wx.Button(parent, size=size, label=u"...")
     parent.Bind(wx.EVT_BUTTON, OnOpen, button)
     return button

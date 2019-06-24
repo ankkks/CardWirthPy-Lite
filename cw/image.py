@@ -832,8 +832,10 @@ class LargeCardImage(CardImage):
 
 class CharacterCardImage(CardImage):
     def __init__(self, ccard, pos_noscale=(0, 0), can_loaded_scaledimage=False, is_scenariocard=False,
-                 scedir=""):
+                 scedir="", is_override_name=False, override_name=""):
         self.ccard = ccard
+        self.is_override_name = is_override_name
+        self.override_name = override_name
         self._pos_noscale = pos_noscale
         self.can_loaded_scaledimage = can_loaded_scaledimage
         self.anotherscenariocard = False
@@ -846,7 +848,10 @@ class CharacterCardImage(CardImage):
         # カード画像
         self.set_faceimgs(self.ccard.imgpaths, self.can_loaded_scaledimage)
         # フォント画像(カード名)
-        self.set_nameimg(self.ccard.name)
+        if self.is_override_name:
+            self.set_nameimg(self.override_name)
+        else:
+            self.set_nameimg(self.ccard.name)
         # フォント画像(レベル)
         self.set_levelimg(self.ccard.level)
         # rect
@@ -1135,19 +1140,29 @@ class CharacterCardImage(CardImage):
 #-------------------------------------------------------------------------------
 
 def create_type2textcell(text, face, size, color,
-        bold, italic, uline, sline, vertical,
+        bold, italic, uline, sline, vertical, antialias,
         cellsize, bcolor, bwidth):
     """縁取りType2のテキストセルを作成する。
     """
-    img = pygame.Surface(cellsize).convert_alpha()
+    if antialias:
+        tcellsize = cellsize[0]*2, cellsize[1]*2
+        tbwidth = bwidth*2
+    else:
+        tcellsize = cellsize
+        tbwidth = bwidth
+    img = pygame.Surface(tcellsize).convert_alpha()
     img.fill((0, 0, 0, 0))
 
-    w = cellsize[0]
+    w = tcellsize[0]
 
     # text
-    font, lineheight = get_textcellfont(size, face, color, bold,
-                                        italic, uline, vertical, False)
-
+    orig_font, lineheight = get_textcellfont(size, face, color, bold,
+                                             italic, uline, vertical, False)
+    if antialias:
+        font, lineheight = get_textcellfont(size*2, face, color, bold,
+                                            italic, uline, vertical, False)
+    else:
+        font = orig_font
     lines = text.splitlines()
     if vertical:
         x = w - lineheight
@@ -1156,6 +1171,10 @@ def create_type2textcell(text, face, size, color,
     y = 0
     for line in lines:
         subimg = font.render(line, False, color)
+        if antialias:
+            orig_size = orig_font.size(line)
+            if orig_size != subimg.get_size():
+                subimg = pygame.transform.scale(subimg, (orig_size[0]*2, orig_size[1]*2))
         # 取消線
         if sline:
             subimg2 = font.render(u"―", False, color)
@@ -1173,12 +1192,15 @@ def create_type2textcell(text, face, size, color,
             y += lineheight
 
     # border
-    cw.imageretouch.add_border(img, bcolor, bwidth)
+    cw.imageretouch.add_border(img, bcolor, tbwidth)
+
+    if antialias:
+        img = cw.image.smoothscale(img, cellsize, True, False)
 
     return img
 
 def draw_textcell(image, rect, text, face, size, color,
-        bold, italic, uline, sline, vertical, bcolor=None):
+                  bold, italic, uline, sline, vertical, antialias, bcolor=None):
     """縁取りType2以外のテキストセルを描画する。
     """
     img = pygame.Surface(rect.size).convert_alpha()
@@ -1195,9 +1217,9 @@ def draw_textcell(image, rect, text, face, size, color,
 
     for line in lines:
         if bcolor:
-            subimg = font.render(line, False, bcolor)
+            subimg = font.render(line, antialias, bcolor)
             if sline:
-                subimg2 = font.render(u"―", False, bcolor)
+                subimg2 = font.render(u"―", antialias, bcolor)
                 size = (subimg.get_width() + cw.s(10), lineheight)
                 subimg2 = pygame.transform.scale(subimg2, size)
                 subimg.blit(subimg2, cw.s((-5, 0)))
@@ -1207,9 +1229,9 @@ def draw_textcell(image, rect, text, face, size, color,
             img.blit(subimg, (x + 1, y - 1))
             img.blit(subimg, (x - 1, y + 1))
             img.blit(subimg, (x + 1, y + 1))
-        subimg = font.render(line, False, color)
+        subimg = font.render(line, antialias, color)
         if sline:
-            subimg2 = font.render(u"―", False, color)
+            subimg2 = font.render(u"―", antialias, color)
             size = (subimg.get_width() + cw.s(10), lineheight)
             subimg2 = pygame.transform.scale(subimg2, size)
             subimg.blit(subimg2, cw.s((-5, 0)))

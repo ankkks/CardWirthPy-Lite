@@ -3027,10 +3027,22 @@ class GetCouponContent(GetContent):
 class HidePartyContent(EventContentBase):
     def __init__(self, data):
         EventContentBase.__init__(self, data)
+        self.cardspeed = self.data.getattr(".", "cardspeed", "Default")
+        if self.cardspeed == "Default":
+            self.cardspeed = -1
+        else:
+            self.cardspeed = int(self.cardspeed)
 
     def action(self):
         """パーティ非表示コンテント。"""
-        cw.cwpy.hide_party()
+        override_dealspeed = cw.cwpy.override_dealspeed
+        try:
+            if self.cardspeed != -1:
+                cw.cwpy.override_dealspeed = self.cardspeed
+            cw.cwpy.hide_party()
+        finally:
+            cw.cwpy.override_dealspeed = override_dealspeed
+
         return 0
 
     def get_status(self):
@@ -3534,18 +3546,26 @@ class RedisplayContent(EventContentBase):
 class ReverseFlagContent(EventContentBase):
     def __init__(self, data):
         EventContentBase.__init__(self, data)
+        self.flag = self.data.get("flag")
+        self.cardspeed = self.data.getattr(".", "cardspeed", "Default")
+        if self.cardspeed == "Default":
+            self.cardspeed = -1
+            self.overridecardspeed = False
+        else:
+            self.cardspeed = int(self.cardspeed)
+            self.overridecardspeed = self.data.getbool(".", "overridecardspeed", False)
 
     def action(self):
         """フラグ反転コンテント。"""
         if self.is_differentscenario():
             return 0
 
-        flag = self.data.get("flag")
+        flag = self.flag
 
         if flag in cw.cwpy.sdata.flags:
             flag = cw.cwpy.sdata.flags[flag]
             flag.reverse()
-            flag.redraw_cards()
+            flag.redraw_cards(self.cardspeed, self.overridecardspeed)
 
         return 0
 
@@ -3566,6 +3586,13 @@ class SetFlagContent(EventContentBase):
         EventContentBase.__init__(self, data)
         self.flag = self.data.get("flag")
         self.value = self.data.getbool(".", "value", False)
+        self.cardspeed = self.data.getattr(".", "cardspeed", "Default")
+        if self.cardspeed == "Default":
+            self.cardspeed = -1
+            self.overridecardspeed = False
+        else:
+            self.cardspeed = int(self.cardspeed)
+            self.overridecardspeed = self.data.getbool(".", "overridecardspeed", False)
 
     def action(self):
         """フラグ変更コンテント。"""
@@ -3578,7 +3605,7 @@ class SetFlagContent(EventContentBase):
         flag = cw.cwpy.sdata.flags.get(flag, None)
         if not flag is None:
             flag.set(value)
-            flag.redraw_cards()
+            flag.redraw_cards(self.cardspeed, self.overridecardspeed)
 
         return 0
 
@@ -3674,10 +3701,21 @@ class SetStepDownContent(EventContentBase):
 class ShowPartyContent(EventContentBase):
     def __init__(self, data):
         EventContentBase.__init__(self, data)
+        self.cardspeed = self.data.getattr(".", "cardspeed", "Default")
+        if self.cardspeed == "Default":
+            self.cardspeed = -1
+        else:
+            self.cardspeed = int(self.cardspeed)
 
     def action(self):
         """パーティ表示コンテント。"""
-        cw.cwpy.show_party()
+        override_dealspeed = cw.cwpy.override_dealspeed
+        try:
+            if self.cardspeed != -1:
+                cw.cwpy.override_dealspeed = self.cardspeed
+            cw.cwpy.show_party()
+        finally:
+            cw.cwpy.override_dealspeed = override_dealspeed
         return 0
 
     def get_status(self):
@@ -4193,6 +4231,13 @@ class SubstituteStepContent(EventContentBase):
 class SubstituteFlagContent(EventContentBase):
     def __init__(self, data):
         EventContentBase.__init__(self, data)
+        self.cardspeed = self.data.getattr(".", "cardspeed", "Default")
+        if self.cardspeed == "Default":
+            self.cardspeed = -1
+            self.overridecardspeed = False
+        else:
+            self.cardspeed = int(self.cardspeed)
+            self.overridecardspeed = self.data.getbool(".", "overridecardspeed", False)
 
     def action(self):
         """フラグ代入コンテント。"""
@@ -4205,7 +4250,7 @@ class SubstituteFlagContent(EventContentBase):
         if fromflag in cw.cwpy.sdata.flags and toflag in cw.cwpy.sdata.flags:
             toflag = cw.cwpy.sdata.flags[toflag]
             toflag.set(cw.cwpy.sdata.flags[fromflag].value)
-            toflag.redraw_cards()
+            toflag.redraw_cards(self.cardspeed, self.overridecardspeed)
         elif fromflag == "??Random":
             toflag = cw.cwpy.sdata.flags.get(toflag, None)
             if not toflag is None:
@@ -4213,7 +4258,7 @@ class SubstituteFlagContent(EventContentBase):
                     toflag.set(True)
                 else:
                     toflag.set(False)
-                toflag.redraw_cards()
+                toflag.redraw_cards(self.cardspeed, self.overridecardspeed)
 
         return 0
 
@@ -4390,12 +4435,33 @@ class MoveCardContent(EventContentBase):
         self.y = data.getint(".", "y", 0)
         self.scale = data.getint(".", "scale", -1)
         self.layer = data.getint(".", "layer", -1)
+        self.cardspeed = self.data.getattr(".", "cardspeed", "Default")
+        if self.cardspeed == "Default":
+            self.cardspeed = -1
+            self.overridecardspeed = False
+        else:
+            self.cardspeed = int(self.cardspeed)
+            self.overridecardspeed = self.data.getbool(".", "overridecardspeed", False)
+
 
     def action(self):
         """カード再配置コンテント(Wsn.3)。"""
         if not self.cardgroup or (self.positiontype == u"None" and self.scale == -1 and self.layer == -1):
             return 0
+        override_dealspeed = cw.cwpy.override_dealspeed
+        force_dealspeed = cw.cwpy.force_dealspeed
+        try:
+            if self.cardspeed != -1:
+                if self.overridecardspeed:
+                    cw.cwpy.force_dealspeed = self.cardspeed
+                else:
+                    cw.cwpy.override_dealspeed = self.cardspeed
+            self._do_action()
+        finally:
+            cw.cwpy.override_dealspeed = override_dealspeed
+            cw.cwpy.force_dealspeed = force_dealspeed
 
+    def _do_action(self):
         i = 0
         deals = []
         for mcard in cw.cwpy.get_mcards():

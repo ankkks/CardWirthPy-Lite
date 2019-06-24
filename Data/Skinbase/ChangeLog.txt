@@ -1,0 +1,16 @@
+﻿SkinBase 変更履歴
+=================
+
+2019年3月10日(dataVersion=11)
+ * キャラクターの削除解説文言"delete_adventurer_description"からアルバムに残る条件に関する記述を削除。
+
+2018年8月17日(dataVersion=11)
+ * Resource\Image\DialogにWINDOW_SCALING.bmpを追加。画面拡大用アイコンでライセンスはCC0。
+
+2016年12月22日(dataVersion=11)
+ * Skin.xmlの文言「絞り込み条件」を「検索：」に改め「キーワード」を廃止した。
+ * 「この条件でシナリオを検索」にデータベース構築の補足を付けた。
+
+2016年11月29日(dataVersion=11)※利便性のためPyRebootからVerを継承しています。
+ * Skin.xmlの文言「絞込キーワード」「整列条件」を「キーワード」「整列」に改めた。
+ * 利用状況を鑑みてVer7以前(PyVer1.0未満)の自動アップデート処理を廃止した。

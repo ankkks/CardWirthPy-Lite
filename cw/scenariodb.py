@@ -838,7 +838,7 @@ class Scenariodb(object):
             fpath = os.path.join(dpath, fname)
             if fpath in paths:
                 continue
-                paths.add(fpath)
+            paths.add(fpath)
             header = self.create_header(t, skintype=skintype)
             if header:
                 seq.append(header)

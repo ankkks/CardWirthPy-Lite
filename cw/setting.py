@@ -138,7 +138,7 @@ class LocalSetting(object):
             "statusnum": ("mincho", "", 12, True, True, False),  # 桁が増える毎に-2
             "sbardesctitle": ("pgothic", "", 14, True, True, False),
             "sbardesc": ("uigothic", "", 14, False, False, False),
-            "screenshot": ("uigothic", "", 18, False, False, False),
+            "screenshot": ("pmincho", "", 18, False, False, False),
         }
 
         if sys.platform == "win32":
@@ -323,7 +323,7 @@ class Setting(object):
         self.all_quickdeal = True
         self.skindirname = "Classic"
         self.vocation120 = False
-        self.sort_yado = "Name"
+        self.sort_yado = "None"
         self.sort_standbys = "None"
         self.sort_parties = "None"
         self.sort_cards = "None"
@@ -406,6 +406,10 @@ class Setting(object):
         self.enable_oldf9 = False
         self.display_logbutton = True#隠しオプション
         self.display_scalebutton = True
+        self.display_noticeinfo = True
+
+        # 宿の表示順序
+        self.yado_order = {}
 
         # 絞り込み・整列などのコントロールの表示有無
         self.show_additional_yado = False
@@ -734,6 +738,16 @@ class Setting(object):
         # タイトルバーの表示内容
         self.titleformat = data.gettext("TitleFormat", self.titleformat)
 
+        # 宿の表示順
+        for e_yadoorder in data.getfind("YadoOrder", raiseerror=False):
+            if e_yadoorder.tag != "Order":
+                continue
+            name = e_yadoorder.getattr(".", "name")
+            order = int(e_yadoorder.text)
+            ypath = cw.util.join_paths("Yado", name, "Environment.xml")
+            if os.path.isfile(ypath):
+                self.yado_order[name] = order
+
         # 絞り込み・整列などのコントロールの表示有無
         self.show_additional_yado = data.getbool("ShowAdditionalControls", "yado", self.show_additional_yado)
         self.show_additional_player = data.getbool("ShowAdditionalControls", "player", self.show_additional_player)
@@ -780,6 +794,7 @@ class Setting(object):
         # 表示するステータスバーボタン
         self.display_logbutton = data.getbool("DisplayLogButton", self.display_logbutton)
         self.display_scalebutton = data.getbool("DisplayScaleButton", self.display_scalebutton)
+        self.display_scalebutton = data.getbool("DisplayNoticeInfo", self.display_noticeinfo)
         # 最後に選んだシナリオを開始地点にする
         self.open_lastscenario = data.getbool("OpenLastScenario", self.open_lastscenario)
 
@@ -1004,21 +1019,11 @@ class Setting(object):
     def set_dealspeed(self, value, battlevalue, usebattle):
         self.dealspeed = value
         self.dealspeed = cw.util.numwrap(self.dealspeed, 0, 10)
-        scales_len = self.dealspeed + 1
-        self.dealing_scales = [
-            int(math.cos(math.radians(90.0 * i / scales_len)) * 100)
-            for i in xrange(scales_len)
-                if i
-        ]
+        self.dealing_scales = self.create_dealingscales(self.dealspeed)
 
         self.dealspeed_battle = battlevalue
         self.dealspeed_battle = cw.util.numwrap(self.dealspeed_battle, 0, 10)
-        scales_len = self.dealspeed_battle + 1
-        self.dealing_scales_battle = [
-            int(math.cos(math.radians(90.0 * i / scales_len)) * 100)
-            for i in xrange(scales_len)
-                if i
-        ]
+        self.dealing_scales_battle = self.create_dealingscales(self.dealspeed_battle)
 
         self.use_battlespeed = usebattle
 
@@ -1027,6 +1032,17 @@ class Setting(object):
             return self.dealspeed_battle
         else:
             return self.dealspeed
+
+    def create_dealingscales(self, dealspeed):
+        dealspeed = cw.util.numwrap(dealspeed, 0, 10)
+        scales_len = dealspeed + 1
+        dealing_scales = [
+                int(math.cos(math.radians(90.0 * i / scales_len)) * 100)
+                for i in range(scales_len)
+                    if i
+        ]
+        return dealing_scales
+
 
     def get_drawsetting(self):
         if self.local.important_draw or not self.skin_local.important_draw:
@@ -1138,6 +1154,20 @@ class Setting(object):
                         scedir = folder
                     break
         return scedir
+
+    def insert_yadoorder(self, yadodirname):
+        seq = []
+        for dname, order in self.yado_order.items():
+            seq.append((order, dname))
+        self.yado_order.clear()
+        self.yado_order[yadodirname] = 0
+        o = 1
+        for _, dname in sorted(seq):
+            if dname == yadodirname:
+                continue
+            self.yado_order[dname] = o
+            o += 1
+        pass
 
 class _MsgDict(dict):
     def __init__(self):

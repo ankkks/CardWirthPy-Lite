@@ -884,7 +884,15 @@ class Character(object):
         cw.cwpy.event.in_inusecardevent = True
         removeafter = False
         battlespeed = cw.cwpy.is_battlestatus()
-        if header.type == "BeastCard":
+        showstyle = header.get_showstyle()
+        if showstyle == "Invisible":
+            if misfire:
+                if header.type == "BeastCard":
+                    cw.cwpy.play_sound("error", True)
+                else:
+                    cw.cwpy.play_sound("confuse", True)
+                cw.animation.animate_sprite(self, "axialvibe", battlespeed=battlespeed)
+        elif showstyle == "Center":
             cw.cwpy.set_inusecardimg(self, header, "hidden", center=True)
             inusecardimg = cw.cwpy.get_inusecardimg()
             cw.animation.animate_sprite(inusecardimg, "deal", battlespeed=battlespeed)
@@ -905,7 +913,10 @@ class Character(object):
                 cw.cwpy.wait_frame(waitrate, cw.cwpy.setting.can_skipanimation)
 
             if misfire:
-                cw.cwpy.play_sound("error", True)
+                if header.type == "BeastCard":
+                    cw.cwpy.play_sound("error", True)
+                else:
+                    cw.cwpy.play_sound("confuse", True)
                 cw.animation.animate_sprite(inusecardimg, "axialvibe", battlespeed=battlespeed)
 
             cw.animation.animate_sprite(inusecardimg, "zoomout_slow", battlespeed=battlespeed)
@@ -930,7 +941,10 @@ class Character(object):
                 cw.cwpy.wait_frame(waitrate, cw.cwpy.setting.can_skipanimation)
 
             if misfire:
-                cw.cwpy.play_sound("confuse", True)
+                if header.type == "BeastCard":
+                    cw.cwpy.play_sound("error", True)
+                else:
+                    cw.cwpy.play_sound("confuse", True)
                 cw.cwpy.clear_inusecardimg(self)
                 cw.animation.animate_sprite(self, "axialvibe", battlespeed=battlespeed)
                 cw.animation.animate_sprite(self, "hide", battlespeed=battlespeed)
@@ -962,7 +976,10 @@ class Character(object):
                 cw.cwpy.wait_frame(waitrate, cw.cwpy.setting.can_skipanimation)
 
             if misfire:
-                cw.cwpy.play_sound("confuse", True)
+                if header.type == "BeastCard":
+                    cw.cwpy.play_sound("error", True)
+                else:
+                    cw.cwpy.play_sound("confuse", True)
                 cw.animation.animate_sprite(self, "axialvibe", battlespeed=battlespeed)
                 cw.animation.animate_sprite(self, "hide", battlespeed=battlespeed)
                 cw.cwpy.clear_inusecardimg()
@@ -2980,6 +2997,7 @@ class Player(Character):
             for header in cw.cwpy.ydata.partyrecord:
                 header.rename_member(self.data.fpath, name)
         cw.cwpy.background.reload(False, nocheckvisible=True)
+        cw.cwpy.update_mcardnames()
 
 def calc_maxlife(vit, minval, level):
     """能力値から体力の最大値を計算する。"""

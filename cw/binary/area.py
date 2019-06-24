@@ -185,6 +185,8 @@ class MenuCard(base.CWBinaryBase):
             if e.tag == "Property":
                 for prop in e:
                     if prop.tag == "Name":
+                        if prop.getbool(".", "spchars", False):
+                            f.check_wsnversion("4", u"特殊文字の展開")
                         name = prop.text
                     elif prop.tag == "ImagePath":
                         base.CWBinaryBase.check_imgpath(f, prop, "TopLeft")
@@ -217,6 +219,8 @@ class MenuCard(base.CWBinaryBase):
                         f.check_wsnversion("1", u"レイヤ")
                     elif prop.tag == "CardGroup" and prop.text:
                         f.check_wsnversion("3", u"カードグループ")
+                    elif prop.tag == "DealingSpeed" and prop.text != "Default":
+                        f.check_wsnversion("4", u"カード速度指定")
             elif e.tag == "Events":
                 events = e
 

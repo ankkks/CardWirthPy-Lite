@@ -354,6 +354,7 @@ class BattleEngine(object):
         cw.cwpy.hide_cards(True)
         cw.cwpy.cardgrp.remove(cw.cwpy.mcards)
         cw.cwpy.mcards = []
+        cw.cwpy.mcards_expandspchars.clear()
         cw.cwpy.file_updates.clear()
 
         if runevent:
@@ -387,6 +388,7 @@ class BattleEngine(object):
             cw.cwpy.hide_cards(True)
             cw.cwpy.cardgrp.remove(cw.cwpy.mcards)
             cw.cwpy.mcards = []
+            cw.cwpy.mcards_expandspchars.clear()
             cw.cwpy.file_updates.clear()
             cw.cwpy._gameover = False
 

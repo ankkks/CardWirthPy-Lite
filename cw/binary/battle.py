@@ -91,11 +91,14 @@ class Battle(base.CWBinaryBase):
                         bgm = base.CWBinaryBase.materialpath(prop.text)
                         f.check_bgmoptions(prop)
                         if prop.getbool(".", "continue", False):
-                            f.check_wsnversion("3", "バトル開始時のBGM継続")
+                            f.check_wsnversion("3", u"バトル開始時のBGM継続")
                     elif prop.tag == "RunAway":
                         runaway = prop.getbool(".", True)
                         if not runaway:
                             f.check_wsnversion("3", u"逃走不可バトル")
+                    elif prop.tag == "Name":
+                        if prop.getbool(".", "override", False):
+                            f.check_wsnversion("4", u"エネミーカード名の上書き")
             elif e.tag == "PlayerCardEvents":
                 if len(e):
                     f.check_wsnversion("2", u"プレイヤーカードイベント")
@@ -189,6 +192,8 @@ class EnemyCard(base.CWBinaryBase):
                         f.check_wsnversion("1", u"レイヤ")
                     elif prop.tag == "CardGroup" and prop.text:
                         f.check_wsnversion("3", u"カードグループ")
+                    elif prop.tag == "DealingSpeed" and prop.text != "Default":
+                        f.check_wsnversion("4", u"カード速度指定")
             elif e.tag == "Events":
                 events = e
 

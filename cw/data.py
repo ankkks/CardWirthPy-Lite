@@ -1554,15 +1554,27 @@ class Flag(object):
     def __nonzero__(self):
         return self.value
 
-    def redraw_cards(self):
+    def redraw_cards(self, cardspeed=-1, overridecardspeed=False):
         """対応するメニューカードの再描画処理"""
-        cw.data.redraw_cards(self.value, flag=self.name)
+        override_dealspeed = cw.cwpy.override_dealspeed
+        force_dealspeed = cw.cwpy.force_dealspeed
+        try:
+            if cardspeed != -1:
+                if overridecardspeed:
+                    cw.cwpy.force_dealspeed = cardspeed
+                else:
+                    cw.cwpy.override_dealspeed = cardspeed
+            cw.data.redraw_cards(self.value, flag=self.name)
+        finally:
+            cw.cwpy.override_dealspeed = override_dealspeed
+            cw.cwpy.force_dealspeed = force_dealspeed
 
     def set(self, value, updatedebugger=True):
         if self.value <> value:
             if cw.cwpy.ydata:
                 cw.cwpy.ydata.changed()
             self.value = value
+            cw.cwpy.update_mcardnames()
             if updatedebugger:
                 cw.cwpy.event.refresh_variable(self)
 
@@ -1620,6 +1632,7 @@ class Step(object):
             if cw.cwpy.ydata:
                 cw.cwpy.ydata.changed()
             self.value = value
+            cw.cwpy.update_mcardnames()
             if updatedebugger:
                 cw.cwpy.event.refresh_variable(self)
 

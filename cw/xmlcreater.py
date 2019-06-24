@@ -84,7 +84,7 @@ def create_partyrecord(party):
     _create_xml("PartyRecord", path, d)
     return path
 
-def create_environment(name, dpath, skindirname, is_autoloadparty):
+def create_environment(name, dpath, skindirname, is_autoloadparty, imgpaths):
     """
     dpath: "Environment.xml"を作成する宿のディレクトリパス。
     宿のデータを納める"Environment.xml"を作る。
@@ -111,9 +111,30 @@ def create_environment(name, dpath, skindirname, is_autoloadparty):
          "indent": "",
          "is_autoloadparty": str(is_autoloadparty)}
 
+    copy_yadoimgpaths(dpath, imgpaths)
+    imgpaths = [cw.binary.xmltemplate.get_xmltext("ImagePath",
+                                                  {"path": cw.binary.util.repl_escapechar(info.path),
+                                                   "postype": info.postype,
+                                                   "indent": "   "}) for info in imgpaths]
+    d["imgpaths"] = "\n" + "\n".join(imgpaths)
+
     path = cw.util.join_paths(dpath, "Environment.xml")
     _create_xml("Environment", path, d)
     return path
+
+def copy_yadoimgpaths(yadodir, imgpaths):
+    if not imgpaths:
+        return
+    idpath = cw.util.join_paths(yadodir, "Material", "Signboard")
+    for info in imgpaths:
+        if not info.path:
+            continue
+        dst = cw.util.join_paths(idpath, os.path.basename(info.path))
+        dst = cw.util.dupcheck_plus(dst, yado=False)
+        if not os.path.isdir(idpath):
+            os.makedirs(idpath)
+        cw.util.copy_scaledimagepaths(info.path, dst, can_loaded_scaledimage=True)
+        info.path = cw.util.join_paths("Material", "Signboard", os.path.basename(dst))
 
 def create_settings(setting, writeplayingdata=True, fpath="Settings_Lite.xml"):
     """Settings_Lite.xmlを新しく作る。
@@ -143,6 +164,13 @@ def create_settings(setting, writeplayingdata=True, fpath="Settings_Lite.xml"):
         if setting.window_position <> setting.window_position_init:
             e = cw.data.make_element("WindowPosition", attrs={"left":str(setting.window_position[0]),
                                                                 "top":str(setting.window_position[1])})
+            element.append(e)
+        # 宿の表示順
+        if setting.yado_order != setting.yado_order_init:
+            e = cw.data.make_element("YadoOrder", setting.lastyado)
+            for yadodirname, order in setting.yado_order.items():
+                e.append(cw.data.make_element("Order", str(order), attrs={"name": yadodirname}))
+
             element.append(e)
     # 拡大モード
     if writeplayingdata:
@@ -592,6 +620,9 @@ def create_settings(setting, writeplayingdata=True, fpath="Settings_Lite.xml"):
     if setting.display_logbutton <> setting.display_logbutton_init:
         e = cw.data.make_element("DisplayLogButton", str(setting.display_logbutton))
         element.append(e)
+    if setting.display_logbutton <> setting.display_noticeinfo_init:
+        e = cw.data.make_element("DisplayNoticeInfo", str(setting.display_noticeinfo))
+        element.append(e)
 
     #  最後に選んだシナリオを開始地点にする
     if setting.open_lastscenario <> setting.open_lastscenario_init:
@@ -868,7 +899,9 @@ def write_castimagepath(name, paths, can_loaded_scaledimage):
     キャストの新しい画像を記憶し、記憶後のパスを返す。
     """
     seq = []
-    if not name:
+    if name:
+        name = cw.binary.util.check_filename(name.strip())
+    else:
         name = "noname"
     for info in paths:
         path = info.path
@@ -966,7 +999,7 @@ def create_scenariolog(sdata, path, recording, logfilepath):
             e_bgimg.append(e)
 
         elif bgtype == cw.sprite.background.BG_TEXT:
-            text, namelist, face, tsize, color, bold, italic, underline, strike, vertical,\
+            text, namelist, face, tsize, color, bold, italic, underline, strike, vertical, antialias,\
                 btype, bcolor, bwidth, loaded, updatetype, size, pos, flag, visible, layer, cellname = d
             attrs = {"visible": str(visible),
                      "loaded": str(loaded)}
@@ -983,6 +1016,8 @@ def create_scenariolog(sdata, path, recording, logfilepath):
                                                           "strike": str(strike)})
             e_bgimg.append(e)
             e = cw.data.make_element("Vertical", str(vertical))
+            e_bgimg.append(e)
+            e = cw.data.make_element("Antialias", str(antialias))
             e_bgimg.append(e)
             e = make_colorelement("Color", color)
             e_bgimg.append(e)

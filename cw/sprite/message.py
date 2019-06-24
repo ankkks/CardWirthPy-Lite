@@ -579,8 +579,12 @@ class MessageWindow(base.CWPySprite):
         """
         if not nametable:
             nametable = self.name_table
-        text, spcharinfo, _namelist, _namelistindex = _rpl_specialstr(full, "All", s, nametable, self.get_stepvalue, self.get_flagvalue)
         if full:
+            full = _SP_FULL
+        else:
+            full = _SP_EXPAND_SHARPS
+        text, spcharinfo, _namelist, _namelistindex = _rpl_specialstr(full, "All", s, nametable, self.get_stepvalue, self.get_flagvalue)
+        if full == _SP_FULL:
             return text, spcharinfo
         else:
             return text
@@ -1176,17 +1180,18 @@ def get_pointlist(size, pos=(0, 0)):
     pos5 = pos
     return (pos1, pos2, pos3, pos4, pos5)
 
-def rpl_specialstr(s, basenamelist=None, updatetype="All"):
+def rpl_specialstr(s, basenamelist=None, expandsharps=True, updatetype="All"):
     """
     テキストセルや選択肢のテキスト内の
     特殊文字列(#, $)を置換した文字列を返す。
     """
     name_table = _create_nametable(False, None)
+    full = _SP_EXPAND_SHARPS if expandsharps else _SP_NO_SHARPS
     try:
-        r = _rpl_specialstr(False, updatetype, s, name_table, _get_stepvalue, _get_flagvalue, basenamelist=basenamelist)
+        r = _rpl_specialstr(full, updatetype, s, name_table, _get_stepvalue, _get_flagvalue, basenamelist=basenamelist)
     except:
         cw.util.print_ex()
-        r = _rpl_specialstr(False, updatetype, s, name_table, _get_stepvalue, _get_flagvalue, basenamelist=None)
+        r = _rpl_specialstr(full, updatetype, s, name_table, _get_stepvalue, _get_flagvalue, basenamelist=None)
 
     return r[0], r[2]
 
@@ -1251,7 +1256,7 @@ def _create_nametable(full, talker):
     selected = cw.cwpy.event.get_targetmember("Selected")\
                if cw.cwpy.event.has_selectedmember() else u""
     unselected = cw.cwpy.event.get_targetmember("Unselected")
-    if full:
+    if full == _SP_FULL:
         inusecard = cw.cwpy.event.get_targetmember("Selectedcard")
     party = cw.cwpy.ydata.party
     yado = cw.cwpy.ydata
@@ -1263,11 +1268,10 @@ def _create_nametable(full, talker):
         "#y" : yado,       # 宿の名前
         "#t" : party       # パーティの名前
     }
-    if full:
+    if full == _SP_FULL:
         name_table["#c"] = inusecard # 使用カード名(カード使用イベント時のみ)
         name_table["#i"] = talker    # 話者の名前(表示イメージのキャラやカード名)
 
-    if full:
         # シナリオ内の画像で上書き
         for key in cw.cwpy.rsrc.specialchars.iterkeys():
             if key in name_table:
@@ -1369,6 +1373,10 @@ def _get_flagvalue(key, full, updatetype, name_table, basenamelist, startindex, 
                                                  basenamelist, startindex, spcharinfo, namelist, namelistindex, stack+1)
     return s, namelistindex
 
+_SP_EXPAND_SHARPS = 0
+_SP_FULL = 1
+_SP_NO_SHARPS = 2
+
 def _rpl_specialstr(full, updatetype, s, name_table, get_step, get_flag, basenamelist=None,
                     startindex=0, spcharinfo=None, namelist=None, namelistindex=0, stack=0):
     """
@@ -1397,27 +1405,27 @@ def _rpl_specialstr(full, updatetype, s, name_table, get_step, get_flag, basenam
             fl = s[i+1:i+1+nextpos]
             val, namelistindex = get(fl, full, updatetype, name_table, basenamelist, buflen, spcharinfo, namelist, namelistindex, stack)
             if val is None:
-                if not full:
+                if full != _SP_FULL:
                     # BUG: 存在しない状態変数を表示しようとすると
                     #      先頭の文字が欠ける(CardWirth 1.50)
                     buf.append(c[1:])
-                return 0 if full else -1, namelistindex
+                return 0 if full == _SP_FULL else -1, namelistindex
             skip = 1 + nextpos
             buf.append(val)
             return skip, namelistindex
 
-        if c == '#':
+        if c == '#' and full in (_SP_FULL, _SP_EXPAND_SHARPS):
             if i + 1 == len(s) or s[i+1] == '\n':
                 buf.append(c)
                 buflen += len(c)
                 continue
             nc = s[i+1].lower()
-            if full and '#' + nc in cw.cwpy.rsrc.specialchars:
+            if full == _SP_FULL and '#' + nc in cw.cwpy.rsrc.specialchars:
                 spcharinfo.add(buflen)
                 buf.append(c)
                 buflen += len(c)
                 continue
-            if full:
+            if full == _SP_FULL:
                 if nc in ('m', 'r', 'u', 'c', 'i', 't', 'y'):
                     if basenamelist is None:
                         buf.append(_get_namefromtable(nc, name_table, namelist))
@@ -1456,7 +1464,7 @@ def _rpl_specialstr(full, updatetype, s, name_table, get_step, get_flag, basenam
                 buf.append(c)
                 buflen += len(c)
         else:
-            if full and c == '&':
+            if full == _SP_FULL and c == '&':
                 spcharinfo.add(buflen)
             buf.append(c)
             buflen += len(c)

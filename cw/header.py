@@ -830,6 +830,19 @@ class CardHeader(object):
                     return True
         return False
 
+    def get_showstyle(self):
+        """発動時の視覚効果(Wsn.4)。"""
+        if self.carddata is None:
+            prop = cw.data.xml2element(self.fpath, "Property")
+            e = prop.find("ShowStyle")
+        else:
+            e = self.carddata.find("Property/ShowStyle")
+        if e is None:
+            if self.type == "BeastCard":
+                return "Center"
+            else:
+                return "FrontOfUser"
+        return e.text
 
     def get_can_loaded_scaledimage(self):
         """スケーリングされたイメージを使用可能なカードか。"""
@@ -1386,9 +1399,8 @@ class PartyHeader(object):
         if path:
             e = cw.util.get_elementfromzip(path, "ScenarioLog.xml", "Property")
             path = e.gettext("WsnPath", "")
-            db = cw.scenariodb.Scenariodb()
+            db = cw.cwpy.frame.open_scenariodb()
             sceheader = db.search_path(path)
-            db.close()
             return sceheader
         else:
             return None
