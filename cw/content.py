@@ -146,6 +146,58 @@ class EventContentBase(object):
                 cw.cwpy.input()
                 cw.cwpy.eventhandler.run()
 
+
+    def variant_error(self, msg="", ex=None):
+        desc = u"コモンの処理でエラーが発生しました。"
+        if msg:
+            desc += "\n" + msg
+        if ex:
+            if isinstance(ex, cw.calculator.TokanizeException):
+                desc += u"\n" + "使用できない文字があります(行:%s 位置:%s)" % (ex.line, ex.pos)
+            elif isinstance(ex, cw.calculator.SemanticsException):
+                desc += u"\n" + "構文が正しくありません(行:%s 位置:%s)" % (ex.line, ex.pos)
+            elif isinstance(ex, cw.calculator.FunctionIsNotDefinedException):
+                desc += u"\n" + "関数 %s は定義されていません。" % (ex.func_name)
+            elif isinstance(ex, cw.calculator.ArgumentIsNotDecimalException):
+                desc += u"\n" + "関数 %s の %s 番目の引数が数値ではありません(値=%s)" % (ex.func_name, ex.arg_index+1, ex.arg_value)
+            elif isinstance(ex, cw.calculator.ArgumentIsNotStringException):
+                desc += u"\n" + "関数 %s の %s 番目の引数が文字列ではありません(値=%s)" % (ex.func_name, ex.arg_index+1, ex.arg_value)
+            elif isinstance(ex, cw.calculator.ArgumentIsNotBooleanException):
+                desc += u"\n" + "関数 %s の %s 番目の引数が真偽値ではありません(値=%s)" % (ex.func_name, ex.arg_index+1, ex.arg_value)
+            elif isinstance(ex, cw.calculator.ArgumentsCountException):
+                desc += u"\n" + "関数 %s の呼び出し引数の数が間違っています。" % (ex.func_name)
+            elif isinstance(ex, cw.calculator.InvalidArgumentException):
+                desc += u"\n" + "関数 %s の %s 番目の引数の値が間違っています(値=%s)" % (ex.func_name, ex.arg_index+1, ex.arg_value)
+            elif isinstance(ex, cw.calculator.VariantNotFoundException):
+                desc += u"\n" + "コモン『%s』はありません。" % (ex.path)
+            elif isinstance(ex, cw.calculator.FlagNotFoundException):
+                desc += u"\n" + "フラグ『%s』はありません。" % (ex.path)
+            elif isinstance(ex, cw.calculator.StepNotFoundException):
+                desc += u"\n" + "ステップ『%s』はありません。" % (ex.path)
+
+        cw.cwpy.play_sound("error")
+        def func():
+            choices = (
+                (u"続行", wx.ID_OK, cw.wins(100)),
+                (u"イベント中止", wx.ID_CANCEL, cw.wins(100)),
+                (u"エディタで開く", cw.debug.debugger.ID_EDITOR, cw.wins(100)),
+            )
+            dlg = cw.dialog.message.Message(cw.cwpy.frame, cw.cwpy.msgs["message"], desc, mode=3, choices=choices)
+            dlg.buttons[2].Enable(bool(cw.cwpy.setting.editor))
+            cw.cwpy.frame.move_dlg(dlg)
+            ret = dlg.ShowModal()
+            dlg.Destroy()
+            return ret
+        ret = cw.cwpy.frame.sync_exec(func)
+
+        if ret == wx.ID_CANCEL:
+            raise cw.event.EffectBreakError()
+
+        elif ret == cw.debug.debugger.ID_EDITOR:
+            cw.debug.debugger.Debugger.exec_editor(cw.cwpy.frame, self.data)
+            raise cw.event.EffectBreakError()
+
+
     @property
     def textdict(self):
         return {
@@ -572,7 +624,7 @@ class BranchSkillContent(BranchContent):
         scope = self.data.get("targets")
         name = cw.cwpy.sdata.get_skillname(resid)
         if not name is None:
-            success = self.get_contentname(child) == "○"
+            success = self.get_contentname(child) == u"○"
             if self.invert:
                 success = not success
             if scope == "SelectedCard":
@@ -615,7 +667,7 @@ class BranchItemContent(BranchContent):
         name = cw.cwpy.sdata.get_itemname(resid)
 
         if not name is None:
-            success = self.get_contentname(child) == "○"
+            success = self.get_contentname(child) == u"○"
             if self.invert:
                 success = not success
             if scope == "SelectedCard":
@@ -657,7 +709,7 @@ class BranchBeastContent(BranchContent):
         scope = self.data.get("targets")
         name = cw.cwpy.sdata.get_beastname(resid)
         if not name is None:
-            success = self.get_contentname(child) == "○"
+            success = self.get_contentname(child) == u"○"
             if self.invert:
                 success = not success
             if scope == "SelectedCard":
@@ -923,7 +975,7 @@ class BranchStatusContent(BranchContent):
         s = self.textdict.get(self.data.get("targetm", "").lower(), "")
         s2 = self.textdict.get(self.data.get("status", "").lower(), "")
 
-        success = self.get_contentname(child) == "○"
+        success = self.get_contentname(child) == u"○"
         if self.invert:
             success = not success
         if success:
@@ -934,10 +986,15 @@ class BranchStatusContent(BranchContent):
 class BranchGossipContent(BranchContent):
     def __init__(self, data):
         BranchContent.__init__(self, data)
+        self.gossip = self.data.get("gossip", "")
+        self.spchars = self.data.getbool(".", "spchars", False) # 特殊文字の展開(Wsn.4)
 
     def action(self):
         """ゴシップ分岐コンテント。"""
-        gossip = self.data.get("gossip", "")
+        if self.spchars:
+            gossip, _namelist = cw.sprite.message.rpl_specialstr(self.gossip)
+        else:
+            gossip = self.gossip
         flag = cw.cwpy.ydata.has_gossip(gossip)
         return self.get_boolean_index(flag)
 
@@ -945,12 +1002,13 @@ class BranchGossipContent(BranchContent):
         return u"ゴシップ分岐コンテント"
 
     def get_childname(self, child):
-        s = self.data.get("gossip", "")
+        s = self.gossip
+        spchars = u"(特殊文字を展開)" if self.spchars else u""
 
         if self.get_contentname(child) == u"○":
-            return u"ゴシップ『%s』が宿屋にある" % (s)
+            return u"ゴシップ『%s』が宿屋にある%s" % (s, spchars)
         else:
-            return u"ゴシップ『%s』が宿屋にない" % (s)
+            return u"ゴシップ『%s』が宿屋にない%s" % (s, spchars)
 
 class BranchCompleteStampContent(BranchContent):
     def __init__(self, data):
@@ -1051,7 +1109,8 @@ class BranchCouponContent(BranchContent):
             if e.text:
                 names.append(e.text)
         self.couponnames = names
-        self.invert = self.data.getbool(".", "invert", False)
+        self.invert = self.data.getbool(".", "invert", False) # 条件の逆転(Wsn.4)
+        self.spchars = self.data.getbool(".", "spchars", False) # 特殊文字の展開(Wsn.4)
 
     def action(self):
         """称号存在分岐コンテント。"""
@@ -1061,8 +1120,14 @@ class BranchCouponContent(BranchContent):
         if not self.couponnames:
             return false_index
 
-        # シャロ―コピー
-        names = self.couponnames[:]
+        if self.spchars:
+            names = []
+            for name in self.couponnames:
+                name, _namelist = cw.sprite.message.rpl_specialstr(name)
+                names.append(name)
+        else:
+            # シャロ―コピー
+            names = self.couponnames[:]
         # 全てに一致？
         allmatch = self.matchingtype == "And"
 
@@ -1103,7 +1168,8 @@ class BranchCouponContent(BranchContent):
                 resulttype = u"不所有"
             else:
                 resulttype = u"所有"
-            return u"称号「%s」の%s%sで分岐" % (s, type, resulttype)
+            spchars = u"(特殊文字を展開)" if self.spchars else u""
+            return u"称号「%s」の%s%sで分岐%s" % (s, type, resulttype, spchars)
         else:
             return u"称号が指定されていません"
 
@@ -1120,14 +1186,15 @@ class BranchCouponContent(BranchContent):
                     type = u"の全て"
                 else:
                     type = u"のどれか一つ"
-        success = self.get_contentname(child) == "○"
+        success = self.get_contentname(child) == u"○"
         if self.invert:
             # 判定条件の反転(Wsn.4)
             success = not success
+        spchars = u"(特殊文字を展開)" if self.spchars else u""
         if success:
-            return u"%sが称号「%s」%sを所有している" % (s2, s, type)
+            return u"%sが称号「%s」%sを所有している%s" % (s2, s, type, spchars)
         else:
-            return u"%sが称号「%s」%sを所有していない" % (s2, s, type)
+            return u"%sが称号「%s」%sを所有していない%s" % (s2, s, type, spchars)
 
 class BranchSelectContent(BranchContent):
     def __init__(self, data):
@@ -1695,7 +1762,7 @@ class BranchKeyCodeContent(BranchContent):
         s2 = u"・".join(types) if types else u"(指定無し)"
         s3 = self.keycode
 
-        success = self.get_contentname(child) == "○"
+        success = self.get_contentname(child) == u"○"
         if self.invert:
             success = not success
         if success:
@@ -1811,6 +1878,7 @@ class BranchMultiCouponContent(BranchContent):
         self.scope = self.data.get("targets", "Selected")
         # 対象範囲修正
         self.scope, self.someone, self.unreversed = _get_couponscope(self.scope)
+        self.spchars = self.data.getbool(".", "spchars", False) # 特殊文字の展開(Wsn.4)
 
     def action(self):
         """クーポン多岐分岐コンテント(Wsn.2)。"""
@@ -1830,6 +1898,9 @@ class BranchMultiCouponContent(BranchContent):
                     continue
 
             coupon = e.get("name", "")
+
+            if self.spchars:
+                coupon, _namelist = cw.sprite.message.rpl_specialstr(coupon)
             if coupon:
                 if _has_coupon(targets, [coupon], self.scope, self.someone, False, True, invert=False):
                     return index
@@ -1853,10 +1924,11 @@ class BranchMultiCouponContent(BranchContent):
         scope = self.data.get("targets", "Selected")
         s2 = self.textdict.get(scope.lower(), "")
 
+        spchars = u"(特殊文字を展開)" if self.spchars else u""
         if name:
-            return u"%sが称号「%s」を所有している" % (s2, name)
+            return u"%sが称号「%s」を所有している%s" % (s2, name, spchars)
         else:
-            return u"%sが全ての称号を所有していない" % (s2)
+            return u"%sが全ての称号を所有していない%s" % (s2, spchars)
 
 
 class BranchMultiRandomContent(BranchContent):
@@ -2085,6 +2157,30 @@ class ChangeAreaContent(EventContentBase):
         else:
             return u"エリアが指定されていません"
 
+class ChangeEnvironmentContent(EventContentBase):
+    def __init__(self, data):
+        EventContentBase.__init__(self, data, is_changestate=True)
+        self.backpack = self.data.getattr(".", "backpack", "NotSet")
+
+    def action(self):
+        """状況設定コンテント。"""
+        if self.backpack == "Enable":
+            cw.cwpy.sdata.party_environment_backpack = True
+        elif self.backpack == "Disable":
+            cw.cwpy.sdata.party_environment_backpack = False
+        return 0
+
+    def get_status(self):
+        def enable_str(s):
+            if s == "Enable":
+                return u"使用可"
+            elif s == "Disable":
+                return u"使用不可"
+            else:
+                return u"変更しない"
+        backpack = enable_str(self.backpack)
+        return u"荷物袋 = %s" % (backpack)
+
 #-------------------------------------------------------------------------------
 # Check系コンテント
 #-------------------------------------------------------------------------------
@@ -2173,10 +2269,30 @@ class EffectContent(EventContentBase):
         d["fadein"] = self.data.getint(".", "fadein", 0)
         d["channel"] = self.data.getint(".", "channel", 0)
 
+        self.initialeffect = self.data.getbool(".", "initialeffect", False)
+        if self.initialeffect:
+            self.initialsoundpath = cw.util.validate_filepath(self.data.get("initialsound", ""))
+            self.initialvolume = self.data.getint(".", "initialvolume", 100)
+            self.initialloopcount = self.data.getint(".", "initialloopcount", 1)
+            self.initialfadein = self.data.getint(".", "initialfadein", 0)
+            self.initialchannel = self.data.getint(".", "initialchannel", 0)
+
         # 選択メンバの能力参照(Wsn.2)
         d["refability"] = self.data.getbool(".", "refability", False)
         d["physical"] = self.data.getattr(".", "physical", "Dex")
         d["mental"] = self.data.getattr(".", "mental", "Aggressive")
+
+        # アニメーション速度(Wsn.4)
+        cardspeed = self.data.getattr(".", "cardspeed", "Default")
+        if cardspeed == "Default":
+            d["cardspeed"] = -1
+            d["overridecardspeed"] = False
+        else:
+            d["cardspeed"] = int(cardspeed)
+            d["overridecardspeed"] = self.data.getbool(".", "overridecardspeed", False)
+
+        # 吸収者(Wsn.4)
+        d["absorbto"] = self.data.getattr(".", "absorbto", "None")
 
         # Effectインスタンス作成
         motions = self.data.getfind("Motions").getchildren()
@@ -2225,6 +2341,19 @@ class EffectContent(EventContentBase):
 
             else:
                 cardversion = None
+
+        def initial_effect(targets, tevent):
+            if not self.initialeffect:
+                return targets
+
+            def remove_target(target):
+                if isinstance(target, cw.character.Character):
+                    target.remove_coupon(u"＠効果対象")
+                if tevent:
+                    tevent.remove_target(target)
+            return cw.event.initial_effect(self.eff, targets, False,
+                                           self.initialsoundpath, self.initialvolume, self.initialloopcount,
+                                           self.initialchannel, self.initialfadein, remove_target)
 
         def apply(target):
             if isinstance(target, cw.character.Character):
@@ -2282,7 +2411,7 @@ class EffectContent(EventContentBase):
             else:
                 assert isinstance(target, cw.sprite.card.MenuCard)
                 cw.cwpy.play_sound_with(self.eff.soundpath, subvolume=self.eff.volume, loopcount=self.eff.loopcount,
-                                    channel=self.eff.channel, fade=self.eff.fade)
+                                        channel=self.eff.channel, fade=self.eff.fade)
                 self.eff.animate(target)
                 cw.cwpy.draw(clip=target.rect)
                 cw.cwpy.event.get_effectevent().mcards.discard(target)
@@ -2335,7 +2464,7 @@ class EffectContent(EventContentBase):
                                 break
 
                 # 効果イベントの差し替え
-                tevent = cw.event.Targeting(None, targets, False)
+                tevent = cw.event.Targeting(None, targets, self.initialeffect)
                 if e_mcards:
                     tevent.mcards = e_mcards
                 cw.cwpy.event.effectevent = tevent
@@ -2350,6 +2479,7 @@ class EffectContent(EventContentBase):
                 tevent.waited = True
 
                 # 効果の実行
+                initial_effect(targets, tevent)
                 while True:
                     member = tevent.get_nexttarget()
                     if member is None:
@@ -2382,8 +2512,11 @@ class EffectContent(EventContentBase):
 
         else:
             # イベントが発火しない場合の効果適用処理
+            targets = initial_effect(targets, None)
             for member in targets:
                 apply(member)
+                if member.cardtarget:
+                    member.clear_cardtarget()
                 if not cw.cwpy.is_playingscenario() or cw.cwpy.sdata.in_f9:
                     break
 
@@ -2939,10 +3072,15 @@ class GetCompleteStampContent(GetContent):
 class GetGossipContent(GetContent):
     def __init__(self, data):
         GetContent.__init__(self, data)
+        self.gossip = self.data.get("gossip", "")
+        self.spchars = self.data.getbool(".", "spchars", False) # 特殊文字の展開(Wsn.4)
 
     def action(self):
         """ゴシップ取得コンテント。"""
-        gossip = self.data.get("gossip")
+        if self.spchars:
+            gossip, _namelist = cw.sprite.message.rpl_specialstr(self.gossip)
+        else:
+            gossip = self.gossip
 
         if gossip:
             cw.cwpy.ydata.set_gossip(gossip)
@@ -2950,10 +3088,11 @@ class GetGossipContent(GetContent):
         return 0
 
     def get_status(self):
-        gossip = self.data.get("gossip")
+        gossip = self.gossip
+        spchars = u"(特殊文字を展開)" if self.spchars else u""
 
         if gossip:
-            return u"ゴシップ『%s』取得" % (gossip)
+            return u"ゴシップ『%s』取得%s" % (gossip, spchars)
         else:
             return u"ゴシップが指定されていません"
 
@@ -2986,17 +3125,22 @@ class GetCouponContent(GetContent):
     def __init__(self, data):
         GetContent.__init__(self, data)
         self.coupon = self.data.get("coupon")
-        self.value = self.data.get("value")
+        self.value = self.data.getint(".", "value", 0)
         self.scope = self.data.get("targets")
         # 称号所有者が適用範囲の時の称号名(Wsn.2)
         self.holdingcoupon = self.data.get("holdingcoupon", "")
+        self.spchars = self.data.getbool(".", "spchars", False) # 特殊文字の展開(Wsn.4)
 
     def action(self):
         """称号付与コンテント。"""
-        if is_addablecoupon(self.coupon):
+        if self.spchars:
+            coupon, _namelist = cw.sprite.message.rpl_specialstr(self.coupon)
+        else:
+            coupon = self.coupon
+        if is_addablecoupon(coupon):
             targets = cw.cwpy.event.get_targetscope(self.scope, False, coupon=self.holdingcoupon)
             cardevent = cw.cwpy.event.get_effectevent()
-            targetout = cardevent and cardevent.in_effectmotionloop() and self.coupon == u"＠効果対象"
+            targetout = cardevent and cardevent.in_effectmotionloop() and coupon == u"＠効果対象"
 
             for target in targets:
                 if isinstance(target, cw.character.Character):
@@ -3004,19 +3148,20 @@ class GetCouponContent(GetContent):
                         # "＠効果対象外"を持つメンバには"＠効果対象"はつかない(Wsn.2)
                         continue
 
-                    target.set_coupon(self.coupon, self.value)
+                    target.set_coupon(coupon, self.value)
 
         return 0
 
     def get_status(self):
-        coupon = self.data.get("coupon")
+        coupon = self.coupon
 
         if coupon:
-            value = self.data.getint(".", "value", 0)
+            value = self.value
             value = "+%s" % (value) if 0 <= value else "%s" % (value)
-            scope = self.data.get("targets")
+            scope = self.scope
             scope = self.textdict.get(scope.lower(), "")
-            return u"%sに称号『%s(%s)』を付与" % (scope, coupon, value)
+            spchars = u"(特殊文字を展開)" if self.spchars else u""
+            return u"%sに称号『%s(%s)』を付与%s" % (scope, coupon, value, spchars)
         else:
             return u"称号が指定されていません"
 
@@ -3353,10 +3498,15 @@ class LoseCompleteStampContent(LoseContent):
 class LoseGossipContent(LoseContent):
     def __init__(self, data):
         LoseContent.__init__(self, data)
+        self.gossip = self.data.get("gossip", "")
+        self.spchars = self.data.getbool(".", "spchars", False) # 特殊文字の展開(Wsn.4)
 
     def action(self):
         """ゴシップ削除コンテント。"""
-        gossip = self.data.get("gossip", "")
+        if self.spchars:
+            gossip, _namelist = cw.sprite.message.rpl_specialstr(self.gossip)
+        else:
+            gossip = self.gossip
 
         if gossip:
             cw.cwpy.ydata.remove_gossip(gossip)
@@ -3364,10 +3514,11 @@ class LoseGossipContent(LoseContent):
         return 0
 
     def get_status(self):
-        gossip = self.data.get("gossip", "")
+        ossip = self.gossip
+        spchars = u"(特殊文字を展開)" if self.spchars else u""
 
         if gossip:
-            return u"ゴシップ『%s』削除" % (gossip)
+            return u"ゴシップ『%s』削除%s" % (gossip, spchars)
         else:
             return u"ゴシップが指定されていません"
 
@@ -3379,20 +3530,22 @@ class LoseCouponContent(LoseContent):
         self.scope = self.data.get("targets")
         # 称号所有者が適用範囲の時の称号名(Wsn.2)
         self.holdingcoupon = self.data.get("holdingcoupon", "")
+        self.spchars = self.data.getbool(".", "spchars", False) # 特殊文字の展開(Wsn.4)
 
     def action(self):
         """称号剥奪コンテント。"""
-        coupon = self.data.get("coupon")
-        scope = self.data.get("targets")
-
-        if is_addablecoupon(self.coupon):
+        if self.spchars:
+            coupon, _namelist = cw.sprite.message.rpl_specialstr(self.coupon)
+        else:
+            coupon = self.coupon
+        if is_addablecoupon(coupon):
             targets = cw.cwpy.event.get_targetscope(self.scope, False, coupon=self.holdingcoupon)
             cardevent = cw.cwpy.event.get_effectevent()
-            targetout = cardevent and cardevent.in_effectmotionloop() and self.coupon == u"＠効果対象"
+            targetout = cardevent and cardevent.in_effectmotionloop() and coupon == u"＠効果対象"
 
             for target in targets:
                 if isinstance(target, cw.character.Character):
-                    target.remove_coupon(self.coupon)
+                    target.remove_coupon(coupon)
 
                     if targetout:
                         # 無限ループを避けるための措置(Wsn.2)
@@ -3402,12 +3555,14 @@ class LoseCouponContent(LoseContent):
         return 0
 
     def get_status(self):
-        coupon = self.data.get("coupon")
+        coupon = self.coupon
+
 
         if coupon:
-            scope = self.data.get("targets")
+            scope = self.scope
             s = self.textdict.get(scope.lower(), "")
-            return u"%sから称号『%s』剥奪" % (s, coupon)
+            spchars = u"(特殊文字を展開)" if self.spchars else u""
+            return u"%sから称号『%s』剥奪%s" % (s, coupon, spchars)
         else:
             return u"称号が指定されていません"
 
@@ -4456,7 +4611,7 @@ class MoveCardContent(EventContentBase):
                     cw.cwpy.force_dealspeed = self.cardspeed
                 else:
                     cw.cwpy.override_dealspeed = self.cardspeed
-            self._do_action()
+            return self._do_action()
         finally:
             cw.cwpy.override_dealspeed = override_dealspeed
             cw.cwpy.force_dealspeed = force_dealspeed

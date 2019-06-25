@@ -552,6 +552,10 @@ class Content(base.CWBinaryBase):
                 f.check_wsnversion("2", u"選択メンバの能力参照")
             if data.getbool(".", "ignite", False):
                 f.check_wsnversion("2", u"効果コンテントによるイベント発火")
+            if data.getbool(".", "initialeffect", False):
+                f.check_wsnversion("4", u"初期効果の有無")
+            if data.getattr(".", "absorbto", "None") != "None":
+                f.check_wsnversion("4", u"吸収者の指定")
             f.write_dword(int(data.get("level")))
             f.write_byte(base.CWBinaryBase.unconv_target_member(data.get("targetm"), f, effectcontent=True))
             f.write_byte(base.CWBinaryBase.unconv_card_effecttype(data.get("effecttype")))
@@ -642,6 +646,8 @@ class Content(base.CWBinaryBase):
             if data.getbool(".", "invert", False):
                 f.check_wsnversion("4", u"判定条件の反転")
             base.CWBinaryBase.check_coupon(f, coupon)
+            if data.getbool(".", "spchars", False):
+                f.check_wsnversion("4", u"クーポン内の特殊文字の展開")
             f.write_string(coupon)
             f.write_dword(0)
             f.write_byte(base.CWBinaryBase.unconv_target_scope_coupon(data.get("targets"), f))
@@ -666,6 +672,8 @@ class Content(base.CWBinaryBase):
         elif tag == "Get" and ctype == "Money":
             f.write_dword(int(data.get("value")))
         elif tag == "Get" and ctype == "Coupon":
+            if data.getbool(".", "spchars", False):
+                f.check_wsnversion("4", u"クーポン内の特殊文字の展開")
             base.CWBinaryBase.check_coupon(f, data.get("coupon"))
             f.write_string(data.get("coupon"))
             f.write_dword(int(data.get("value")))
@@ -689,6 +697,8 @@ class Content(base.CWBinaryBase):
         elif tag == "Lose" and ctype == "Money":
             f.write_dword(int(data.get("value")))
         elif tag == "Lose" and ctype == "Coupon":
+            if data.getbool(".", "spchars", False):
+                f.check_wsnversion("4", u"クーポン内の特殊文字の展開")
             base.CWBinaryBase.check_coupon(f, data.get("coupon"))
             f.write_string(data.get("coupon"))
             f.write_dword(0)
@@ -772,10 +782,16 @@ class Content(base.CWBinaryBase):
         elif tag == "Lose" and ctype == "CompleteStamp":
             f.write_string(data.get("scenario"))
         elif tag == "Branch" and ctype == "Gossip":
+            if data.getbool(".", "spchars", False):
+                f.check_wsnversion("4", u"ゴシップ内の特殊文字の展開")
             f.write_string(data.get("gossip"))
         elif tag == "Get" and ctype == "Gossip":
+            if data.getbool(".", "spchars", False):
+                f.check_wsnversion("4", u"ゴシップ内の特殊文字の展開")
             f.write_string(data.get("gossip"))
         elif tag == "Lose" and ctype == "Gossip":
+            if data.getbool(".", "spchars", False):
+                f.check_wsnversion("4", u"ゴシップ内の特殊文字の展開")
             f.write_string(data.get("gossip"))
         elif tag == "Branch" and ctype == "IsBattle":
             pass
@@ -891,6 +907,8 @@ class Content(base.CWBinaryBase):
             f.check_wsnversion("3", u"カード再配置コンテント")
             if data.getattr(".", "cardspeed", "Default") != "Default":
                 f.check_wsnversion("4", u"カード速度指定")
+        elif tag == "Change" and ctype == "Environment": # Wsn.4
+            f.check_wsnversion("4", u"状況設定")
         else:
             raise ValueError(tag + ", " + ctype)
 

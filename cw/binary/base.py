@@ -646,6 +646,12 @@ class CWBinaryBase(object):
         elif ctype == "Branch" and n == "MultiRandom":  # Wsn.2
             f.check_wsnversion("2", u"ランダム多岐分岐コンテント")
             return 0
+        elif ctype == "Move" and n == "Card":  # Wsn.3
+            f.check_wsnversion("3", u"カード再配置コンテント")
+            return 0
+        elif ctype == "Change" and n == "Environment":  # Wsn.4
+            f.check_wsnversion("4", u"状況設定コンテント")
+            return 0
         else:
             raise ValueError(ctype + ", " + n)
 

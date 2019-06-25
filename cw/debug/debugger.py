@@ -46,6 +46,7 @@ ID_STEPOVER = wx.NewId()
 ID_STEPIN = wx.NewId()
 ID_PAUSE = wx.NewId()
 ID_STOP = wx.NewId()
+ID_PARTY_ENV = wx.NewId()
 ID_ROUND = wx.NewId()
 ID_STARTEVENT = wx.NewId()
 ID_EDITOR = wx.NewId()
@@ -170,6 +171,11 @@ class Debugger(wx.Frame):
         self.mi_info.SetBitmap(rsrc["INFO"])
         scenario_menu.AppendItem(self.mi_info)
         scenario_menu.AppendSeparator()
+        self.mi_party_env = wx.MenuItem(scenario_menu, ID_PARTY_ENV, u"状況(&E)",
+                                         u"パーティの状況を変更します。")
+        self.mi_party_env.SetBitmap(rsrc["EVT_CHANGE_ENVIRONMENT"])
+        scenario_menu.AppendItem(self.mi_party_env)
+        scenario_menu.AppendSeparator()
         self.mi_round = wx.MenuItem(scenario_menu, ID_ROUND, u"ラウンド(&T)")
         self.mi_round.SetBitmap(rsrc["ROUND"])
         scenario_menu.AppendItem(self.mi_round)
@@ -288,6 +294,10 @@ class Debugger(wx.Frame):
         self.tl_info = self.tb2.AddLabelTool(
             ID_INFO, u"情報", rsrc["INFO"],
             shortHelp=u"情報カードの取得・破棄を行います。")
+        self.tb2.AddSeparator()
+        self.tl_party_env = self.tb2.AddLabelTool(
+            ID_PARTY_ENV, u"状況", rsrc["EVT_CHANGE_ENVIRONMENT"],
+            shortHelp=u"パーティの状況を変更します。")
         self.tb2.AddSeparator()
         self.tl_round = self.tb2.AddLabelTool(
             ID_ROUND, u"ラウンド", rsrc["ROUND"],
@@ -515,6 +525,7 @@ class Debugger(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnSavedJPDCImageTool, id=ID_SAVEDJPDCIMAGE)
         self.Bind(wx.EVT_MENU, self.OnMoneyTool, id=ID_MONEY)
         self.Bind(wx.EVT_MENU, self.OnCardTool, id=ID_CARD)
+        self.Bind(wx.EVT_MENU, self.OnPartyEnvTool, id=ID_PARTY_ENV)
         self.Bind(wx.EVT_MENU, self.OnRoundTool, id=ID_ROUND)
         self.Bind(wx.EVT_MENU, self.OnMemberTool, id=ID_MEMBER)
         self.Bind(wx.EVT_MENU, self.OnCouponTool, id=ID_COUPON)
@@ -670,6 +681,30 @@ class Debugger(wx.Frame):
         cw.cwpy.frame.move_dlg(dlg)
         dlg.ShowModal()
         cw.cwpy.exec_func(cw.cwpy.update_yadoinitial)
+
+    def OnPartyEnvTool(self, event):
+        choices = [u"荷物袋の使用が可能"]
+        selections = []
+        if cw.cwpy.sdata.party_environment_backpack:
+            selections.append(0)
+        dlg = wx.MultiChoiceDialog(
+            self, u"パーティの状況を設定してください",
+            u"状況設定", choices, style=wx.DEFAULT_DIALOG_STYLE|wx.OK|wx.CANCEL|wx.MINIMIZE_BOX)
+        dlg.SetSelections(selections)
+
+        if dlg.ShowModal() == wx.ID_OK:
+            party_environment_backpack = False
+            for index in dlg.GetSelections():
+                if index == 0:
+                    party_environment_backpack = True
+
+            def func():
+                if cw.cwpy.is_playingscenario() and cw.cwpy.sdata.party_environment_backpack != party_environment_backpack:
+                    cw.cwpy.sdata.party_environment_backpack = party_environment_backpack
+                    if cw.cwpy.areaid == cw.AREA_CAMP:
+                        cw.data.redraw_cards(party_environment_backpack)
+            cw.cwpy.exec_func(func)
+        dlg.Destroy()
 
     def OnRoundTool(self, event):
         if not cw.cwpy.is_battlestatus():
@@ -1576,6 +1611,7 @@ class Debugger(wx.Frame):
                 enabled[self.mi_pack.GetId()] = (self.mi_pack, self.tl_pack, False)
                 enabled[self.mi_friend.GetId()] = (self.mi_friend, self.tl_friend, False)
                 enabled[self.mi_info.GetId()] = (self.mi_info, self.tl_info, False)
+                enabled[self.mi_party_env.GetId()] = (self.mi_party_env, self.tl_party_env, False)
                 enabled[self.mi_round.GetId()] = (self.mi_round, self.tl_round, False)
                 enabled[self.mi_save.GetId()] = (self.mi_save, self.tl_save, False)
                 enabled[self.mi_load.GetId()] = (self.mi_load, self.tl_load, False)
@@ -1613,6 +1649,7 @@ class Debugger(wx.Frame):
                     enabled[self.mi_status.GetId()] = (self.mi_status, self.tl_status, True)
                     enabled[self.mi_recovery.GetId()] = (self.mi_recovery, self.tl_recovery, True)
                     enabled[self.mi_redisplay.GetId()] = (self.mi_redisplay, self.tl_redisplay, True)
+                    enabled[self.mi_party_env.GetId()] = (self.mi_party_env, self.tl_party_env, True)
                     if cw.cwpy.setting.editor:
                         enabled[self.mi_editor.GetId()] = (self.mi_editor, self.tl_editor, True)
                     if is_runningevent:

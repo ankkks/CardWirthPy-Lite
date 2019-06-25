@@ -598,7 +598,7 @@ class MessageWindow(base.CWPySprite):
         elif key in cw.cwpy.sdata.steps:
             v = cw.cwpy.sdata.steps[key]
         else:
-            v, namelistindex = _get_spstep(key, updatetype, basenamelist, namelist, namelistindex)
+            v, namelistindex = _get_spstep(key, full, updatetype, basenamelist, namelist, namelistindex)
             if v is None:
                 return None, namelistindex
 
@@ -1282,7 +1282,7 @@ def _get_stepvalue(key, full, updatetype, name_table, basenamelist, startindex, 
     if key in cw.cwpy.sdata.steps:
         v = cw.cwpy.sdata.steps[key]
     else:
-        v, namelistindex = _get_spstep(key, updatetype, basenamelist, namelist, namelistindex)
+        v, namelistindex = _get_spstep(key, full, updatetype, basenamelist, namelist, namelistindex)
     if v is None:
         return None, namelistindex
 
@@ -1306,9 +1306,9 @@ def _get_stepvalue(key, full, updatetype, name_table, basenamelist, startindex, 
     return s, namelistindex
 
 def get_spstep(name):
-    return _get_spstep(name, "Fixed", None, None, 0)[0]
+    return _get_spstep(name, _SP_EXPAND_SHARPS, "Fixed", None, None, 0)[0]
 
-def _get_spstep(name, updatetype, basenamelist, namelist, namelistindex):
+def _get_spstep(name, full, updatetype, basenamelist, namelist, namelistindex):
     if cw.cwpy.event.in_inusecardevent:
         cardversion = cw.cwpy.event.get_inusecard().wsnversion
     else:
@@ -1316,7 +1316,7 @@ def _get_spstep(name, updatetype, basenamelist, namelist, namelistindex):
 
     if cw.cwpy.sdata.is_wsnversion('2', cardversion):
         lname = name.lower()
-        if lname in u"??selectedplayer":
+        if full != _SP_NO_SHARPS and lname in "??selectedplayer":
             # 選択メンバのパーティ内の番号(Wsn.2)
             # パーティ内の選択メンバがいない場合は"0"
             if basenamelist is None:

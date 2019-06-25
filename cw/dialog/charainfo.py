@@ -554,17 +554,29 @@ class TopPanel(wx.Panel):
         # カード画像
         x = (dc.GetSize()[0] - cw.wins(74)) / 2
 
-        infos = cw.image.get_imageinfos(self.ccard.data.find("Property"))
-        can_loaded_scaledimage = self.ccard.data.getbool(".", "scaledimage", False)
+        if isinstance(self.ccard, cw.sprite.card.EnemyCard):
+            is_override_image = self.ccard.mcarddata.getbool("Property/ImagePaths", "override", False)
+        else:
+            is_override_image = False
+
+        if is_override_image:
+            infos = cw.image.get_imageinfos(self.ccard.mcarddata.find("Property"), pcnumber=True)
+            infos, can_loaded_scaledimages = cw.sprite.card.imageinfos_to_pathdata(infos)
+        else:
+            infos = cw.image.get_imageinfos(self.ccard.data.find("Property"))
+            can_loaded_scaledimage = self.ccard.data.getbool(".", "scaledimage", False)
+            can_loaded_scaledimages = [can_loaded_scaledimage] * len(infos)
+
         setpos = any(map(lambda info: not info.postype in (None, "Default"), infos))
 
-        for info in infos:
+        for info, can_loaded_scaledimage in zip(infos, can_loaded_scaledimages):
             path = info.path
-            if isinstance(cw.cwpy.selection, (cw.character.Enemy,
-                                                cw.character.Friend)):
-                path = cw.util.get_materialpath(path, cw.M_IMG)
-            elif not cw.binary.image.path_is_code(path):
-                path = cw.util.join_yadodir(path)
+            if not info.pcnumber:
+                if isinstance(cw.cwpy.selection, (cw.character.Enemy,
+                                                    cw.character.Friend)):
+                    path = cw.util.get_materialpath(path, cw.M_IMG)
+                elif not cw.binary.image.path_is_code(path):
+                    path = cw.util.join_yadodir(path)
 
             bmp = cw.util.load_wxbmp(path, True, can_loaded_scaledimage=can_loaded_scaledimage)
             bmp2 = cw.wins(bmp)
@@ -663,7 +675,7 @@ class TopPanel(wx.Panel):
 
         # 名前
         dc.SetFont(cw.cwpy.rsrc.get_wxfont("charaparam2", pixelsize=cw.wins(16)))
-        s = self.ccard.name
+        s = self.ccard.get_showingname()
         w = dc.GetTextExtent(s)[0]
         width2 = self.Parent.width - cw.wins(5)
         cw.util.draw_witharound_simple(dc, s, width2 - w, cw.wins(3), backcolor)
@@ -709,7 +721,7 @@ class TopPanel(wx.Panel):
     def get_detailtext(self):
         lines = []
         level = u"%s" % (self.ccard.level)
-        s = u"[ %s ] Level %s" % (self.ccard.name, level)
+        s = u"[ %s ] Level %s" % (self.ccard.get_showingname(), level)
         if not isinstance(self.race, cw.header.UnknownRaceHeader):
             s += u" / %s" % (self.race.name)
         if self.sex or self.age:

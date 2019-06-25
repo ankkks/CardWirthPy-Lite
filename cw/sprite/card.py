@@ -45,6 +45,8 @@ class CWPyCard(base.SelectableSprite):
         self.hide_inusecardimg = True
         # アニメーション速度の上書き(-1でプレイヤー設定値)
         self.dealspeed = -1
+        # 名前にある特殊文字の展開の有無
+        self.spchars = False
 
         # MenuCardの特殊コマンド
         self.command = ""
@@ -57,6 +59,8 @@ class CWPyCard(base.SelectableSprite):
         mcardflag &= bool(not self.debug_only or cw.cwpy.is_debugmode())
         if mcardflag and self.command == "ShowDialog" and self.arg == "INFOVIEW":
             mcardflag &= bool(cw.cwpy.is_playingscenario() and cw.cwpy.sdata.has_infocards())
+        elif mcardflag and self.command == "ShowDialog" and self.arg == "BACKPACK":
+            mcardflag &= cw.cwpy.sdata.party_environment_backpack
         return mcardflag
 
     @staticmethod
@@ -70,6 +74,8 @@ class CWPyCard(base.SelectableSprite):
             command = data.getattr(".", "command", "")
             if command == "ShowDialog" and data.getattr(".", "arg", "") == "INFOVIEW":
                 mcardflag &= bool(cw.cwpy.is_playingscenario() and cw.cwpy.sdata.has_infocards())
+            elif command == "ShowDialog" and data.getattr(".", "arg", "") == "BACKPACK":
+                mcardflag &= cw.cwpy.sdata.party_environment_backpack
         return mcardflag
 
     def get_unselectedimage(self):
@@ -115,7 +121,8 @@ class CWPyCard(base.SelectableSprite):
         else:
             return cw.cwpy.setting.dealing_scales
 
-    def _get_dealspeed(self):
+    def get_dealspeed(self, battlespeed):
+        """このカードがアニメーションする速度を返す。"""
         if cw.cwpy.force_dealspeed != -1:
             return cw.cwpy.force_dealspeed
         elif self.dealspeed != -1:
@@ -123,7 +130,9 @@ class CWPyCard(base.SelectableSprite):
         elif cw.cwpy.override_dealspeed != -1:
             return cw.cwpy.override_dealspeed
         else:
-            return cw.cwpy.setting.get_dealspeed(self.battlespeed and cw.cwpy.setting.use_battlespeed)
+            return cw.cwpy.setting.get_dealspeed(battlespeed)
+    def _get_dealspeed(self):
+        return self.get_dealspeed(self.battlespeed and cw.cwpy.setting.use_battlespeed)
 
     def update(self, scr):
         method = getattr(self, "update_" + self.status, None)
@@ -1041,10 +1050,18 @@ class EnemyCard(CWPyCard, character.Enemy):
         for info in cw.image.get_imageinfos(self.data.find("Property")):
             path = info.path
             self.imgpaths.append(cw.image.ImageInfo(cw.util.get_materialpath(path, cw.M_IMG), base=info))
+        # イメージの上書き(Wsn.4)
+        is_override_image = self.mcarddata.getbool("Property/ImagePaths", "override", False)
+        if is_override_image:
+            override_infos = cw.image.get_imageinfos(self.mcarddata.find("Property"), pcnumber=True)
+            override_images = imageinfos_to_pathdata(override_infos)
+        else:
+            override_images = []
         can_loaded_scaledimage = self.data.getbool(".", "scaledimage", False)
         self.cardimg = cw.image.CharacterCardImage(self, pos_noscale=self._init_pos_noscale,
                                                    can_loaded_scaledimage=can_loaded_scaledimage, is_scenariocard=True,
-                                                   is_override_name=self.spchars, override_name=override_name)
+                                                   is_override_name=self.spchars, override_name=override_name,
+                                                   is_override_image=is_override_image, override_images=override_images)
         self.set_pos_noscale(pos_noscale=self._init_pos_noscale)
         self.update_image()
         # 空のイメージ
@@ -1300,24 +1317,7 @@ class MenuCard(CWPyCard):
         infos = cw.image.get_imageinfos(self._data.find("Property"), pcnumber=True)
 
         # 通常イメージ。LargeMenuCardはサイズ大のメニューカード作成
-        paths = []
-        can_loaded_scaledimages = []
-        for info in infos:
-            if info.path:
-                paths.append(cw.image.ImageInfo(info.path, base=info))
-                can_loaded_scaledimages.append(cw.cwpy.areaid < 0 or cw.cwpy.sdata.can_loaded_scaledimage)
-            elif info.pcnumber:
-                # メニューカードにPCの画像を表示(1.30)
-                pcards = cw.cwpy.ydata.party.members
-                pi = info.pcnumber - 1
-                if 0 <= pi and pi < len(pcards):
-                    can_loaded_scaledimage = pcards[pi].getbool(".", "scaledimage", False)
-                    for info2 in cw.image.get_imageinfos(pcards[pi].find("Property")):
-                        path = info2.path
-                        if path:
-                            path = cw.util.join_yadodir(path)
-                        paths.append(cw.image.ImageInfo(path, info.pcnumber, base=info2, basecardtype="LargeCard"))
-                        can_loaded_scaledimages.append(can_loaded_scaledimage)
+        paths, can_loaded_scaledimages = imageinfos_to_pathdata(infos)
 
         if self._data.tag == "LargeMenuCard":
             self._cardimg = cw.image.LargeCardImage(paths, "NORMAL", self.name,
@@ -1445,6 +1445,31 @@ class MenuCard(CWPyCard):
             CWPyCard.set_scale(self, scale)
         else:
             self.scale = scale
+
+def imageinfos_to_pathdata(infos):
+    """
+    infosを実際に表示するファイルのパスとスケーリング可否情報に変換する。
+    """
+    paths = []
+    can_loaded_scaledimages = []
+    for info in infos:
+        if info.path:
+            paths.append(cw.image.ImageInfo(info.path, base=info))
+            can_loaded_scaledimages.append(cw.cwpy.areaid < 0 or cw.cwpy.sdata.can_loaded_scaledimage)
+        elif info.pcnumber:
+            # メニューカードにPCの画像を表示(1.30)
+            pcards = cw.cwpy.ydata.party.members
+            pi = info.pcnumber - 1
+            if 0 <= pi and pi < len(pcards):
+                can_loaded_scaledimage = pcards[pi].getbool(".", "scaledimage", False)
+                for info2 in cw.image.get_imageinfos(pcards[pi].find("Property")):
+                    path = info2.path
+                    if path:
+                        path = cw.util.join_yadodir(path)
+                    paths.append(cw.image.ImageInfo(path, info.pcnumber, base=info2, basecardtype="LargeCard"))
+                    can_loaded_scaledimages.append(can_loaded_scaledimage)
+    return paths, can_loaded_scaledimages
+
 
 def main():
     pass

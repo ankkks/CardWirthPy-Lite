@@ -823,7 +823,7 @@ def create_albumpage(path, lost=False, nocoupon=False):
     pelement = etree.make_element("Property")
 
     sets = set(["Name", "ImagePath", "ImagePaths", "Description", "Level",
-                "Ability", "Coupons"])
+                "Life", "Feature", "Ability", "Coupons"])
 
     can_loaded_scaledimage = etree.getbool(".", "scaledimage", False)
     for e in etree.getfind("Property"):
@@ -832,6 +832,8 @@ def create_albumpage(path, lost=False, nocoupon=False):
 
     element.append(pelement)
     etree = cw.data.xml2etree(element=element)
+
+    etree.edit("Property/Life", etree.getattr("Property/Life", "max"))
 
     # クーポン
     if not nocoupon:
@@ -934,6 +936,11 @@ def create_scenariolog(sdata, path, recording, logfilepath):
     e_prop.append(e)
     e = cw.data.make_element("NoticeInfoView", str(sdata.notice_infoview))
     e_prop.append(e)
+    e = cw.data.make_element("PartyEnvironment")
+    if not sdata.party_environment_backpack:
+        e.append(cw.data.make_element("Backpack", "Disable"))
+    if len(e):
+        e_prop.append(e)
     if cw.cwpy.setting.write_playlog:
         e = cw.data.make_element("LogFile", logfilepath)
         e_prop.append(e)

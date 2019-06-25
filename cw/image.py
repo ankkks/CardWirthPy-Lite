@@ -832,10 +832,12 @@ class LargeCardImage(CardImage):
 
 class CharacterCardImage(CardImage):
     def __init__(self, ccard, pos_noscale=(0, 0), can_loaded_scaledimage=False, is_scenariocard=False,
-                 scedir="", is_override_name=False, override_name=""):
+                 scedir="", is_override_name=False, override_name="", is_override_image=False, override_images=[]):
         self.ccard = ccard
         self.is_override_name = is_override_name
         self.override_name = override_name
+        self.is_override_image = is_override_image
+        self.override_images = override_images
         self._pos_noscale = pos_noscale
         self.can_loaded_scaledimage = can_loaded_scaledimage
         self.anotherscenariocard = False
@@ -845,6 +847,7 @@ class CharacterCardImage(CardImage):
         self.update_scale()
 
     def update_scale(self):
+        self.image_mtime.clear()
         # カード画像
         self.set_faceimgs(self.ccard.imgpaths, self.can_loaded_scaledimage)
         # フォント画像(カード名)
@@ -861,12 +864,13 @@ class CharacterCardImage(CardImage):
         self.paths = paths
         self.can_loaded_scaledimage = can_loaded_scaledimage
         self.cardimgs = []
-        for info in self.paths:
-            path = info.path
-            if not cw.binary.image.path_is_code(path) and isinstance(self.ccard, cw.sprite.card.PlayerCard) and\
-                    not self.is_scenariocard:
-                path = cw.util.get_yadofilepath(path)
-            self.cardimgs.append(cw.s(cw.util.load_image(path, True, can_loaded_scaledimage=self.can_loaded_scaledimage)))
+        if not self.is_override_image:
+            for info in self.paths:
+                path = info.path
+                if not cw.binary.image.path_is_code(path) and isinstance(self.ccard, cw.sprite.card.PlayerCard) and\
+                        not self.is_scenariocard:
+                    path = cw.util.get_yadofilepath(path)
+                self.cardimgs.append(cw.s(cw.util.load_image(path, True, can_loaded_scaledimage=self.can_loaded_scaledimage)))
 
     def set_nameimg(self, name):
         if name:
@@ -944,13 +948,35 @@ class CharacterCardImage(CardImage):
             self.image.blit(self.levelimg, self.levelimg_pos)
 
         # カード画像
-        for cardimg, info in zip(self.cardimgs, self.paths):
+        self.image_mtime.clear()
+        if self.is_override_image:
+            for i, info in enumerate(self.override_images[0]):
+                path = info.path
+                pisc = cw.binary.image.path_is_code(path)
+                if (not pisc and self.anotherscenariocard) or (not pisc and not self.is_scenariocard) or info.pcnumber:
+                    path = cw.util.get_yadofilepath(path)
 
-            baserect = info.calc_basecardposition(cardimg.get_size(), noscale=False,
-                                                  basecardtype="LargeCard",
-                                                  cardpostype="LargeCard")
+                if (not path or (self.is_scenariocard and not self.anotherscenariocard)) and not info.pcnumber:
+                    path = cw.util.get_materialpath(info.path, cw.M_IMG, system=not self.is_scenariocard,
+                                                    scedir=self.scedir)
 
-            cw.imageretouch.blit_2bitbmp_to_card(self.image, cardimg, (cw.s(11)+baserect.x, cw.s(18)+baserect.y))
+                if not pisc and os.path.isfile(path):
+                    self.image_mtime[path] = os.path.getmtime(path)
+
+                if pisc or os.path.isfile(path):
+                    can_loaded_scaledimage = self.override_images[1][i]
+                    subimg = cw.s(cw.util.load_image(path, True, can_loaded_scaledimage=can_loaded_scaledimage))
+                    baserect = info.calc_basecardposition(subimg.get_size(), noscale=False,
+                                                          basecardtype="LargeCard",
+                                                          cardpostype="LargeCard")
+
+                cw.imageretouch.blit_2bitbmp_to_card(self.image, subimg, (cw.s(11)+baserect.x, cw.s(18)+baserect.y))
+        else:
+            for cardimg, info in zip(self.cardimgs, self.paths):
+                baserect = info.calc_basecardposition(cardimg.get_size(), noscale=False,
+                                                      basecardtype="LargeCard",
+                                                      cardpostype="LargeCard")
+                cw.imageretouch.blit_2bitbmp_to_card(self.image, cardimg, (cw.s(11)+baserect.x, cw.s(18)+baserect.y))
 
         # 名前
         if self.nameimg:
