@@ -175,6 +175,9 @@ class Character(object):
         # キャッシュ
         self._voc_tbl = {}
 
+    def get_showingname(self):
+        return self.get_name()
+
     def get_imagepaths(self):
         """現在表示中のカード画像の情報を
         cw.image.ImageInfoのlistで返す。
@@ -1106,7 +1109,7 @@ class Character(object):
             self.actiondata = (target, header, beasts)
             self.actionautoselected = auto
             cw.cwpy.play_sound("page")
-            assert cw.cwpy.pre_dialogs, "%s, %s" % (self.name, header.name)
+            assert cw.cwpy.pre_dialogs, "%s, %s" % (self.name, header.name if header else "?")
             if cw.cwpy.pre_dialogs:
                 cw.cwpy.pre_dialogs.pop()
 
@@ -2095,6 +2098,38 @@ class Character(object):
 
         for name in names:
             self._remove_coupon(name)
+
+
+    @synclock(_couponlock)
+    def find_coupon(self, matcher, startindex):
+        """
+        matcher(name)がTrueになるクーポンを
+        startindexの位置から検索し、見つかった位置を返す。
+        """
+        e_coupons = self.data.find("Property/Coupons")
+        if not e_coupons is None:
+            for i, e_coupon in enumerate(e_coupons):
+                if matcher(e_coupon.text):
+                    return i
+        return -1
+
+    @synclock(_couponlock)
+    def get_coupon_at(self, index):
+        """指定位置のクーポンを(name, value)で返す。"""
+        e_coupons = self.data.find("Property/Coupons")
+        if e_coupons is None:
+            raise Exception("No coupons.")
+        e = e_coupons[index]
+        return e.text, e.getint(".", "value", 0)
+
+    @synclock(_couponlock)
+    def coupons_len(self):
+        """クーポン数を返す。"""
+        e_coupons = self.data.find("Property/Coupons")
+        if e_coupons is None:
+            return 0
+        else:
+            return len(e_coupons)
 
     #---------------------------------------------------------------------------
     #　レベル変更用

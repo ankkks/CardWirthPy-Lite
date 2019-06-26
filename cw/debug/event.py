@@ -173,10 +173,17 @@ class EventList(wx.TreeCtrl):
             return
 
         self.DeleteChildren(selitem)
-        def append(parent, data, tag):
+
+        def append(parent, data, tag, e_flags=None, e_steps=None, e_variants=None):
             e = cw.event.Event(data)
             if len(e.treekeys) == 0:
                 return
+            if not e_flags is None:
+                e.flags = cw.data.init_flags(e_flags.cwxparent, False)
+            if not e_steps is None:
+                e.steps = cw.data.init_steps(e_steps.cwxparent, False)
+            if not e_variants is None:
+                e.variants = cw.data.init_variants(e_variants.cwxparent, False)
             item = self.AppendItem(parent, e.treekeys[0], self.imgidx_event)
             self.SetItemPyData(item, e)
             for keynum in e.keynums:
@@ -230,7 +237,7 @@ class EventList(wx.TreeCtrl):
             return
         data = cw.data.xml2etree(element=e)
         for ee in data.getfind("Events"):
-            append(selitem, ee, data.getroot().tag)
+            append(selitem, ee, data.getroot().tag, data.find("Flags"), data.find("Steps"), data.find("Variants"))
             if virtual:
                 break
 
@@ -250,7 +257,7 @@ class EventList(wx.TreeCtrl):
                         if  cardname is None:
                             cardname = u"(未設定)"
                     else:
-                        cardname = ce.gettext("Property/Name", u"")
+                        cardname = ce.gettext("Property/Name", "")
                     item = self.AppendItem(selitem, cardname, self.imgidx_menucard)
                     for ee in ce.getfind("Events"):
                         append(item, ee, ce.tag)

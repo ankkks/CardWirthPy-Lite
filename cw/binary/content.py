@@ -909,6 +909,12 @@ class Content(base.CWBinaryBase):
                 f.check_wsnversion("4", u"カード速度指定")
         elif tag == "Change" and ctype == "Environment": # Wsn.4
             f.check_wsnversion("4", u"状況設定")
+        elif tag == "Set" and ctype == "Variant":  # Wsn.4
+            f.check_wsnversion("4", u"コモン設定コンテント")
+        elif tag == "Branch" and ctype == "Variant":  # Wsn.4
+            f.check_wsnversion("4", u"コモン分岐コンテント")
+        elif tag == "Check" and ctype == "Variant":  # Wsn.4
+            f.check_wsnversion("4", u"コモン判定コンテント")
         else:
             raise ValueError(tag + ", " + ctype)
 

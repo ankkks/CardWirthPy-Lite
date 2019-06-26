@@ -854,7 +854,16 @@ class Setting(object):
         self.makingcoupons = [u"＿" + f.name for f in self.makings]
 
         # デバグ宿で簡易生成を行う際の能力型
-        self.sampletypes = [cw.features.SampleType(e) for e in data.getfind("SampleTypes")]
+        sampletypedescs = {}
+        for e in basedata.getfind("SampleTypes"):
+            sampletype = cw.features.SampleType(e)
+            sampletypedescs[sampletype.name] = sampletype.description
+        self.sampletypes = [cw.features.SampleType(e) for e in data.getfind(u"SampleTypes")]
+        for sampletype in self.sampletypes:
+            # 古いスキンでサンプルタイプの解説が無い場合があるので
+            # 同一名称のサンプルタイプがSkinBaseにあるようなら解説をコピーする
+            if sampletype.description == u"":
+                sampletype.description = sampletypedescs.get(sampletype.name, u"")
 
         # 音声とメッセージは、選択中のスキンに
         # 定義されていなければスキンベースのもので代替する
@@ -2412,6 +2421,7 @@ CWXEDITOR_RESOURCES = {
     "COUPON": "coupon_plus.png",
     "EDITOR": "cwxeditor.png",
     "EVENT": "event_tree.png",
+    "LOCAL_FLAG": "flag_l.png",
     "FRIEND": "cast.png",
     "GOSSIP": "gossip.png",
     "IGNITION": "def_start.png",
@@ -2426,6 +2436,9 @@ CWXEDITOR_RESOURCES = {
     "ROUND": "round.png",
     "SAVE": "save.png",
     "UPDATE": "refresh.png",
+    "LOCAL_STEP": "step_l.png",
+    "LOCAL_VARIANT": "variant_l.png",
+    "VARIABLES": "flagdir.png",
 
     # Terminal
     "EVT_START": "evt_start.png",  # スタート
@@ -2465,6 +2478,10 @@ CWXEDITOR_RESOURCES = {
     "EVT_BRANCH_STEPVALUE": "evt_cmpstep.png",  # ステップ比較分岐
     "EVT_SUBSTITUTE_FLAG": "evt_cpflag.png",  # フラグ代入
     "EVT_SUBSTITUTE_STEP": "evt_cpstep.png",  # ステップ代入
+    "EVT_SET_VARIANT": "evt_set_var.png",  # コモン設定(Wsn.4)
+    "EVT_BRANCH_VARIANT": "evt_br_var.png",  # コモン分岐(Wsn.4)
+    "EVT_CHECK_VARIANT": "evt_chk_var.png",  # コモン判定(Wsn.4)
+
 
     # Utility
     "EVT_BRANCH_SELECT": "evt_br_member.png",  # メンバ選択

@@ -133,7 +133,7 @@ class YadoDB(object):
                     """
                     self.cur.execute(s)
 
-            # moved列,scenariocard列,versionhint列,star列が存在しない
+            # moved列,scenariocard列,versionhint列,star列,resetvariables列が存在しない
             # 場合は作成する(旧バージョンとの互換性維持)
             cur = self.con.execute("PRAGMA table_info('card')")
             res = cur.fetchall()
@@ -142,6 +142,7 @@ class YadoDB(object):
             hasversionhint = False
             haswsnversion = False
             hasstar = False
+            hasresetvariables = False
             for rec in res:
                 if rec[1] == "moved":
                     hasmoved = True
@@ -153,7 +154,9 @@ class YadoDB(object):
                     haswsnversion = True
                 elif rec[1] == "star":
                     hasstar = True
-                if all((hasmoved, hasscenariocard, hasversionhint, haswsnversion, hasstar)):
+                elif rec[1] == "resetvariables":
+                    hasresetvariables = True
+                if all((hasmoved, hasscenariocard, hasversionhint, haswsnversion, hasstar, hasresetvariables)):
                     break
 
             if not hasmoved:
@@ -175,6 +178,10 @@ class YadoDB(object):
             if not haswsnversion:
                 # 値はNoneのままにしておく
                 self.cur.execute("ALTER TABLE card ADD COLUMN wsnversion TEXT")
+                reqcommit = True
+            if not hasresetvariables:
+                self.cur.execute("ALTER TABLE card ADD COLUMN resetvariables INTEGER")
+                self.cur.execute("UPDATE card SET resetvariables=?", (0,))
                 reqcommit = True
 
             if self.mode == YADO:
@@ -313,6 +320,7 @@ class YadoDB(object):
                     versionhint TEXT,
                     wsnversion TEXT,
                     star INTEGER,
+                    resetvariables INTEGER,
                     ctime INTEGER,
                     mtime INTEGER,
                     PRIMARY KEY (fpath)
@@ -716,9 +724,11 @@ class YadoDB(object):
             versionhint,
             wsnversion,
             star,
+            resetvariables,
             ctime,
             mtime
         ) VALUES(
+            ?,
             ?,
             ?,
             ?,
@@ -796,6 +806,7 @@ class YadoDB(object):
             cw.cwpy.sct.to_basehint(header.versionhint),
             header.wsnversion,
             header.star,
+            1 if header.need_resetvariables else 0,
             ctime,
             mtime,
         ))
@@ -885,6 +896,7 @@ class YadoDB(object):
                 versionhint,
                 wsnversion,
                 star,
+                resetvariables,
                 ctime,
                 mtime,
                 numorder

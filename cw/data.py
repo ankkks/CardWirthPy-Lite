@@ -10,6 +10,7 @@ import time
 import shutil
 import threading
 import ctypes
+import decimal
 import xml.parsers.expat
 from xml.etree.cElementTree import ElementTree
 from xml.etree.ElementTree import _ElementInterface
@@ -72,6 +73,7 @@ class SystemData(object):
         self._infocard_cache = {}
         self.flags = {}
         self.steps = {}
+        self.variants = {}
         self.labels = {}
         self.ignorecase_table = {}
         self.notice_infoview = False
@@ -250,6 +252,33 @@ class SystemData(object):
             self.resource_cache_size = 0
 
         self.resource_cache_size += size
+
+    def find_flag(self, path, event):
+        """
+        pathが指すフラグを返す。
+        eventにローカル変数がある場合は優先する。
+        """
+        if event and path in event.flags:
+            return event.flags[path]
+        return self.flags.get(path, None)
+
+    def find_step(self, path, event):
+        """
+        pathが指すステップを返す。
+        eventにローカル変数がある場合は優先する。
+        """
+        if event and path in event.steps:
+            return event.steps[path]
+        return self.steps.get(path, None)
+
+    def find_variant(self, path, event):
+        """
+        pathが指すコモンを返す。
+        eventにローカル変数がある場合は優先する。
+        """
+        if event and path in event.variants:
+            return event.variants[path]
+        return self.variants.get(path, None)
 
     def start(self):
         pass
@@ -783,6 +812,8 @@ class ScenarioData(SystemData):
         self._init_flags()
         # step set
         self._init_steps()
+        # variant set
+        self._init_variants()
         # refresh debugger
         self._init_debugger()
 
@@ -1022,26 +1053,30 @@ class ScenarioData(SystemData):
     def _reload(self):
         flagvals = {}
         stepvals = {}
+        variantvals = {}
         for name, flag in self.flags.items():
             flagvals[name] = flag.value
         for name, step in self.steps.items():
             stepvals[name] = step.value
+        for name, variant in list(self.variants.items()):
+            variantvals[name] = variant.value
         self.data_cache = {}
         self.resource_cache = {}
         self.resource_cache_size = 0
         self._init_xmlpaths()
         self._init_flags()
         self._init_steps()
+        self._init_variants()
 
         for name, value in flagvals.items():
             if name in self.flags:
-                flag = self.flags[name]
-                if flag.value <> value:
-                    flag.value = value
-                    flag.redraw_cards()
+                self.flags[name].set(value, updatedebugger=False)
         for name, value in stepvals.items():
             if name in self.steps:
-                self.steps[name].value = value
+                self.steps[name].set(value, updatedebugger=False)
+        for name, value in list(variantvals.items()):
+            if name in self.variants:
+                self.variants[name].set(value, updatedebugger=False)
 
         self._init_debugger()
         def func():
@@ -1211,16 +1246,7 @@ class ScenarioData(SystemData):
         """
         summary.xmlで定義されているフラグを初期化。
         """
-        self.flags = {}
-
-        for e in self.summary.getfind("Flags"):
-            value = e.getbool(".", "default")
-            name = e.gettext("Name", "")
-            truename = e.gettext("True", "")
-            falsename = e.gettext("False", "")
-            spchars = e.getbool(".", "spchars", False)
-            self.flags[name] = Flag(value, name, truename, falsename, defaultvalue=value,
-                                    spchars=spchars)
+        self.flags = init_flags(self.summary, False)
 
     def _init_steps(self):
         """
@@ -1228,16 +1254,13 @@ class ScenarioData(SystemData):
         """
         self.steps = {}
 
-        for e in self.summary.getfind("Steps"):
-            value = e.getint(".", "default")
-            name = e.gettext("Name", "")
-            valuenames = []
-            for ev in e:
-                if ev.tag.startswith("Value"):
-                    valuenames.append(ev.text if ev.text else u"")
-            spchars = e.getbool(".", "spchars", False)
-            self.steps[name] = Step(value, name, valuenames, defaultvalue=value,
-                                    spchars=spchars)
+        self.steps = init_steps(self.summary, False)
+
+    def _init_variants(self):
+        """
+        summary.xmlで定義されているコモンを初期化。
+        """
+        self.variants = init_variants(self.summary, False)
 
     def reset_variables(self):
         """すべての状態変数を初期化する。"""
@@ -1251,6 +1274,13 @@ class ScenarioData(SystemData):
             name = e.gettext("Name", "")
             self.flags[name].set(value)
             self.flags[name].redraw_cards()
+
+        for e in self.summary.getfind("Variants", raiseerror=False):
+            type = e.getattr(".", "defaulttype")
+            value = e.getattr(".", "defaultvalue", "")
+            value = Variant.value_from_str(type, value)
+            name = e.gettext("Name", "")
+            self.variants[name].set(value)
 
     def start(self):
         """
@@ -1310,6 +1340,10 @@ class ScenarioData(SystemData):
 
         # 保存済みJPDCイメージを宿フォルダへ移動
         cw.header.SavedJPDCImageHeader.create_header()
+
+        # 状態変数を保存
+        cw.cwpy.ydata.save_variables(self.name, self.author, complete,
+                                     cw.cwpy.sdata.flags, cw.cwpy.sdata.steps, cw.cwpy.sdata.variants)
 
         cw.cwpy.background.clear_background()
         cw.cwpy.ydata.party.remove_numbercoupon()
@@ -1381,6 +1415,24 @@ class ScenarioData(SystemData):
                     os.makedirs(dpath3)
                 shutil.copy2(frompath, topath)
 
+        # 宿に保存された状態変数(Wsn.4)
+        key = (self.name, self.author)
+        vars = cw.cwpy.ydata.saved_variables.get(key, None)
+        if vars:
+            _, flags, steps, variants = vars
+            for name, value in flags.items():
+                flag = self.flags.get(name, None)
+                if not flag is None and not flag.initialization in ("Leave"):
+                    flag.set(value)
+            for name, value in steps.items():
+                step = self.steps.get(name, None)
+                if not step is None and not step.initialization in ("Leave"):
+                    step.set(value)
+            for name, value in variants.items():
+                variant = self.variants.get(name, None)
+                if not variant is None and not variant.initialization in ("Leave"):
+                    variant.set(value)
+
         # create_zip
         path = cw.util.splitext(cw.cwpy.ydata.party.data.fpath)[0] + ".wsl"
 
@@ -1412,6 +1464,13 @@ class ScenarioData(SystemData):
         for e in etree.getfind("Steps"):
             if e.text in self.steps:
                 self.steps[e.text].value = e.getint(".", "value")
+
+        for e in etree.getfind("Variants", raiseerror=False):
+            if e.text in self.variants:
+                type = e.getattr(".", "type")
+                value = e.getattr(".", "value", "")
+                value = Variant.value_from_str(type, value)
+                self.variants[e.text].value = value
 
         if not recording:
             for e in etree.getfind("Gossips"):
@@ -1546,14 +1605,66 @@ class ScenarioData(SystemData):
             self.set_versionhint(cw.HINT_MESSAGE, None)
         self.friendcards = seq
 
+def init_flags(data, writable):
+    flags = {}
+
+    for e in data.getfind("Flags", raiseerror=False):
+        defvalue = e.getbool(".", "default")
+        value = e.getbool(".", "value", defvalue)
+        name = e.gettext("Name", "")
+        truename = e.gettext("True", "")
+        falsename = e.gettext("False", "")
+        spchars = e.getbool(".", "spchars", False)
+        flags[name] = Flag(data if writable else None, e, value, name, truename, falsename, defaultvalue=defvalue, spchars=spchars)
+
+    return flags
+
+
+def init_steps(data, writable):
+    steps = {}
+
+    for e in data.getfind("Steps", raiseerror=False):
+        defvalue = e.getint(".", "default")
+        value = e.getint(".", "value", defvalue)
+        name = e.gettext("Name", "")
+        valuenames = []
+        for ev in e:
+            if ev.tag.startswith("Value"):
+                valuenames.append(ev.text if ev.text else "")
+        spchars = e.getbool(".", "spchars", False)
+        steps[name] = Step(data if writable else None, e, value, name, valuenames, defaultvalue=defvalue, spchars=spchars)
+
+    return steps
+
+
+def init_variants(data, writable):
+    variants = {}
+
+    for e in data.getfind("Variants", raiseerror=False):
+        deftype = e.getattr(".", "defaulttype", "String")
+        type = e.getattr(".", "type", deftype)
+        defvalue = e.getattr(".", "defaultvalue", "")
+        value = e.getattr(".", "value", defvalue)
+
+        value = Variant.value_from_str(type, value)
+        name = e.gettext("Name", "")
+        variants[name] = Variant(data if writable else None, e, value, name, defaultvalue=defvalue)
+
+    return variants
+
+
 class Flag(object):
-    def __init__(self, value, name, truename, falsename, defaultvalue, spchars):
+    def __init__(self, parent, data, value, name, truename, falsename, defaultvalue, spchars):
+        self.is_writable = not parent is None
+        self._parent = parent
+        self._data = data
         self.value = value
         self.name = name
         self.truename = truename if truename else u""
         self.falsename = falsename if falsename else u""
         self.defaultvalue = defaultvalue
         self.spchars = spchars
+        self.initialization = data.getattr(".", "initialize", "Leave") if not data is None else "Leave"
 
     def __nonzero__(self):
         return self.value
@@ -1599,6 +1710,11 @@ class Flag(object):
         else:
             return s
 
+    def write_value(self):
+        if self.is_writable and self.initialization != "EventExit":
+            self._data.set("value", str(self.value))
+            self._parent.is_edited = True
+
 def redraw_cards(value, flag=""):
     """フラグに対応するメニューカードの再描画処理"""
     quickdeal = cw.cwpy.areaid == cw.AREA_CAMP and cw.cwpy.setting.all_quickdeal
@@ -1624,12 +1740,16 @@ def redraw_cards(value, flag=""):
         cw.cwpy.hide_cards(updatelist=False, flag=flag, quickhide=quickdeal)
 
 class Step(object):
-    def __init__(self, value, name, valuenames, defaultvalue, spchars):
+    def __init__(self, parent, data, value, name, valuenames, defaultvalue, spchars):
+        self.is_writable = not parent is None
+        self._parent = parent
+        self._data = data
         self.value = value
         self.name = name
         self.valuenames = valuenames
         self.defaultvalue = defaultvalue
         self.spchars = spchars
+        self.initialization = data.getattr(".", "initialize", "Leave") if not data is None else "Leave"
 
     def set(self, value, updatedebugger=True):
         value = cw.util.numwrap(value, 0, len(self.valuenames)-1)
@@ -1659,6 +1779,66 @@ class Step(object):
             return u""
         else:
             return s
+
+    def write_value(self):
+        if self.is_writable and self.initialization != "EventExit":
+            self._data.set("value", str(self.value))
+            self._parent.is_edited = True
+
+class Variant(object):
+    def __init__(self, parent, data, value, name, defaultvalue):
+        self.is_writable = not parent is None
+        self._parent = parent
+        self._data = data
+        self.type = Variant.value_to_type(value)
+        self.value = value
+        self.name = name
+        self.defaultvalue = defaultvalue
+        self.initialization = data.getattr(".", "initialize", "Leave") if not data is None else "Leave"
+
+    def set(self, value, updatedebugger=True):
+        if self.value != value:
+            if cw.cwpy.ydata:
+                cw.cwpy.ydata.changed()
+            self.type = Variant.value_to_type(value)
+            self.value = value
+            cw.cwpy.update_mcardnames()
+            if updatedebugger:
+                cw.cwpy.event.refresh_variable(self)
+
+    @staticmethod
+    def value_to_type(value):
+        if isinstance(value, bool):
+            return "Boolean"
+        elif isinstance(value, decimal.Decimal):
+            return "Number"
+        else:
+            return "String"
+
+    @staticmethod
+    def value_from_str(type, s):
+        if type == "Boolean":
+            return cw.util.str2bool(s)
+        elif type =="Number":
+            return decimal.Decimal(s)
+        else: # String
+            return s
+
+    @staticmethod
+    def value_to_str(value):
+        if isinstance(value, bool):
+            return str(value).upper()
+        else:
+            return str(value)
+
+    def string_value(self):
+        return Variant.value_to_str(self.value)
+
+    def write_value(self):
+        if self.is_writable and self.initialization != "EventExit":
+            self._data.set("type", self.type)
+            self._data.set("value", str(self.value))
+            self._parent.is_edited = True
 
 #-------------------------------------------------------------------------------
 #　宿データ
@@ -1839,6 +2019,9 @@ class YadoData(object):
 
         # 保存済みJPDCイメージ
         self.savedjpdcimage = self.yadodb.get_savedjpdcimage()
+
+        # 保存済み状態変数
+        self.saved_variables = cw.data.YadoData.get_savedvariables(self.environment)
 
         self.yadodb.close()
 
@@ -2032,7 +2215,7 @@ class YadoData(object):
     def is_empty(self):
         return not (self.partys or self.standbys or self.storehouse or\
                     self.album or self.partyrecord or self.savedjpdcimage or\
-                    self.get_gossips() or self.get_compstamps())
+                    self.get_gossips() or self.get_compstamps() or self.saved_variables)
 
     def set_skinname(self, skindirname, skintype):
         self.skindirname = skindirname
@@ -2687,6 +2870,35 @@ class YadoData(object):
                     cw.cwpy.sdata.gossips[name] = False
         assert len(self.environment.getfind("Gossips")) == 0
 
+    def find_gossip(self, matcher, startindex):
+        """
+        matcher(name)がTrueになるゴシップを
+        startindexの位置から検索し、見つかった位置を返す。
+        """
+        e_gossips = self.environment.find("Gossips")
+        if not e_gossips is None:
+            for i, e_gossip in enumerate(e_gossips):
+                if matcher(e_gossip.text):
+                    return i
+        return -1
+
+    def get_gossip_at(self, index):
+        """指定位置のゴシップ名を返す。"""
+        e_gossips = self.environment.find("Gossips")
+        if e_gossips is None:
+            raise Exception("No gossips.")
+        e = e_gossips[index]
+        return e.text
+
+    def gossips_len(self):
+        """ゴシップ数を返す。"""
+        e_gossips = self.environment.find("Gossips")
+        if e_gossips is None:
+            return 0
+        else:
+            return len(e_gossips)
+
+
     def set_money(self, value, blink=False):
         """金庫に入っている金額を変更する。
         現在の所持金にvalue値をプラスするので注意。
@@ -2910,6 +3122,124 @@ class YadoData(object):
             e.set("path", path)
             be.append(e)
         self.environment.is_edited = True
+
+
+    @staticmethod
+    def get_savedvariables(environment):
+        """保存された状態変数を((scenario, author), (element, flags, steps, variants))で返す。"""
+        data = environment.find("SavedVariables")
+        if data is None:
+            return {}
+        d = {}
+        for e in data:
+            if e.tag != "Variables":
+                continue
+            scenario = e.getattr(".", "scenario", "")
+            author = e.getattr(".", "author", "")
+            if not scenario and not author:
+                continue
+            key = (scenario, author)
+            flags = {}
+            for e_flag in e.getfind("Flags", raiseerror=False):
+                name = e_flag.getattr(".", "name", "")
+                if not name:
+                    continue
+                flags[name] = e_flag.getbool(".", "value", False)
+            steps = {}
+            for e_step in e.getfind("Steps", raiseerror=False):
+                name = e_step.getattr(".", "name", "")
+                if not name:
+                    continue
+                steps[name] = e_step.getint(".", "value", 0)
+            variants = {}
+            for e_variant in e.getfind("Variants", raiseerror=False):
+                name = e_variant.getattr(".", "name", "")
+                if not name:
+                    continue
+                type = e_variant.getattr(".", "type", "")
+                if not type:
+                    continue
+                value = Variant.value_from_str(type, e_variant.getattr(".", "value", ""))
+                variants[name] = value
+            d[key] = (e, flags, steps, variants)
+        return d
+
+    def save_variables(self, scenario, author, complete, flags, steps, variants, debuglog):
+        target = ("None",) if complete else ("Complete", "None")
+        d_flags = {}
+        for flag in flags.values():
+            if flag.initialization in target:
+                d_flags[flag.name] = flag.value
+                if debuglog:
+                    debuglog.add_flag(flag.name)
+        d_steps = {}
+        for step in steps.values():
+            if step.initialization in target:
+                d_steps[step.name] = step.value
+                if debuglog:
+                    debuglog.add_step(step.name)
+        d_variants = {}
+        for variant in variants.values():
+            if variant.initialization in target:
+                d_variants[variant.name] = variant.value
+                if debuglog:
+                    debuglog.add_variant(variant.name)
+        key = (scenario, author)
+
+        if key in self.saved_variables:
+            data = self.environment.find("SavedVariables")
+            e, _, _, _ = self.saved_variables[key]
+            if not d_flags and not d_steps and not d_variants:
+                data.remove(e)
+                if debuglog:
+                    debuglog.remove_variables()
+                self.environment.is_edited = True
+                return
+            e.clear()
+        else:
+            if not d_flags and not d_steps and not d_variants:
+                return
+            data = self.environment.find("SavedVariables")
+            if data is None:
+                data = make_element("SavedVariables")
+                self.environment.append(".", data)
+            e = make_element("Variables")
+            data.append(e)
+        e.set("scenario", scenario)
+        e.set("author", author)
+        if d_flags:
+            e_flags = make_element("Flags")
+            e.append(e_flags)
+            for name, value in d_flags.items():
+                e_flags.append(make_element("Flag", attrs={"name": name,
+                                                           "value": str(value)}))
+        if d_steps:
+            e_steps = make_element("Steps")
+            e.append(e_steps)
+            for name, value in d_steps.items():
+                e_steps.append(make_element("Step", attrs={"name": name,
+                                                           "value": str(value)}))
+        if d_variants:
+            e_variants = make_element("Variants")
+            e.append(e_variants)
+            for name, value in d_variants.items():
+                e_variants.append(make_element("Variant", attrs={"name": name,
+                                                                 "type": Variant.value_to_type(value),
+                                                                 "value": str(value)}))
+
+        self.environment.is_edited = True
+        self.saved_variables[key] = (e, d_flags, d_steps, d_variants)
+
+    def remove_savedvariables(self, scenario, author):
+        key = (scenario, author)
+        d = self.saved_variables.get(key, None)
+        if not d:
+            return
+        e, _, _, _ = d
+        data = self.environment.find("SavedVariables")
+        data.remove(e)
+        del self.saved_variables[key]
+
 
 def find_scefullpath(scepath, spaths):
     """開始ディレクトリscepathから経路spathsを

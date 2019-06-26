@@ -35,8 +35,8 @@ class CWPyCard(base.SelectableSprite):
         self.flag = flag
         # スケール
         self.scale = 100
-        # 逃走の有無
-        self.escape = False
+        # アクションの有無
+        self.actions = {7: False}
         # Trueなら高速でアニメーションする
         self.highspeed = False
         # Trueなら戦闘時のアニメーション速度設定を使用する
@@ -59,7 +59,7 @@ class CWPyCard(base.SelectableSprite):
         mcardflag &= bool(not self.debug_only or cw.cwpy.is_debugmode())
         if mcardflag and self.command == "ShowDialog" and self.arg == "INFOVIEW":
             mcardflag &= bool(cw.cwpy.is_playingscenario() and cw.cwpy.sdata.has_infocards())
-        elif mcardflag and self.command == "ShowDialog" and self.arg == "BACKPACK":
+        elif mcardflag and self.command in ("MoveCard", "ShowDialog") and self.arg == "BACKPACK":
             mcardflag &= cw.cwpy.sdata.party_environment_backpack
         return mcardflag
 
@@ -74,7 +74,7 @@ class CWPyCard(base.SelectableSprite):
             command = data.getattr(".", "command", "")
             if command == "ShowDialog" and data.getattr(".", "arg", "") == "INFOVIEW":
                 mcardflag &= bool(cw.cwpy.is_playingscenario() and cw.cwpy.sdata.has_infocards())
-            elif command == "ShowDialog" and data.getattr(".", "arg", "") == "BACKPACK":
+            elif command in ("MoveCard", "ShowDialog") and data.getattr(".", "arg", "") == "BACKPACK":
                 mcardflag &= cw.cwpy.sdata.party_environment_backpack
         return mcardflag
 
@@ -748,6 +748,9 @@ class PlayerCard(CWPyCard, character.Player):
             self.rect = pygame.Rect(self._rect)
             self.rect.move_ip(cw.s(0), cw.s(+150))
 
+    def get_showingname(self):
+        return self.name
+
     def set_name(self, name):
         character.Player.set_name(self, name)
         self.cardimg.set_nameimg(self.get_name())
@@ -963,8 +966,16 @@ class EnemyCard(CWPyCard, character.Enemy):
         self.flag = mcarddata.gettext("Property/Flag", "")
         # カードグループ
         self.cardgroup = mcarddata.gettext("Property/CardGroup", "")
-        # 逃走の有無
-        self.escape = mcarddata.getbool(".", "escape", False)
+        # 逃走の有無(Wsn.3以前)
+        self.actions[7] = mcarddata.getbool(".", "escape", False)
+        # アクションの有無(Wsn.4)
+        e_actions = mcarddata.find("Property/Actions")
+        if not e_actions is None:
+            for e_action in e_actions:
+                if e_action.tag != "Action":
+                    continue
+                actid = e_action.getint(".", "id")
+                self.actions[actid] = e_action.getbool(".", True)
 
         # 名前にある特殊文字の展開の有無
         self.spchars = False
@@ -987,7 +998,6 @@ class EnemyCard(CWPyCard, character.Enemy):
 
         self._init = False
 
-        self._name = mcarddata.gettext("Property/Name", "")
         self.spchars = mcarddata.getbool("Property/Name", "override", False)
 
         # 表示するまでデータを作らない
@@ -1041,8 +1051,10 @@ class EnemyCard(CWPyCard, character.Enemy):
         # CharacterCard初期化
         character.Enemy.__init__(self)
         self.deck.set(self, draw=False)
+
+        self._name = self.data.gettext("Property/Name", "")
         if self.spchars:
-            override_name = cw.sprite.message.rpl_specialstr(self._name, expandsharps=False)[0]
+            override_name = cw.sprite.message.rpl_specialstr(self._name, expandsharps=False, localvariables=False)[0]
         else:
             override_name = ""
         # カード画像
@@ -1073,11 +1085,18 @@ class EnemyCard(CWPyCard, character.Enemy):
     def is_initialized(self):
         return self._init
 
+    def get_showingname(self):
+        self.initialize()
+        if self.spchars:
+            return self.cardimg.override_name
+        else:
+            return self._name
+
     def update_name(self):
         if not self._init:
             return
         if self.spchars:
-            name = cw.sprite.message.rpl_specialstr(self._name, expandsharps=False)[0]
+            name = cw.sprite.message.rpl_specialstr(self._name, expandsharps=False, localvariables=False)[0]
             if self.cardimg and self.cardimg.override_name != name:
                 self.cardimg.override_name = name
                 self.cardimg.set_nameimg(name)
@@ -1183,6 +1202,9 @@ class FriendCard(CWPyCard, character.Friend):
         self.clear_image()
         # 精神力回復
         self.set_skillpower()
+
+    def get_showingname(self):
+        return self.name
 
     def update_delete(self):
         if self in cw.cwpy.sdata.friendcards:
@@ -1341,11 +1363,14 @@ class MenuCard(CWPyCard):
         self._pos_noscale2 = None
         return True
 
+    def get_showingname(self):
+        return self.name
+
     def update_name(self):
         if not self._init:
             return
         if self.spchars:
-            self.name = cw.sprite.message.rpl_specialstr(self._name, expandsharps=False)[0]
+            self.name = cw.sprite.message.rpl_specialstr(self._name, expandsharps=False, localvariables=False)[0]
         else:
             self.name = self._name
         if self._cardimg and self._cardimg.name != self.name:

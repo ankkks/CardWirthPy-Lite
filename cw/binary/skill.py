@@ -262,6 +262,9 @@ class SkillCard(base.CWBinaryBase):
                 motions = e
             elif e.tag == "Events":
                 events = e
+            elif e.tag in ("Flags", "Steps", "Variants"):
+                if len(e):
+                    f.check_wsnversion("4", u"ローカル変数")
 
         f.write_byte(restype)
         f.write_image(image)

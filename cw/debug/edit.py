@@ -3,8 +3,10 @@
 
 import sys
 import math
+import decimal
 import wx
 import wx.lib.mixins.listctrl as listmix
+import wx.lib.masked
 
 import cw
 
@@ -945,6 +947,119 @@ class SavedJPDCImageEditDialog(wx.Dialog):
         indexes = self.get_selectedindexes()
         self.rmvbtn.Enable(bool(indexes))
 
+
+
+#-------------------------------------------------------------------------------
+#  保存済み状態変数整理ダイアログ
+#-------------------------------------------------------------------------------
+
+class SavedVariablesEditDialog(wx.Dialog):
+
+    def __init__(self, parent, savedvariables):
+        wx.Dialog.__init__(self, parent, -1, u"状態変数を保存したシナリオ",
+                style=wx.CAPTION|wx.SYSTEM_MENU|wx.CLOSE_BOX|wx.RESIZE_BORDER|wx.MINIMIZE_BOX)
+        self.cwpy_debug = True
+        keys = iter(savedvariables.keys())
+        self.list = list(cw.util.sorted_by_attr(keys))
+        self._removed = []
+
+        # リスト
+        image = cw.cwpy.rsrc.debugs["VARIABLES_dbg"]
+        self.values = AutoWidthListCtrl(self, -1, size=cw.ppis((250, 300)), style=wx.LC_REPORT|wx.LC_NO_HEADER|wx.BORDER)
+        self.values.imglist = wx.ImageList(image.GetWidth(), image.GetHeight())
+        self.values.imgidx = self.values.imglist.Add(image)
+        self.values.SetImageList(self.values.imglist, wx.IMAGE_LIST_SMALL)
+        self.values.InsertColumn(0, u"状態変数名")
+        self.values.SetColumnWidth(0, cw.ppis(170))
+        self.values.setResizeColumn(0)
+
+        # 検索
+        self.find = FindPanel(self, self.values, self._item_selected)
+
+        # 削除
+        self.rmvbtn = cw.cwpy.rsrc.create_wxbutton_dbg(self, wx.ID_REMOVE, (-1, -1), name=u"削除")
+
+        # 決定
+        self.okbtn = cw.cwpy.rsrc.create_wxbutton_dbg(self, -1, (-1, -1), cw.cwpy.msgs["entry_decide"])
+        # 中止
+        self.cnclbtn = cw.cwpy.rsrc.create_wxbutton_dbg(self, wx.ID_CANCEL, (-1, -1), cw.cwpy.msgs["entry_cancel"])
+
+        self._bind()
+        self._do_layout()
+
+        for name, author in self.list:
+            index = self.values.GetItemCount()
+            if author:
+                s = "%s(%s)" % (name, author)
+            else:
+                s = "%s" % (name)
+            self.values.InsertItem(index, s)
+            self.values.SetItemImage(index, self.values.imgidx)
+
+        self._item_selected()
+
+    def _bind(self):
+        self.Bind(wx.EVT_LIST_ITEM_SELECTED, self.OnItemSelected, self.values)
+        self.Bind(wx.EVT_LIST_ITEM_DESELECTED, self.OnItemSelected, self.values)
+        self.Bind(wx.EVT_BUTTON, self.OnRemoveBtn, self.rmvbtn)
+        self.Bind(wx.EVT_BUTTON, self.OnOkBtn, self.okbtn)
+
+    def _do_layout(self):
+        sizer_left = wx.BoxSizer(wx.VERTICAL)
+        sizer_left.Add(self.values, 1, flag=wx.EXPAND)
+        sizer_left.Add(self.find, 0, flag=wx.EXPAND|wx.TOP, border=cw.ppis(3))
+
+        sizer_right = wx.BoxSizer(wx.VERTICAL)
+        sizer_right.Add(self.rmvbtn, 0, wx.EXPAND)
+        sizer_right.AddStretchSpacer(1)
+        sizer_right.Add(self.okbtn, 0, wx.EXPAND)
+        sizer_right.Add(self.cnclbtn, 0, wx.EXPAND|wx.TOP, border=cw.ppis(5))
+
+        sizer = wx.BoxSizer(wx.HORIZONTAL)
+        sizer.Add(sizer_left, 1, wx.EXPAND|wx.ALL, border=cw.ppis(5))
+        sizer.Add(sizer_right, 0, flag=wx.EXPAND|wx.RIGHT|wx.TOP|wx.BOTTOM, border=cw.ppis(5))
+
+        self.SetSizer(sizer)
+        sizer.Fit(self)
+        self.Layout()
+
+    def OnRemoveBtn(self, event):
+        while True:
+            index = self.values.GetNextItem(-1, wx.LIST_NEXT_ALL, wx.LIST_STATE_SELECTED)
+            if index <= -1:
+                break
+            self._removed.append(self.list.pop(index))
+            self.values.DeleteItem(index)
+        self._item_selected()
+
+    def OnOkBtn(self, event):
+        def func(removedlist):
+            cw.cwpy.play_sound("harvest")
+            for removed in removedlist:
+                if removed in cw.cwpy.ydata.saved_variables:
+                    cw.cwpy.ydata.remove_savedvariables(removed[0], removed[1])
+            if cw.cwpy.event:
+                cw.cwpy.event.refresh_tools()
+        cw.cwpy.exec_func(func, self._removed)
+        self.EndModal(wx.ID_OK)
+
+    def OnItemSelected(self, event):
+        self._item_selected()
+
+    def get_selectedindexes(self):
+        index = -1
+        indexes = []
+        while True:
+            index = self.values.GetNextItem(index, wx.LIST_NEXT_ALL, wx.LIST_STATE_SELECTED)
+            if index <= -1:
+                break
+            indexes.append(index)
+        return indexes
+
+    def _item_selected(self):
+        indexes = self.get_selectedindexes()
+        self.rmvbtn.Enable(bool(indexes))
+
 #-------------------------------------------------------------------------------
 #  ブレークポイント整理ダイアログ
 #-------------------------------------------------------------------------------
@@ -1296,7 +1411,109 @@ def down_to_bottom(values, seq, indexes):
 
     values.EnsureVisible(values.GetItemCount() - 1)
 
+#-------------------------------------------------------------------------------
+#  コモン編集ダイアログ
+#-------------------------------------------------------------------------------
 
+class VariantEditDialog(wx.Dialog):
+
+    def __init__(self, parent, title, label, value):
+        wx.Dialog.__init__(self, parent, -1, title,
+                style=wx.CAPTION|wx.SYSTEM_MENU|wx.CLOSE_BOX|wx.MINIMIZE_BOX)
+        self.cwpy_debug = True
+        self.value = value
+
+        self.box = wx.StaticBox(self, -1, label)
+
+        self.type_num = wx.RadioButton(self, -1, u"数値")
+        self.type_str = wx.RadioButton(self, -1, u"文字列")
+        self.type_bool = wx.RadioButton(self, -1, u"真偽値")
+
+        self.value_num = wx.lib.masked.NumCtrl(self, -1, value=0)
+        self.value_num.SetFractionWidth(3)
+        self.value_str = wx.TextCtrl(self, -1)
+        self.value_bool = wx.Choice(self, -1, choices=["TRUE", "FALSE"])
+        self.value_bool.Select(0)
+        self.value_num.Disable()
+        self.value_str.Disable()
+        self.value_bool.Disable()
+
+        if isinstance(value, bool):
+            self.type_bool.SetValue(True)
+            self.value_bool.Select(0 if value else 1)
+            self.value_bool.Enable()
+        elif isinstance(value, decimal.Decimal):
+            self.type_num.SetValue(True)
+            try:
+                self.value_num.SetValue(float(value))
+            except:
+                self.value_num.SetValue(0)
+            self.value_num.Enable()
+        else:
+            self.type_str.SetValue(True)
+            self.value_str.SetValue(cw.data.Variant.value_to_str(value))
+            self.value_str.Enable()
+
+        # btn
+        self.okbtn = wx.Button(self, wx.ID_OK, "&OK", (cw.ppis(100), -1))
+        self.cnclbtn = wx.Button(self, wx.ID_CANCEL, "&Cancel", (cw.ppis(100), -1))
+
+        self._update_value()
+
+        self._do_layout()
+        self._bind()
+
+    def _bind(self):
+        self.Bind(wx.EVT_RADIOBUTTON, self.OnType, self.type_bool)
+        self.Bind(wx.EVT_RADIOBUTTON, self.OnType, self.type_num)
+        self.Bind(wx.EVT_RADIOBUTTON, self.OnType, self.type_str)
+        self.Bind(wx.EVT_CHOICE, self.OnValue, self.value_bool)
+        self.Bind(wx.lib.masked.EVT_NUM, self.OnValue, self.value_num)
+        self.Bind(wx.EVT_TEXT, self.OnValue, self.value_str)
+
+    def _do_layout(self):
+        sizer_box = wx.StaticBoxSizer(self.box, wx.HORIZONTAL)
+        sizer_grid = wx.GridBagSizer()
+        sizer_grid.Add(self.type_num, pos=(0, 0), flag=wx.ALL|wx.ALIGN_CENTRE_VERTICAL, border=cw.ppis(3))
+        sizer_grid.Add(self.type_str, pos=(1, 0), flag=wx.ALL|wx.ALIGN_CENTRE_VERTICAL, border=cw.ppis(3))
+        sizer_grid.Add(self.type_bool, pos=(2, 0), flag=wx.ALL|wx.ALIGN_CENTRE_VERTICAL, border=cw.ppis(3))
+        sizer_grid.Add(self.value_num, pos=(0, 1), flag=wx.ALL|wx.ALIGN_CENTRE_VERTICAL, border=cw.ppis(3))
+        sizer_grid.Add(self.value_str, pos=(1, 1), flag=wx.ALL|wx.ALIGN_CENTRE_VERTICAL, border=cw.ppis(3))
+        sizer_grid.Add(self.value_bool, pos=(2, 1), flag=wx.ALL|wx.ALIGN_CENTRE_VERTICAL, border=cw.ppis(3))
+        sizer_box.Add(sizer_grid, 1, wx.EXPAND, 0)
+
+        sizer_buttons = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_buttons.AddStretchSpacer(0)
+        sizer_buttons.Add(self.okbtn, 1, wx.EXPAND|wx.RIGHT, cw.ppis(5))
+        sizer_buttons.AddStretchSpacer(0)
+        sizer_buttons.Add(self.cnclbtn, 1, wx.EXPAND, cw.ppis(0))
+        sizer_buttons.AddStretchSpacer(0)
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(sizer_box, 1, wx.TOP|wx.LEFT|wx.RIGHT|wx.EXPAND, cw.ppis(15))
+        sizer.Add(sizer_buttons, 0, wx.ALL|wx.EXPAND, cw.ppis(15))
+        self.SetSizer(sizer)
+        sizer.Fit(self)
+        self.Layout()
+
+    def OnType(self, event):
+        self.value_num.Enable(self.type_num.GetValue())
+        self.value_str.Enable(self.type_str.GetValue())
+        self.value_bool.Enable(self.type_bool.GetValue())
+        self._update_value()
+
+    def OnValue(self, event):
+        self._update_value()
+
+    def _update_value(self):
+        if self.type_bool.GetValue():
+            self.value = self.value_bool.GetSelection() == 0
+        elif self.type_num.GetValue():
+            self.value = decimal.Decimal(self.value_num.GetValue()).quantize(decimal.Decimal('.001'),
+                                                                             rounding=decimal.ROUND_HALF_UP).normalize()
+
+        else:
+            self.value = self.value_str.GetValue()
 
 def main():
     pass

@@ -127,6 +127,9 @@ class SampleType(Feature):
     def __init__(self, data):
         Feature.__init__(self, data)
 
+        # 解説
+        self.description = cw.util.decodewrap(self.data.gettext("Description", ""))
+
 def wrap_ability(data):
     """
     能力値の切り上げ・切り捨て。

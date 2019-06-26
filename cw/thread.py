@@ -1029,7 +1029,7 @@ class CWPy(_Singleton, threading.Thread):
         # 一時的に荷物袋から出したカードを戻す(消滅していなければ)
         if self.card_takenouttemporarily and not self.selectedheader and (not checkevent or not self.is_runningevent()) and not self.is_battlestatus():
             owner = self.card_takenouttemporarily.get_owner()
-            if owner and isinstance(owner, cw.character.Character):
+            if owner and isinstance(owner, cw.character.Character) and self.sdata.party_environment_backpack:
                 self.clear_inusecardimg(self.card_takenouttemporarily.get_owner())
                 cw.cwpy.trade("BACKPACK", header=self.card_takenouttemporarily, from_event=False, parentdialog=None, sound=False, call_predlg=False, sort=True)
             cw.cwpy.card_takenouttemporarily = None
@@ -1134,6 +1134,7 @@ class CWPy(_Singleton, threading.Thread):
             if clip:
                 if self._lazy_clip:
                     clip = self._lazy_clip.union_ip(clip)
+                #PyLite:ローカル変数実装時に位置が変わっている
                 self.scr_draw.set_clip(clip)
                 self.cardgrp.set_clip(clip)
                 self.topgrp.set_clip(clip)
@@ -1995,7 +1996,7 @@ class CWPy(_Singleton, threading.Thread):
                     s = u"シナリオの読み込みに失敗しました。"
                     self.call_modaldlg("ERROR", text=s)
                 if isinstance(self.sdata, cw.data.ScenarioData):
-                    self.sdata.end()
+                    self.sdata.end(failure=True)
                 self.set_yado()
                 if self.is_showingdebugger() and self.event:
                     self.event.refresh_variablelist()
@@ -3353,7 +3354,7 @@ class CWPy(_Singleton, threading.Thread):
                 # 特殊エリアのカードはデバッグモードによって
                 # 表示が切り替わる場合がある
                 for mcard in self.sdata.sparea_mcards[areaid]:
-                    if mcard.debug_only and not self.is_debugmode():
+                    if (mcard.debug_only and not self.is_debugmode()) or not mcard.is_flagtrue():
                         mcard.hide()
                     else:
                         mcard.deal()
@@ -4405,6 +4406,9 @@ class CWPy(_Singleton, threading.Thread):
                     if not header.carddata:
                         e = cw.data.yadoxml2etree(header.fpath)
                         header.carddata = e.getroot()
+                        header.flags = cw.data.init_flags(header.carddata, True)
+                        header.steps = cw.data.init_steps(header.carddata, True)
+                        header.variants = cw.data.init_variants(header.carddata, True)
                     # シナリオプレイ中であれば削除フラグを立てて削除を保留
                     # (F9時に復旧する必要があるため)
                     if targettype in ("PAWNSHOP", "TRASHBOX"):

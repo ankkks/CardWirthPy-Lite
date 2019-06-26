@@ -1360,6 +1360,9 @@ def smoothscale(surface, size, smoothing=True, iscard=False):
         return surface
     size = map(lambda a: max(1, a), size)
 
+    if surface.get_width() == 0 or surface.get_height() == 0:
+        return pygame.Surface(size).convert()
+
     if surface.get_height() <= 1:
         # FIXME: 環境によって、高さが1の画像に
         #        pygame.transform.smoothscale()を行うと

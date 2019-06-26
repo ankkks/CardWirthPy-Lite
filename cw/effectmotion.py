@@ -1212,6 +1212,8 @@ class EffectMotion(object):
             return False
         if target.is_inactive():
             return False
+        if not target.actions.get(1, True):
+            return False
         if cw.cwpy.battle:
             cw.cwpy.advlog.dealattackcard_motion(target, target.is_inactive(), cw.cwpy.is_battlestatus())
             target.deck.set_nextcard(1)
@@ -1225,6 +1227,8 @@ class EffectMotion(object):
         if success_res:
             return False
         if target.is_inactive():
+            return False
+        if not target.actions.get(2, True):
             return False
         if cw.cwpy.battle:
             cw.cwpy.advlog.dealpowerfulattackcard_motion(target, target.is_inactive(), cw.cwpy.is_battlestatus())
@@ -1240,6 +1244,8 @@ class EffectMotion(object):
             return False
         if target.is_inactive():
             return False
+        if not target.actions.get(3, True):
+            return False
         if cw.cwpy.battle:
             cw.cwpy.advlog.dealcriticalattackcard_motion(target, target.is_inactive(), cw.cwpy.is_battlestatus())
             target.deck.set_nextcard(3)
@@ -1253,6 +1259,8 @@ class EffectMotion(object):
         if success_res:
             return False
         if target.is_inactive():
+            return False
+        if not target.actions.get(4, True):
             return False
         if cw.cwpy.battle:
             cw.cwpy.advlog.dealfeintcard_motion(target, target.is_inactive(), cw.cwpy.is_battlestatus())
@@ -1268,6 +1276,8 @@ class EffectMotion(object):
             return False
         if target.is_inactive():
             return False
+        if not target.actions.get(5, True):
+            return False
         if cw.cwpy.battle:
             cw.cwpy.advlog.dealdefensecard_motion(target, target.is_inactive(), cw.cwpy.is_battlestatus())
             target.deck.set_nextcard(5)
@@ -1282,6 +1292,8 @@ class EffectMotion(object):
             return False
         if target.is_inactive():
             return False
+        if not target.actions.get(6, True):
+            return False
         if cw.cwpy.battle:
             cw.cwpy.advlog.dealdistancecard_motion(target, target.is_inactive(), cw.cwpy.is_battlestatus())
             target.deck.set_nextcard(6)
@@ -1295,6 +1307,8 @@ class EffectMotion(object):
         if success_res:
             return False
         if target.is_inactive():
+            return False
+        if not target.actions.get(-1, True):
             return False
         if cw.cwpy.battle:
             cw.cwpy.advlog.dealconfusecard_motion(target, target.is_inactive(), cw.cwpy.is_battlestatus())

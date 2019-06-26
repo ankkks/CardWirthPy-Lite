@@ -70,6 +70,9 @@ class CardHeader(object):
             self.enhance_res_used = dbrec["enhance_res_used"]
             self.enhance_def_used = dbrec["enhance_def_used"]
             self.attachment = bool(dbrec["attachment"])
+            self.flags = {}
+            self.steps = {}
+            self.variants = {}
             if dbowner == "BACKPACK":
                 from_scenario = bool(dbrec["scenariocard"])
             self.versionhint = cw.cwpy.sct.from_basehint(dbrec["versionhint"])
@@ -78,6 +81,7 @@ class CardHeader(object):
                 self.wsnversion = ""
             self.moved = dbrec["moved"]
             self.star = dbrec["star"]
+            self.need_resetvariables = bool(dbrec["resetvariables"])
         else:
             self.set_owner(owner)
             self.carddata = carddata
@@ -153,6 +157,11 @@ class CardHeader(object):
                     data.append(e)
                 self.price = 1000
 
+            self.need_resetvariables = self.carddata.getbool(".", "resetvariables", False)
+            self.flags = cw.data.init_flags(self.carddata, True)
+            self.steps = cw.data.init_steps(self.carddata, True)
+            self.variants = cw.data.init_variants(self.carddata, True)
+
             # Image
             self.imgpaths = cw.image.get_imageinfos(data)
             # 互換性マーク
@@ -224,6 +233,9 @@ class CardHeader(object):
         if self.star is None:
             return 0
         return -self.star
+
+    def get_showingname(self):
+        return self.name
 
     def set_cardimg(self, imgpaths, can_loaded_scaledimage, anotherscenariocard):
         paths = []
@@ -307,6 +319,18 @@ class CardHeader(object):
 
     def get_cardimg(self):
         return self.cardimg.get_cardimg(self)
+
+    def set_resetvariables(self, resetvariables):
+        assert self.carddata is not None
+        self.need_resetvariables = resetvariables
+        if not self.carddata is None:
+            if resetvariables:
+                self.carddata.set("resetvariables", str(resetvariables))
+            elif "resetvariables" in self.carddata.attrib:
+                self.carddata.attrib.pop("resetvariables")
+        owner = self.get_owner()
+        if owner and isinstance(owner, cw.character.Character) and owner.data is not None:
+            owner.data.is_edited = True
 
     def do_write(self, dupcheck=True):
         if not self._lazy_write is None:
@@ -598,6 +622,7 @@ class CardHeader(object):
         self.do_write()
         if self.scenariocard:
             if self.carddata is None:
+                assert self.is_backpackheader()
                 assert self.fpath, self.name
                 assert os.path.isfile(self.fpath), self.fpath
                 self.carddata = cw.data.xml2element(self.fpath)
@@ -619,12 +644,31 @@ class CardHeader(object):
             self.imgpaths = cw.image.get_imageinfos(self.carddata.find("Property"))
             self.set_cardimg(self.imgpaths, can_loaded_scaledimage=self.carddata.getbool(".", "scaledimage", False),
                              anotherscenariocard=False)
+            if self.need_resetvariables:
+                self.reset_variables()
             if self.is_backpackheader():
                 self.write()
                 self.carddata = None
+                self.flags = {}
+                self.steps = {}
+                self.variants = {}
 
         elif self.type == "BeastCard" and not self.attachment:
             cw.cwpy.trade("TRASHBOX", header=self, from_event=True)
+
+        elif self.need_resetvariables:
+            if self.carddata is None:
+                assert self.is_backpackheader()
+                assert self.fpath, self.name
+                assert os.path.isfile(self.fpath), self.fpath
+                self.carddata = cw.data.xml2element(self.fpath)
+            self.reset_variables()
+            if self.is_backpackheader():
+                self.write()
+                self.carddata = None
+                self.flags = {}
+                self.steps = {}
+                self.variants = {}
 
         if self.is_ccardheader() and self.type == "SkillCard" and not self.carddata is None:
             self.carddata.getfind("Property/UseLimit").text = "0"
@@ -634,6 +678,39 @@ class CardHeader(object):
             owner.data.is_edited = True
         elif self.is_backpackheader():
             cw.cwpy.ydata.party.data.is_edited = True
+
+
+    def reset_variables(self):
+        """シナリオ終了時の状態変数初期化処理を行う。"""
+        assert self.carddata is not None
+        if not self.need_resetvariables:
+            return
+        for e in self.carddata.getfind("Flags"):
+            if e.getattr(".", "initialize", "Leave") == "Leave":
+                e.set("value", e.get("default"))
+        for e in self.carddata.getfind("Steps"):
+            if e.getattr(".", "initialize", "Leave") == "Leave":
+                e.set("value", e.get("default"))
+        for e in self.carddata.getfind("Variants"):
+            if e.getattr(".", "initialize", "Leave") == "Leave":
+                e.set("type", e.get("defaulttype"))
+                e.set("value", e.get("defaultvalue"))
+
+        for flag in self.flags.values():
+            if flag.initialization == "Leave":
+                flag.set(flag.defaultvalue)
+        for step in self.steps.values():
+            if step.initialization == "Leave":
+                step.set(step.defaultvalue)
+        for variant in self.variants.values():
+            if variant.initialization == "Leave":
+                variant.set(variant.defaultvalue)
+
+        if "resetvariables" in self.carddata.attrib:
+            self.carddata.attrib.pop("resetvariables")
+        self.need_resetvariables = False
+        self.carddata.is_edited = True
+
 
     def copy(self):
         """
@@ -1501,7 +1578,7 @@ class PartyRecordHeader(object):
                 s = os.path.basename(member.fpath)
                 s = cw.util.splitext(s)[0]
                 self.members.append(s)
-                self.membernames.append(member.gettext("Property/Name", u""))
+                self.membernames.append(member.gettext("Property/Name", ""))
             self.backpack = [header.name for header in partyrecord.backpack]
         else:
             data = cw.data.xml2etree(fpath)
@@ -1512,7 +1589,7 @@ class PartyRecordHeader(object):
             self.membernames = []
             for e in data.getfind("Property/Members"):
                 self.members.append(e.text if e.text else "")
-                self.membernames.append(e.getattr(".", "name", u""))
+                self.membernames.append(e.getattr(".", "name", ""))
             self.backpack = [e.get("name", "") for e in data.getfind("BackpackRecord")]
 
     def rename_member(self, fpath, name):
@@ -1539,11 +1616,11 @@ class PartyRecordHeader(object):
 
             # 互換性維持の処理
             # 過去のデータでname属性が無い場合がある
-            name = data.getattr(ename, u"name", u"")
+            name = data.getattr(ename, "name", "")
             if not name:
                 name = GetName(fpath).name
                 self.membernames[index] = name
-                data.edit(ename, u"", u"name")
+                data.edit(ename, "", "name")
 
             data.write_xml()
 

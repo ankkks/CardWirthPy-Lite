@@ -1084,6 +1084,25 @@ def _sorted_by_attr_impl(d, seq, *attr):
     else:
         return sorted(seq, key=functools.cmp_to_key(logical_cmp))
 
+def cmp(a, b):
+    if a is None and b is None:
+        return 0
+    elif a is None:
+        return -1
+    elif b is None:
+        return 1
+    elif type(a) is type(b):
+        if a < b:
+            return -1
+        elif b < a:
+            return 1
+    else:
+        if type(a) is int:
+            return -1
+        else:
+            return 1
+    return 0
+
 def sorted_by_attr(seq, *attr):
     """非破壊的にオブジェクトの属性でソートする。
     seq: リスト
@@ -1151,6 +1170,38 @@ assert relpath("/a", "..").replace("\\", "/") == os.path.relpath("/a", "..").rep
 assert relpath("a", "../bcde").replace("\\", "/") == os.path.relpath("a", "../bcde").replace("\\", "/")
 assert relpath("../a", "../bcde").replace("\\", "/") == os.path.relpath("../a", "../bcde").replace("\\", "/")
 assert relpath("../a", "../").replace("\\", "/") == os.path.relpath("../a", "../").replace("\\", "/")
+
+
+def validate_filepath(fpath):
+    """
+    fpathが絶対パスまたは外部ディレクトリを指定する
+    相対パスであれば空文字列に置換する。
+    """
+    if isinstance(fpath, list):
+        seq = []
+        for f in fpath:
+            f = validate_filepath(f)
+            if f:
+                seq.append(f)
+        return seq
+    else:
+        from cw.binary.image import path_is_code
+        if not fpath:
+            return ""
+        if cw.binary.image.path_is_code(fpath):
+            return fpath
+        if os.path.isabs(fpath):
+            return ""
+        else:
+            n = join_paths(os.path.normpath(fpath))
+            if n == ".." or n.startswith("../"):
+                return ""
+        return fpath
+
+
+assert validate_filepath(["/test/abc", None, "test/../test", "test/../../abc", "../abc"]) ==\
+            ["test/../test"]
+
 
 def is_descendant(path, start):
     """
@@ -2582,7 +2633,7 @@ def txtwrap(s, mode, width=30, wrapschars="", encodedtext=True, spcharinfo=None)
     # 特殊文字記号集合
     re_color = "&[\x20-\x7E]"
     r_spchar = re.compile("#.|" + re_color) if mode in (2, 3) else None
-    if spcharinfo:
+    if spcharinfo is not None:
         spcharinfo2 = []
     cnt = 0
     asciicnt = 0
@@ -2599,13 +2650,25 @@ def txtwrap(s, mode, width=30, wrapschars="", encodedtext=True, spcharinfo=None)
         if index < 0:
             index = len(seq) + index
         seq.insert(index, char)
-        if spcharinfo:
+        if spcharinfo is not None:
             for i in reversed(xrange(len(spcharinfo2))):
                 spi = spcharinfo2[i]
                 if spi < index:
                     break
                 else:
                     spcharinfo2[i] += len(char)
+
+    def insert_wrap(index):
+        # 折り返しを追加
+        seq_insert(index, '\n')
+        if spcharinfo is not None:
+            # 折り返しが追加された位置を記憶しておく
+            if index < 0:
+                index = len(seq) + index
+            if index == len(seq):
+                spcharinfo2.append(seqlen)
+            else:
+                spcharinfo2.append(reduce(lambda l, s: l + len(s), seq[:index], 0))
 
     for index, char in enumerate(s):
         spchar2 = spchar
@@ -2617,7 +2680,7 @@ def txtwrap(s, mode, width=30, wrapschars="", encodedtext=True, spcharinfo=None)
 
         if r_spchar and not defspchar2:
             if skip:
-                if spcharinfo and index in spcharinfo:
+                if spcharinfo is not None and index in spcharinfo:
                     spcharinfo2.append(seqlen)
                 seq.append(char)
                 seqlen += len(char)
@@ -2627,7 +2690,7 @@ def txtwrap(s, mode, width=30, wrapschars="", encodedtext=True, spcharinfo=None)
                     asciicnt = 0
                     if width+1 < cnt:
                         if not wrapafter:
-                            seq_insert(len(seq), "\n")
+                            insert_wrap(len(seq))
                             seqlen += len("\n")
                         cnt = 0
                         asciicnt = 0
@@ -2638,14 +2701,14 @@ def txtwrap(s, mode, width=30, wrapschars="", encodedtext=True, spcharinfo=None)
             chars = char + get_char(s, index + 1)
 
             if r_spchar.match(chars.lower()):
-                if spcharinfo and index in spcharinfo:
+                if spcharinfo is not None and index in spcharinfo:
                     spcharinfo2.append(seqlen)
                     if not chars.startswith("#") or\
                        not chars[:2].lower() in cw.cwpy.rsrc.specialchars or\
                        cw.cwpy.rsrc.specialchars[chars[:2].lower()][1]:
                         if width < cnt and chars.startswith("#"):
                             if not wrapafter:
-                                seq_insert(len(seq), "\n")
+                                insert_wrap(len(seq))
                                 seqlen += len("\n")
                             cnt = 0
                             asciicnt = 0
@@ -2709,24 +2772,24 @@ def txtwrap(s, mode, width=30, wrapschars="", encodedtext=True, spcharinfo=None)
             if defspchar2 and width2+1 < cnt:
                 index = -(cnt - (width+1))
                 if seq[-index] <> "\n":
-                    seq_insert(index, "\n")
+                    insert_wrap(index)
                     seqlen += len("\n")
                 cnt = 1
             elif width2 >= asciicnt > 0 and not defspchar2:
                 if not get_char(s, index + 1) == "\n" and seq[-asciicnt] <> "\n":
-                    seq_insert(-asciicnt, "\n")
+                    insert_wrap(-asciicnt)
                     seqlen += len("\n")
                 cnt = asciicnt
             elif index + 1 <= len(s) or not get_char(s, index + 1) == "\n":
                 if index + 2 <= len(s) or not get_char(s, index + 2) == "\n":
-                    seq.append("\n")
+                    insert_wrap(len(seq))
                     seqlen += len("\n")
                     wrapafter = True
                 cnt = 0
                 asciicnt = 0
                 wraped = False
 
-    if spcharinfo:
+    if spcharinfo is not None:
         spcharinfo.clear()
         spcharinfo.update(spcharinfo2)
 
@@ -2742,7 +2805,7 @@ def _wordwrap_impl(s, width, get_width, open_chars, close_chars, startindex, res
         get_width = get_strlen
 
     iter = re.findall(u"[a-z0-9_]+|[ａ-ｚＡ-Ｚ０-９＿]+|.", s, re.I)
-    if spcharinfo:
+    if spcharinfo is not None:
         # 特殊文字と単語を分離しておく
         iter2 = []
         index = startindex
@@ -2753,7 +2816,7 @@ def _wordwrap_impl(s, width, get_width, open_chars, close_chars, startindex, res
                 if 1 < len(word):
                     iter2.append(word[1:])
                 spc = None
-            elif index in spcharinfo:
+            elif index in spcharinfo is not None:
                 spc = word
             else:
                 iter2.append(word)
@@ -2768,7 +2831,7 @@ def _wordwrap_impl(s, width, get_width, open_chars, close_chars, startindex, res
     index = startindex
     for word in iter:
         # 特殊文字か？
-        is_spchar = spcharinfo and index in spcharinfo
+        is_spchar = spcharinfo is not None and index in spcharinfo
 
         wordlen = get_width(word)
         if width < buflen+wordlen:
@@ -2877,21 +2940,24 @@ def _wordwrap_impl(s, width, get_width, open_chars, close_chars, startindex, res
         return u"\n".join(map(lambda buf: u"".join(map(lambda w: w[0], buf)), lines))
     else:
         seq = []
-        for buf in lines:
+        for i, buf in enumerate(lines):
             line = []
+            seqlen = 0
             for word, is_spchar in buf:
                 if is_spchar:
                     spcharinfo2.append(resultindex)
                 line.append(word)
                 resultindex += len(word)
             seq.append(u"".join(line))
+            if i + 1 < len(lines):
+                spcharinfo2.append(resultindex)  # 折り返し位置を記録
             resultindex += len(u"\n")
         return u"\n".join(seq)
 
 def wordwrap(s, width, get_width=None, open_chars=u"\"'(<[`{‘“〈《≪「『【〔（＜［｛｢",
                                        close_chars=u"!\"'),.:;>?]`}゜’”′″、。々＞》≫」』】〕〟゛°ゝゞヽヾ〻！），．：；＞？］｝｡｣､ﾞﾟぁぃぅぇぉァィゥェォｧｨｩｪｫヵっッｯゃゅょャュョｬｭｮゎヮㇵㇶㇷㇸㇹㇺ…―ーｰ",
                                        spcharinfo=None):
-    if spcharinfo:
+    if spcharinfo is not None:
         spcharinfo2 = []
     else:
         spcharinfo2 = None
@@ -2904,7 +2970,7 @@ def wordwrap(s, width, get_width=None, open_chars=u"\"'(<[`{‘“〈《≪「�
         index += len(line)+len(u"\n")
         resultindex += len(wrapped)+len(u"\n")
 
-    if spcharinfo:
+    if spcharinfo is not None:
         spcharinfo.clear()
         spcharinfo.update(spcharinfo2)
 
@@ -2929,10 +2995,14 @@ def _test_wordwrap(s, width, spcharinfo):
     return wordwrap(s, width, spcharinfo=spcharinfo), spcharinfo
 
 assert _test_wordwrap(u"CARD #WIRTH SPECIA&L\nCHA&RACTER #TEST!", 8, spcharinfo=set([5, 18, 24, 32])) ==\
-       (u"CARD #W\nIRTH \nSPECIA&L\nCHA&RACTER \n#TEST!", set([5, 20, 26, 35]))
+       (u"CARD #W\nIRTH \nSPECIA&L\nCHA&RACTER \n#TEST!", set([5, 7, 13, 20, 26, 34, 35]))
+assert _test_wordwrap(u"wordwrap", 4, spcharinfo=set()) == \
+    (u"word-\nwrap", set([5]))
+
+
 assert wordwrap(u"[&Rabc..]", 3, spcharinfo=set([1])) == u"[&Rab-\nc..]"
 assert wordwrap(u"ab...", 3) == u"ab..\n."
-assert _test_wordwrap(u"ab..&R.", 3, spcharinfo=set([4])) == (u"ab..\n&R.", set([5]))
+assert _test_wordwrap("ab..&R.", 3, spcharinfo=set([4])) == ("ab..\n&R.", set([4, 5]))
 
 def get_char(s, index):
     try:
@@ -3526,6 +3596,9 @@ class CheckableListCtrl(wx.ListCtrl,
                     self.CheckItem(index, flag)
         self._checking = False
 
+    def Draw(self, index, dc, x, y, flags=wx.IMAGELIST_DRAW_NORMAL, solidBackground=False):
+        print(index, x, y)
+        wx.lib.mixins.listctrl.CheckListCtrlMixin.Draw(self, index, dc, x, y, flags, solidBackground)
 
 class CWBackCheckBox(wx.CheckBox):
     def __init__(self, parent, id, text):

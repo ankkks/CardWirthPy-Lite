@@ -20,6 +20,7 @@ mutex = threading.Lock()
 ID_COMPSTAMP = wx.NewId()
 ID_GOSSIP = wx.NewId()
 ID_SAVEDJPDCIMAGE = wx.NewId()
+ID_SAVEDVARIABLES = wx.NewId()
 ID_MONEY = wx.NewId()
 ID_CARD = wx.NewId()
 ID_MEMBER = wx.NewId()
@@ -64,7 +65,7 @@ class Debugger(wx.Frame):
             style=wx.CLIP_CHILDREN|wx.CAPTION|wx.RESIZE_BOX|
             wx.RESIZE_BORDER|wx.CLOSE_BOX|wx.MINIMIZE_BOX|wx.SYSTEM_MENU)
         self.cwpy_debug = True
-        self.SetClientSize((cw.ppis(635), cw.cwpy.frame.GetClientSize()[1]))
+        self.SetClientSize((cw.ppis(651), cw.cwpy.frame.GetClientSize()[1]))
         # set icon
         cw.cwpy.frame.set_icon(self)
         # aui manager
@@ -123,6 +124,9 @@ class Debugger(wx.Frame):
         self.mi_gossip = wx.MenuItem(edit_menu, ID_GOSSIP, u"ゴシップ(&G)")
         self.mi_gossip.SetBitmap(rsrc["GOSSIP"])
         edit_menu.AppendItem(self.mi_gossip)
+        self.mi_savedvariables = wx.MenuItem(edit_menu, ID_SAVEDVARIABLES, u"保存済み状態変数(&V)")
+        self.mi_savedvariables.SetBitmap(rsrc["VARIABLES"])
+        edit_menu.AppendItem(self.mi_savedvariables)
         self.mi_savedjpdcimage = wx.MenuItem(edit_menu, ID_SAVEDJPDCIMAGE, u"保存済みJPDCイメージ(&G)")
         self.mi_savedjpdcimage.SetBitmap(rsrc["JPDCIMAGE"])
         edit_menu.AppendItem(self.mi_savedjpdcimage)
@@ -252,6 +256,9 @@ class Debugger(wx.Frame):
         self.tl_gossip = self.tb1.AddLabelTool(
             ID_GOSSIP, u"ゴシップ", rsrc["GOSSIP"],
             shortHelp=u"ゴシップリストを編集します。")
+        self.tl_savedvariables = self.tb1.AddLabelTool(
+            ID_SAVEDVARIABLES, u"保存済み状態変数", rsrc["VARIABLES"],
+            shortHelp=u"保存された状態変数を整理します。")
         self.tl_savedjpdcimage = self.tb1.AddLabelTool(
             ID_SAVEDJPDCIMAGE, u"保存済みJPDCイメージ", rsrc["JPDCIMAGE"],
             shortHelp=u"保存されたJPDCイメージを整理します。")
@@ -523,6 +530,7 @@ class Debugger(wx.Frame):
         self.Bind(wx.EVT_MENU, self.OnCompStampTool, id=ID_COMPSTAMP)
         self.Bind(wx.EVT_MENU, self.OnGossipTool, id=ID_GOSSIP)
         self.Bind(wx.EVT_MENU, self.OnSavedJPDCImageTool, id=ID_SAVEDJPDCIMAGE)
+        self.Bind(wx.EVT_MENU, self.OnSavedVariablesTool, id=ID_SAVEDVARIABLES)
         self.Bind(wx.EVT_MENU, self.OnMoneyTool, id=ID_MONEY)
         self.Bind(wx.EVT_MENU, self.OnCardTool, id=ID_CARD)
         self.Bind(wx.EVT_MENU, self.OnPartyEnvTool, id=ID_PARTY_ENV)
@@ -664,6 +672,22 @@ class Debugger(wx.Frame):
             cw.cwpy.frame.exec_func(func, self)
         cw.cwpy.exec_func(func, self)
 
+    def OnSavedVariablesTool(self, event):
+        def func(self):
+            if not cw.cwpy.ydata:
+                return
+            saved_variables = cw.cwpy.ydata.saved_variables.copy()
+
+            def func(self):
+                if not self:
+                    return
+                dlg = cw.debug.edit.SavedVariablesEditDialog(self, saved_variables)
+                cw.cwpy.frame.move_dlg(dlg)
+                dlg.ShowModal()
+                dlg.Destroy()
+            cw.cwpy.frame.exec_func(func, self)
+        cw.cwpy.exec_func(func, self)
+
     def OnMoneyTool(self, event):
         if not cw.cwpy.ydata.party:
             return
@@ -722,76 +746,7 @@ class Debugger(wx.Frame):
     def OnEditorTool(self, event):
         if not cw.cwpy.setting.editor:
             return
-        def func(self, content):
-            if not cw.cwpy.is_playingscenario():
-                return
-            fpath = cw.cwpy.sdata.fpath
-            if not fpath:
-                return
-            if os.path.isdir(fpath):
-                # WirthBuilderはSummary.wsmのパスを渡さないとシナリオを開けない
-                wsm = cw.util.join_paths(fpath, "Summary.wsm")
-                if os.path.isfile(wsm):
-                    fpath = wsm
-            # WirthBuilderは'/'区切りのパスを受け付けない
-            fpath = os.path.normpath(fpath)
 
-            editor = cw.cwpy.setting.editor
-            if not editor:
-                return
-
-            # エディタ起動
-            encoding = sys.getfilesystemencoding()
-            editor = editor.encode(encoding)
-            fpath = fpath.encode(encoding)
-            seq = [editor, fpath]
-            cwxpath = ""
-            packid = 0
-
-            if not content is None:
-                cwxpath = content.get_cwxpath()
-                if not cwxpath and cw.cwpy.is_runningevent():
-                    packid = cw.cwpy.event.get_packageid()
-            elif cw.cwpy.is_runningevent():
-                event = cw.cwpy.event.get_event()
-                if event and not event.cur_content is None:
-                    cur_content = event.cur_content
-                    if cur_content.tag == "ContentsLine":
-                        cur_content = cur_content[event.line_index]
-                    cwxpath = cur_content.get_cwxpath()
-
-                if not cwxpath:
-                    # パッケージ処理中でなければ0が返る
-                    packid = cw.cwpy.event.get_packageid()
-
-            if cwxpath:
-                seq.append(cwxpath.encode(encoding))
-            elif packid:
-                # 古いバージョンのCWXEditorでは
-                # -a -b -pオプションつきの起動で
-                # 同一のシナリオが複数開かれてしまう
-                seq.append(("package:id:%s" % (packid)).encode(encoding))
-            elif cw.cwpy.is_battlestatus():
-                seq.append(("battle:id:%s" % (cw.cwpy.areaid)).encode(encoding))
-            elif 0 <= cw.cwpy.areaid:
-                seq.append(("area:id:%s" % (cw.cwpy.areaid)).encode(encoding))
-            elif cw.cwpy.pre_areaids:
-                seq.append(("area:id:%s" % (cw.cwpy.pre_areaids[0][0])).encode(encoding))
-
-            def func(self, seq):
-                if not self:
-                    return
-
-                try:
-                    subprocess.Popen(seq, close_fds=True)
-                except:
-                    s = u"「%s」の実行に失敗しました。設定の [シナリオ] > [外部アプリ] > [エディタ] に適切なエディタを指定してください。" % (os.path.basename(cw.cwpy.setting.editor))
-                    dlg = cw.dialog.message.ErrorMessage(self, s)
-                    cw.cwpy.frame.move_dlg(dlg)
-                    dlg.ShowModal()
-                    dlg.Destroy()
-
-            cw.cwpy.frame.exec_func(func, self, seq)
 
         if not self.view_tree.selectionitem is None:
             content = self.view_tree.selectionitem.content
@@ -800,7 +755,76 @@ class Debugger(wx.Frame):
         else:
             content = None
 
-        cw.cwpy.exec_func(func, self, content)
+        cw.cwpy.exec_func(Debugger.exec_editor, self, content)
+
+    @staticmethod
+    def exec_editor(parent, content):
+        if not cw.cwpy.is_playingscenario():
+            return
+        fpath = cw.cwpy.sdata.fpath
+        if not fpath:
+            return
+        if os.path.isdir(fpath):
+            # WirthBuilderはSummary.wsmのパスを渡さないとシナリオを開けない
+            wsm = cw.util.join_paths(fpath, "Summary.wsm")
+            if os.path.isfile(wsm):
+                fpath = wsm
+        # WirthBuilderは'/'区切りのパスを受け付けない
+        fpath = os.path.normpath(fpath)
+
+        editor = cw.cwpy.setting.editor
+        if not editor:
+            return
+
+        # エディタ起動
+        seq = [editor, fpath]
+        cwxpath = ""
+        packid = 0
+
+        if not content is None:
+            cwxpath = content.get_cwxpath()
+            if not cwxpath and cw.cwpy.is_runningevent():
+                packid = cw.cwpy.event.get_packageid()
+        elif cw.cwpy.is_runningevent():
+            event = cw.cwpy.event.get_event()
+            if event and not event.cur_content is None:
+                cur_content = event.cur_content
+                if cur_content.tag == "ContentsLine":
+                    cur_content = cur_content[event.line_index]
+                cwxpath = cur_content.get_cwxpath()
+
+            if not cwxpath:
+                # パッケージ処理中でなければ0が返る
+                packid = cw.cwpy.event.get_packageid()
+
+        if cwxpath:
+            seq.append(cwxpath)
+        elif packid:
+            # 古いバージョンのCWXEditorでは
+            # -a -b -pオプションつきの起動で
+            # 同一のシナリオが複数開かれてしまう
+            seq.append(("package:id:%s" % (packid)))
+        elif cw.cwpy.is_battlestatus():
+            seq.append(("battle:id:%s" % (cw.cwpy.areaid)))
+        elif 0 <= cw.cwpy.areaid:
+            seq.append(("area:id:%s" % (cw.cwpy.areaid)))
+        elif cw.cwpy.pre_areaids:
+            seq.append(("area:id:%s" % (cw.cwpy.pre_areaids[0][0])))
+
+        def func(parent, seq):
+            if not parent:
+                return
+
+            try:
+                subprocess.Popen(seq, close_fds=True)
+            except:
+                s = u"「%s」の実行に失敗しました。設定の [シナリオ] > [外部アプリ] > [エディタ] に適切なエディタを指定してください。" % (os.path.basename(cw.cwpy.setting.editor))
+                dlg = cw.dialog.message.ErrorMessage(parent, s)
+                cw.cwpy.frame.move_dlg(dlg)
+                dlg.ShowModal()
+                dlg.Destroy()
+
+        cw.cwpy.frame.exec_func(func, parent, seq)
 
     def OnShowStackTraceTool(self, event):
         if self.view_stacktrace:
@@ -1577,6 +1601,7 @@ class Debugger(wx.Frame):
         def func(self):
             ydata = bool(cw.cwpy.ydata)
             party = bool(cw.cwpy.ydata and cw.cwpy.ydata.party)
+            savedvariables = bool(ydata and cw.cwpy.ydata.saved_variables)
             savedjpdcimage = bool(ydata and cw.cwpy.ydata.savedjpdcimage)
             event_paused = cw.cwpy.event.is_paused()
             event_step = cw.cwpy.event.is_stepexec()
@@ -1596,6 +1621,7 @@ class Debugger(wx.Frame):
 
                 enabled[self.mi_comp.GetId()] = (self.mi_comp, self.tl_comp, False)
                 enabled[self.mi_gossip.GetId()] = (self.mi_gossip, self.tl_gossip, False)
+                enabled[self.mi_savedvariables.GetId()] = (self.mi_savedvariables, self.tl_savedvariables, False)
                 enabled[self.mi_savedjpdcimage.GetId()] = (self.mi_savedjpdcimage, self.tl_savedjpdcimage, False)
                 enabled[self.mi_money.GetId()] = (self.mi_money, self.tl_money, False)
                 enabled[self.mi_card.GetId()] = (self.mi_card, self.tl_card, False)
@@ -1635,6 +1661,8 @@ class Debugger(wx.Frame):
                 if ydata:
                     enabled[self.mi_comp.GetId()] = (self.mi_comp, self.tl_comp, True)
                     enabled[self.mi_gossip.GetId()] = (self.mi_gossip, self.tl_gossip, True)
+                    if savedvariables:
+                        enabled[self.mi_savedvariables.GetId()] = (self.mi_savedvariables, self.tl_savedvariables, True)
                     if savedjpdcimage:
                         enabled[self.mi_savedjpdcimage.GetId()] = (self.mi_savedjpdcimage, self.tl_savedjpdcimage, True)
                     enabled[self.mi_money.GetId()] = (self.mi_money, self.tl_money, True)
@@ -1753,6 +1781,10 @@ class VariableListCtrl(wx.ListCtrl):
         self.imglist = wx.ImageList(cw.ppis(16), cw.ppis(16))
         self.imgidx_flag = self.imglist.Add(cw.cwpy.rsrc.debugs["EVT_SET_FLAG"])
         self.imgidx_step = self.imglist.Add(cw.cwpy.rsrc.debugs["EVT_SET_STEP"])
+        self.imgidx_variant = self.imglist.Add(cw.cwpy.rsrc.debugs["VARIANT"])
+        self.imgidx_flag_l = self.imglist.Add(cw.cwpy.rsrc.debugs["LOCAL_FLAG"])
+        self.imgidx_step_l = self.imglist.Add(cw.cwpy.rsrc.debugs["LOCAL_STEP"])
+        self.imgidx_variant_l = self.imglist.Add(cw.cwpy.rsrc.debugs["LOCAL_VARIANT"])
         self.SetImageList(self.imglist, wx.IMAGE_LIST_SMALL)
         self.InsertColumn(0, u"名称")
         self.InsertColumn(1, u"現在値")
@@ -1783,14 +1815,10 @@ class VariableListCtrl(wx.ListCtrl):
             if not cw.cwpy.is_playingscenario():
                 return
             update = False
-            for var in cw.cwpy.sdata.flags.itervalues():
-                if var.value <> var.defaultvalue:
+            for var, local, editable in self.list:
+                if editable and var.value != var.defaultvalue:
                     var.set(var.defaultvalue, updatedebugger=False)
-                    var.redraw_cards()
-                    update = True
-            for var in cw.cwpy.sdata.steps.itervalues():
-                if var.value <> var.defaultvalue:
-                    var.set(var.defaultvalue, updatedebugger=False)
+                    var.write_value()
                     update = True
             cw.cwpy.play_sound("signal")
             if update:
@@ -1800,31 +1828,47 @@ class VariableListCtrl(wx.ListCtrl):
     def OnDClick(self, event):
         # On DClick Item
         if self.GetSelectedItemCount() == 1:
-            item = self.list[self.GetFirstSelected()]
+            item, local, editable = self.list[self.GetFirstSelected()]
+            if not editable:
+                return
 
             if isinstance(item, cw.data.Flag):
                 choices = [item.truename, item.falsename]
             elif isinstance(item, cw.data.Step):
                 choices = item.valuenames
+            else:
+                self._edit_variant(item, local)
+                return
 
             s = u"変更したい値を選択してください。"
             dlg = wx.SingleChoiceDialog(self.Parent, s, item.name, choices)
 
             if dlg.ShowModal() == wx.ID_OK:
                 if isinstance(item, cw.data.Flag):
-                    def func(item, value):
+                    def func(item, local, value):
                         item.set(value)
                         item.redraw_cards()
-                    cw.cwpy.exec_func(func, item, not bool(dlg.GetSelection()))
+                        item.write_value()
+                    cw.cwpy.exec_func(func, item, local, not bool(dlg.GetSelection()))
                 elif isinstance(item, cw.data.Step):
-                    def func(item, value):
+                    def func(item, local, value):
                         item.set(value)
-                    cw.cwpy.exec_func(func, item, dlg.GetSelection())
+                        item.write_value()
+                    cw.cwpy.exec_func(func, item, local, dlg.GetSelection())
 
             dlg.Destroy()
 
+    def _edit_variant(self, variant, local):
+        dlg = cw.debug.edit.VariantEditDialog(self.Parent, variant.name, u"コモンの型と値", variant.value)
+        if dlg.ShowModal() == wx.ID_OK:
+            def func(item, local, value):
+                item.set(value)
+                item.write_value()
+            cw.cwpy.exec_func(func, variant, local, dlg.value)
+        dlg.Destroy()
+
     def OnGetItemText(self, row, col):
-        i = self.list[row]
+        i, _local, _editable = self.list[row]
 
         if col == 0:
             return i.name
@@ -1832,16 +1876,29 @@ class VariableListCtrl(wx.ListCtrl):
             return i.get_valuename()
         elif isinstance(i, cw.data.Step):
             return i.get_valuename()
+        elif isinstance(i, cw.data.Variant):
+            return i.string_value()
         else:
             return ""
 
     def OnGetItemImage(self, row):
-        i = self.list[row]
+        i, local, _editable = self.list[row]
 
         if isinstance(i, cw.data.Flag):
-            return self.imgidx_flag
+            if local:
+                return self.imgidx_flag_l
+            else:
+                return self.imgidx_flag
         elif isinstance(i, cw.data.Step):
-            return self.imgidx_step
+            if local:
+                return self.imgidx_step_l
+            else:
+                return self.imgidx_step
+        elif isinstance(i, cw.data.Variant):
+            if local:
+                return self.imgidx_variant_l
+            else:
+                return self.imgidx_variant
         else:
             return -1
 
@@ -1853,29 +1910,44 @@ class VariableListCtrl(wx.ListCtrl):
         if cw.cwpy.frame.debugger is None:
             return
         try:
-            itemid = self.list.index(variable)
-            self.RefreshItem(itemid)
+            for var, _local, _editable in self.list:
+                if var is variable:
+                    self.RefreshItem(itemid)
+                    break
         except:
             self.refresh_variablelist()
 
-    def refresh_variablelist(self):
+    def refresh_variablelist(self, event=None):
         assert threading.currentThread() <> cw.cwpy
         if cw.cwpy.frame.debugger is None:
             return
-        self._refresh_variablelist()
+        self._refresh_variablelist(event)
 
-    def _refresh_variablelist(self):
+    def _refresh_variablelist(self, event=None):
         assert threading.currentThread() <> cw.cwpy
         self.list = []
         self.SetItemCount(0)
 
-        def func(self):
-            if cw.cwpy.is_playingscenario():
-                vlist = cw.cwpy.sdata.steps.values()
-                cw.util.sort_by_attr(vlist, "name")
-                seq = cw.cwpy.sdata.flags.values()
+        def func(self, event):
+            if not event:
+                event = cw.cwpy.event.get_nowrunningevent()
+            editable = event and event is cw.cwpy.event.get_nowrunningevent()
+            vlist = []
+
+            def extend(data, local, editable):
+                seq = list(data.variants.values())
                 cw.util.sort_by_attr(seq, "name")
-                vlist.extend(seq)
+                vlist.extend(map(lambda a: (a, local, editable), seq))
+                seq = list(data.steps.values())
+                cw.util.sort_by_attr(seq, "name")
+                vlist.extend(map(lambda a: (a, local, editable), seq))
+                seq = list(data.flags.values())
+                cw.util.sort_by_attr(seq, "name")
+                vlist.extend(map(lambda a: (a, local, editable), seq))
+            if cw.cwpy.is_playingscenario():
+                if event:
+                    extend(event, True, editable)
+                extend(cw.cwpy.sdata, False, True)
                 def func(self, vlist):
                     if self:
                         self.list = vlist
@@ -1888,7 +1960,8 @@ class VariableListCtrl(wx.ListCtrl):
                         self.Refresh()
                 cw.cwpy.frame.exec_func(func, self)
 
-        cw.cwpy.exec_func(func, self)
+        cw.cwpy.exec_func(func, self, event)
+
 
 class EventView(wx.ScrolledWindow):
     def __init__(self, parent):
@@ -2171,7 +2244,7 @@ class EventView(wx.ScrolledWindow):
             content = cw.content.get_content(item.content)
             self.set_selectionitem(item)
             self.selectionindex = index
-            self.Parent.statusbar.SetStatusText(content.get_status(), 1)
+            self.Parent.statusbar.SetStatusText(content.get_status(self.current_event), 0)
             self.Refresh()
 
     def OnDClick(self, event):
@@ -2198,6 +2271,7 @@ class EventView(wx.ScrolledWindow):
 
         if not data is None:
             cw.cwpy.exec_func(cw.cwpy.event.set_curcontent, data, self.current_event)
+            self.Parent.view_var.refresh_variablelist()
 
     def OnKeyDown(self, event):
         if not self.itemlist:
@@ -2233,7 +2307,7 @@ class EventView(wx.ScrolledWindow):
 
         if self.selectionitem and keycode in (wx.WXK_LEFT, wx.WXK_UP, wx.WXK_RIGHT, wx.WXK_DOWN):
             content = cw.content.get_content(self.selectionitem.content)
-            self.Parent.statusbar.SetStatusText(content.get_status(), 1)
+            self.Parent.statusbar.SetStatusText(content.get_status(self.current_event), 0)
 
     def OnKeyUp(self, event):
         if not self.itemlist:
@@ -2285,7 +2359,7 @@ class EventView(wx.ScrolledWindow):
                     self.current_content = cur_content
                     self.activeitem = self.items[cur_content]
                     self.show_item(self.activeitem)
-                    s = cw.content.get_content(self.current_content).get_status()
+                    s = cw.content.get_content(self.current_content).get_status(self.current_event)
                     self.Parent.statusbar.SetStatusText(s, 1)
                 else:
                     self.current_content = None
@@ -2350,6 +2424,7 @@ class EventView(wx.ScrolledWindow):
             cw.cwpy.frame.exec_func(func, self, event, trees)
 
         cw.cwpy.exec_func(func, self, event)
+        self.Parent.view_var.refresh_variablelist(event)
 
     def _refresh_tree(self, nowrunning, trees):
         if nowrunning is None:
@@ -2365,6 +2440,7 @@ class EventView(wx.ScrolledWindow):
             self.current_content = None
             self.SetVirtualSize((1, 1))
             self.Refresh()
+            self.Parent.view_var.refresh_variablelist()
             return
 
         self.maxwidth, self.maxheight = 0, 0
@@ -2411,6 +2487,7 @@ class EventView(wx.ScrolledWindow):
             self.SetScrollRate(self.scrollrate_x, self.scrollrate_y)
             self.Scroll(0, 0)
             self.Refresh()
+            self.Parent.view_var.refresh_variablelist()
 
     def create_item(self, parentitem, contents, shiftx, dc):
         assert threading.currentThread() <> cw.cwpy
@@ -2444,7 +2521,7 @@ class EventView(wx.ScrolledWindow):
                 nextdata = content.find("Contents")
                 if nextdata is None:
                     nextdata = ()
-            item = EventViewItem(parent, content, nextdata, pos, self.lineheight, dc)
+            item = EventViewItem(parent, self.current_event, content, nextdata, pos, self.lineheight, dc)
             assert content.tag <> "ContentsLine"
             self.items[content] = item
             self.itemlist.append(item)
@@ -2457,7 +2534,7 @@ class EventView(wx.ScrolledWindow):
 
 
 class EventViewItem(object):
-    def __init__(self, parent, content, nextdata, pos, lineheight, dc):
+    def __init__(self, parent, event, content, nextdata, pos, lineheight, dc):
         assert threading.currentThread() <> cw.cwpy
         self.parent = parent
         self.content = content
@@ -2467,7 +2544,7 @@ class EventViewItem(object):
         if not self.parent is None:
             parent = cw.content.get_content(self.parent)
             if parent:
-                s = parent.get_childname(self.content)
+                s = parent.get_childname(self.content, event)
         else:
             s = self.content.get("name", "")
         self.text = s
@@ -2639,11 +2716,11 @@ class StackTraceView(wx.ListCtrl, wx.lib.mixins.listctrl.ListCtrlAutoWidthMixin)
                 icon = self.imgidx_effect
             else:
                 assert False, e.tag + ctype
-            name = cw.content.get_content(e).get_status()
+            name = cw.content.get_content(e).get_status(self.current_event)
             return name, icon, (evt2, e)
 
     def _get_info(self, cur_content):
-        name = cw.content.get_content(cur_content).get_status()
+        name = cw.content.get_content(cur_content).get_status(self.current_event)
         cname = cur_content.tag + cur_content.getattr(".", "type", "")
         if cname in self.imgidx_contents:
             icon = self.imgidx_contents[cname]

@@ -180,6 +180,17 @@ class BattleEngine(object):
             if self.check_win():
                 raise BattleWinError()
 
+        # ラウンド終了イベント(Wsn.4)
+        cw.cwpy.sdata.start_event(keynum=6)
+        if not cw.cwpy.is_playingscenario() or cw.cwpy.sdata.in_f9:
+            self.end(f9=True)
+            return
+        # イベント結果の勝利・敗北チェック
+        if self.check_defeat():
+            raise BattleDefeatError()
+        elif self.check_win():
+            raise BattleWinError()
+
         # 行動内容のクリア
         for member in self.members:
             member.deck.clear_used()

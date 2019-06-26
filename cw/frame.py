@@ -261,6 +261,7 @@ class Frame(wx.Frame):
             # キー入力初期化
             dlg = cw.debug.debugger.Debugger(self)
             # メインフレームの真横に表示
+            dlg.SetSize((cw.ppis(710), self.GetSize()[1]))
             w = dlg.GetSize()[0]
             w -= (w - self.GetSize()[0]) / 2
             self.move_dlg(dlg, (w, cw.ppis(0)))
@@ -320,7 +321,7 @@ class Frame(wx.Frame):
             event.kwargs = kwargs
             self.AddPendingEvent(event)
             while cw.cwpy.is_running() and self._sync_running:
-                time.sleep(0)
+                time.sleep(0.001)
             return self._sync_result
 
     def OnEXECFUNC(self, event):
