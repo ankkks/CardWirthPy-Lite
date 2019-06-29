@@ -287,7 +287,7 @@ class Deck(object):
             self._clear_hand()
 
             self.hand = []
-            #if ccard.actions.get(0, True):#wsn4
+            #if ccard.actions.get(0, True):
             #    # カード交換は常に残す
             #    header = cw.cwpy.rsrc.actioncards[0].copy()
             #    header.set_owner(ccard)
@@ -296,17 +296,18 @@ class Deck(object):
             # アイテムカードを手札に加える
             self.hand.extend(ccard.get_pocketcards(cw.POCKET_ITEM))
             self._throwaway = False
-        # カード交換は同名アイテムを0に持っていなければ残す
-        header = cw.cwpy.rsrc.actioncards[0].copy()
-        try:
-            if self.hand[0].id == 0 or header.name[0] in ccard.get_pocketcards(cw.POCKET_ITEM)[0].name:
-                pass
-            else:
+        # PyLite:カード交換は同名アイテムを0に持っていなければ残す
+        if ccard.actions.get(0, True):#WSN4
+            header = cw.cwpy.rsrc.actioncards[0].copy()
+            try:
+                if self.hand[0].id == 0 or header.name[0] in ccard.get_pocketcards(cw.POCKET_ITEM)[0].name:
+                    pass
+                else:
+                    header.set_owner(ccard)
+                    self.hand.insert(0, header)
+            except:
                 header.set_owner(ccard)
                 self.hand.insert(0, header)
-        except:
-            header.set_owner(ccard)
-            self.hand.insert(0, header)
 
         while len(self.hand) < maxn and self.talon:
             if self.nextcards:

@@ -701,6 +701,14 @@ class Event(object):
         self.parent = None
         self.base = None
         self.inusecard = None
+        if cw.cwpy.is_playingscenario():
+            self.scenario = cw.cwpy.sdata.name
+            self.author = cw.cwpy.sdata.author
+        else:
+            self.scenario = ""
+            self.author = ""
+        # デバッガで表示のみする場合はFalseにする
+        self.is_active = True
         # 次の子コンテンツインデックス。Contentの戻り値で設定される。
         self.index = 0
         # イベント実行中に発生したエラー
@@ -776,6 +784,8 @@ class Event(object):
         self.trees = event.trees
         self.treekeys = event.treekeys
         self.starttree = event.starttree
+        self.scenario = event.scenario
+        self.author = event.author
         self.flags = event.flags
         self.steps = event.steps
         self.variants = event.variants
@@ -1315,6 +1325,8 @@ class CardEvent(Event, Targeting):
         Event.__init__(self, event)
         Targeting.__init__(self, user, targets, True)
         self.inusecard = inusecard
+        self.scenario = inusecard.scenario
+        self.author = inusecard.author
 
         # ローカル変数(Wsn.4)
         self.flags = inusecard.flags

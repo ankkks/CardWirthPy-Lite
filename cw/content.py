@@ -115,11 +115,13 @@ class EventContentBase(object):
                 seq.append(pcard)
         return cw.cwpy.dice.choice(seq)
 
-    def is_differentscenario(self):
+    def is_differentscenario(self, event=None):
         """実行中のイベントがカードの使用時イベントであり、
         使用中のカードが現在プレイ中のシナリオと異なる
         シナリオから持ち出されたものであればTrueを返す。
         """
+        if event and not event.is_active:
+            return False
         if self._scenario is None:
             if cw.cwpy.is_playingscenario():
                 inusecard = cw.cwpy.event.get_inusecard()
@@ -154,27 +156,27 @@ class EventContentBase(object):
             desc += "\n" + msg
         if ex:
             if isinstance(ex, cw.calculator.TokanizeException):
-                desc += u"\n" + "使用できない文字があります(行:%s 位置:%s)" % (ex.line, ex.pos)
+                desc += u"\n" + u"使用できない文字があります(行:%s 位置:%s)" % (ex.line, ex.pos)
             elif isinstance(ex, cw.calculator.SemanticsException):
-                desc += u"\n" + "構文が正しくありません(行:%s 位置:%s)" % (ex.line, ex.pos)
+                desc += u"\n" + u"構文が正しくありません(行:%s 位置:%s)" % (ex.line, ex.pos)
             elif isinstance(ex, cw.calculator.FunctionIsNotDefinedException):
-                desc += u"\n" + "関数 %s は定義されていません。" % (ex.func_name)
+                desc += u"\n" + u"関数 %s は定義されていません。" % (ex.func_name)
             elif isinstance(ex, cw.calculator.ArgumentIsNotDecimalException):
-                desc += u"\n" + "関数 %s の %s 番目の引数が数値ではありません(値=%s)" % (ex.func_name, ex.arg_index+1, ex.arg_value)
+                desc += u"\n" + u"関数 %s の %s 番目の引数が数値ではありません(値=%s)" % (ex.func_name, ex.arg_index+1, ex.arg_value)
             elif isinstance(ex, cw.calculator.ArgumentIsNotStringException):
-                desc += u"\n" + "関数 %s の %s 番目の引数が文字列ではありません(値=%s)" % (ex.func_name, ex.arg_index+1, ex.arg_value)
+                desc += u"\n" + u"関数 %s の %s 番目の引数が文字列ではありません(値=%s)" % (ex.func_name, ex.arg_index+1, ex.arg_value)
             elif isinstance(ex, cw.calculator.ArgumentIsNotBooleanException):
-                desc += u"\n" + "関数 %s の %s 番目の引数が真偽値ではありません(値=%s)" % (ex.func_name, ex.arg_index+1, ex.arg_value)
+                desc += u"\n" + u"関数 %s の %s 番目の引数が真偽値ではありません(値=%s)" % (ex.func_name, ex.arg_index+1, ex.arg_value)
             elif isinstance(ex, cw.calculator.ArgumentsCountException):
-                desc += u"\n" + "関数 %s の呼び出し引数の数が間違っています。" % (ex.func_name)
+                desc += u"\n" + u"関数 %s の呼び出し引数の数が間違っています。" % (ex.func_name)
             elif isinstance(ex, cw.calculator.InvalidArgumentException):
-                desc += u"\n" + "関数 %s の %s 番目の引数の値が間違っています(値=%s)" % (ex.func_name, ex.arg_index+1, ex.arg_value)
+                desc += u"\n" + u"関数 %s の %s 番目の引数の値が間違っています(値=%s)" % (ex.func_name, ex.arg_index+1, ex.arg_value)
             elif isinstance(ex, cw.calculator.VariantNotFoundException):
-                desc += u"\n" + "コモン『%s』はありません。" % (ex.path)
+                desc += u"\n" + u"コモン『%s』はありません。" % (ex.path)
             elif isinstance(ex, cw.calculator.FlagNotFoundException):
-                desc += u"\n" + "フラグ『%s』はありません。" % (ex.path)
+                desc += u"\n" + u"フラグ『%s』はありません。" % (ex.path)
             elif isinstance(ex, cw.calculator.StepNotFoundException):
-                desc += u"\n" + "ステップ『%s』はありません。" % (ex.path)
+                desc += u"\n" + u"ステップ『%s』はありません。" % (ex.path)
 
         cw.cwpy.play_sound("error")
         def func():
@@ -1294,10 +1296,8 @@ class BranchFlagContent(BranchContent):
 
     def action(self):
         """フラグ分岐コンテント。"""
-        if self.is_differentscenario():
-            return 0
-
-        flag = cw.cwpy.sdata.find_flag(self.flag, cw.cwpy.event.get_nowrunningevent())
+        diffsc = self.is_differentscenario()
+        flag = cw.cwpy.sdata.find_flag(self.flag, diffsc, cw.cwpy.event.get_nowrunningevent())
         if not flag is None:
             index = self.get_boolean_index(flag)
         elif self.get_children_num():
@@ -1310,14 +1310,14 @@ class BranchFlagContent(BranchContent):
         return index
 
     def get_status(self, event):
-        flag = cw.cwpy.sdata.find_flag(self.flag, event)
+        flag = cw.cwpy.sdata.find_flag(self.flag, self.is_differentscenario(event), event)
         if not flag is None:
             return u"フラグ『%s』分岐" % (flag.name)
         else:
             return u"フラグが指定されていません"
 
     def get_childname(self, child, event):
-        flag = cw.cwpy.sdata.find_flag(self.flag, event)
+        flag = cw.cwpy.sdata.find_flag(self.flag, self.is_differentscenario(event), event)
         if flag:
             valuename = flag.get_valuename(self.get_contentname(child) == u"○")
             return u"%s = %s" % (flag.name, valuename)
@@ -1333,10 +1333,7 @@ class BranchStepContent(BranchContent):
 
     def action(self):
         """ステップ上下分岐コンテント。"""
-        if self.is_differentscenario():
-            return 0
-
-        step = cw.cwpy.sdata.find_step(self.step, cw.cwpy.event.get_nowrunningevent())
+        step = cw.cwpy.sdata.find_step(self.step, self.is_differentscenario(), cw.cwpy.event.get_nowrunningevent())
         if not step is None:
             flag = step.value >= self.value
             index = self.get_boolean_index(flag)
@@ -1350,7 +1347,7 @@ class BranchStepContent(BranchContent):
         return index
 
     def get_status(self, event):
-        step = cw.cwpy.sdata.find_step(self.step, event)
+        step = cw.cwpy.sdata.find_step(self.step, self.is_differentscenario(event), event)
 
         if not step is None:
             return u"ステップ『%s』分岐" % (step.name)
@@ -1358,7 +1355,7 @@ class BranchStepContent(BranchContent):
             return u"ステップが指定されていません"
 
     def get_childname(self, child, event):
-        step = cw.cwpy.sdata.find_step(self.step, event)
+        step = cw.cwpy.sdata.find_step(self.step, self.is_differentscenario(event), event)
         if not step is None:
             valuename = step.get_valuename(self.value)
 
@@ -1378,10 +1375,7 @@ class BranchMultiStepContent(BranchContent):
 
     def action(self):
         """ステップ多岐分岐コンテント。"""
-        if self.is_differentscenario():
-            return 0
-
-        step = cw.cwpy.sdata.find_step(self.step, cw.cwpy.event.get_nowrunningevent())
+        step = cw.cwpy.sdata.find_step(self.step, self.is_differentscenario(), cw.cwpy.event.get_nowrunningevent())
         if not step is None:
             value = step.value
             index = self.get_value_index(value)
@@ -1395,7 +1389,7 @@ class BranchMultiStepContent(BranchContent):
         return index
 
     def get_status(self, event):
-        step = cw.cwpy.sdata.find_step(self.step, event)
+        step = cw.cwpy.sdata.find_step(self.step, self.is_differentscenario(event), event)
 
         if not step is None:
             return u"ステップ『%s』多岐分岐" % (step.name)
@@ -1403,7 +1397,7 @@ class BranchMultiStepContent(BranchContent):
             return u"ステップが指定されていません"
 
     def get_childname(self, child, event):
-        step = cw.cwpy.sdata.find_step(self.step, event)
+        step = cw.cwpy.sdata.find_step(self.step, self.is_differentscenario(event), event)
 
         if not step is None:
             try:
@@ -2219,17 +2213,14 @@ class CheckFlagContent(EventContentBase):
 
     def action(self):
         """フラグ判定コンテント。"""
-        if self.is_differentscenario():
-            return cw.IDX_TREEEND
-
-        flag = cw.cwpy.sdata.find_flag(self.flag, cw.cwpy.event.get_nowrunningevent())
+        flag = cw.cwpy.sdata.find_flag(self.flag, self.is_differentscenario(), cw.cwpy.event.get_nowrunningevent())
         if not flag is None and bool(flag):
             return 0
         else:
             return cw.IDX_TREEEND
 
     def get_status(self, event):
-        if not cw.cwpy.sdata.find_flag(self.flag, event) is None:
+        if not cw.cwpy.sdata.find_flag(self.flag, self.is_differentscenario(event), event) is None:
             return u"フラグ『%s』の値で判定" % (self.flag)
         else:
             return u"フラグが指定されていません"
@@ -2243,10 +2234,7 @@ class CheckStepContent(EventContentBase):
 
     def action(self):
         """ステップ判定コンテント(1.50)。"""
-        if self.is_differentscenario():
-            return cw.IDX_TREEEND
-
-        step = cw.cwpy.sdata.find_step(self.step, cw.cwpy.event.get_nowrunningevent())
+        step = cw.cwpy.sdata.find_step(self.step, self.is_differentscenario(), cw.cwpy.event.get_nowrunningevent())
         if not step is None:
             value2 = step.value
             if self.comparison == "=":
@@ -2265,7 +2253,7 @@ class CheckStepContent(EventContentBase):
         return cw.IDX_TREEEND
 
     def get_status(self, event):
-        step = cw.cwpy.sdata.find_step(self.step, event)
+        step = cw.cwpy.sdata.find_step(self.step, self.is_differentscenario(event), event)
         if not step is None:
             return u"%s %s ステップ『%s』" % (self.value1, self.comparison, step.name)
         else:
@@ -3760,10 +3748,7 @@ class ReverseFlagContent(EventContentBase):
 
     def action(self):
         """フラグ反転コンテント。"""
-        if self.is_differentscenario():
-            return 0
-
-        flag = cw.cwpy.sdata.find_flag(self.flag, cw.cwpy.event.get_nowrunningevent())
+        flag = cw.cwpy.sdata.find_flag(self.flag, self.is_differentscenario(), cw.cwpy.event.get_nowrunningevent())
         if not flag is None:
             flag.reverse()
             flag.redraw_cards(self.cardspeed, self.overridecardspeed)
@@ -3771,7 +3756,7 @@ class ReverseFlagContent(EventContentBase):
         return 0
 
     def get_status(self, event):
-        flag = cw.cwpy.sdata.find_flag(self.flag, event)
+        flag = cw.cwpy.sdata.find_flag(self.flag, self.is_differentscenario(event), event)
         if not flag is None:
             return u"フラグ『%s』の値を反転" % (flag.name)
         else:
@@ -3796,10 +3781,7 @@ class SetFlagContent(EventContentBase):
 
     def action(self):
         """フラグ変更コンテント。"""
-        if self.is_differentscenario():
-            return 0
-
-        flag = cw.cwpy.sdata.find_flag(self.flag, cw.cwpy.event.get_nowrunningevent())
+        flag = cw.cwpy.sdata.find_flag(self.flag, self.is_differentscenario(), cw.cwpy.event.get_nowrunningevent())
         if not flag is None:
             flag.set(self.value)
             flag.redraw_cards(self.cardspeed, self.overridecardspeed)
@@ -3807,7 +3789,7 @@ class SetFlagContent(EventContentBase):
         return 0
 
     def get_status(self, event):
-        flag = cw.cwpy.sdata.find_flag(self.flag, event)
+        flag = cw.cwpy.sdata.find_flag(self.flag, self.is_differentscenario(event), event)
         if not flag is None:
             s = flag.get_valuename(self.value)
             return u"フラグ『%s』を【%s】に変更" % (flag.name, s)
@@ -3822,17 +3804,14 @@ class SetStepContent(EventContentBase):
 
     def action(self):
         """ステップ変更コンテント。"""
-        if self.is_differentscenario():
-            return 0
-
-        step = cw.cwpy.sdata.find_step(self.step, cw.cwpy.event.get_nowrunningevent())
+        step = cw.cwpy.sdata.find_step(self.step, self.is_differentscenario(), cw.cwpy.event.get_nowrunningevent())
         if not step is None:
             step.set(self.value)
 
         return 0
 
     def get_status(self, event):
-        step = cw.cwpy.sdata.find_step(self.step, event)
+        step = cw.cwpy.sdata.find_step(self.step, self.is_differentscenario(event), event)
         if not step is None:
             s = step.get_valuename(self.value)
             return u"ステップ『%s』を【%s】に変更" % (step.name, s)
@@ -3846,17 +3825,14 @@ class SetStepUpContent(EventContentBase):
 
     def action(self):
         """ステップ増加コンテント。"""
-        if self.is_differentscenario():
-            return 0
-
-        step = cw.cwpy.sdata.find_step(self.step, cw.cwpy.event.get_nowrunningevent())
+        step = cw.cwpy.sdata.find_step(self.step, self.is_differentscenario(), cw.cwpy.event.get_nowrunningevent())
         if not step is None:
             step.up()
 
         return 0
 
     def get_status(self, event):
-        step = cw.cwpy.sdata.find_step(self.step, event)
+        step = cw.cwpy.sdata.find_step(self.step, self.is_differentscenario(event), event)
         if not step is None:
             return u"ステップ『%s』の値を1増加" % (step.name)
         else:
@@ -3869,17 +3845,14 @@ class SetStepDownContent(EventContentBase):
 
     def action(self):
         """ステップ減少コンテント。"""
-        if self.is_differentscenario():
-            return 0
-
-        step = cw.cwpy.sdata.find_step(self.step, cw.cwpy.event.get_nowrunningevent())
+        step = cw.cwpy.sdata.find_step(self.step, self.is_differentscenario(), cw.cwpy.event.get_nowrunningevent())
         if not step is None:
             step.down()
 
         return 0
 
     def get_status(self, event):
-        step = cw.cwpy.sdata.find_step(self.step, event)
+        step = cw.cwpy.sdata.find_step(self.step, self.is_differentscenario(event), event)
         if not step is None:
             return u"ステップ『%s』の値を1減少" % (step.name)
         else:
@@ -3898,14 +3871,15 @@ class SetVariantContent(BranchContent):
     def action(self):
         """コモン設定コンテント(Wsn.4)。"""
         event = cw.cwpy.event.get_nowrunningevent()
-        variant = cw.cwpy.sdata.find_variant(self.variant, event)
+        diffsc = self.is_differentscenario()
+        variant = cw.cwpy.sdata.find_variant(self.variant, diffsc, event)
         def eval():
             try:
                 if not self.parsed_expression:
                     self.parsed_expression = cw.calculator.parse(self.expression)
                 if len(self.parsed_expression) == 0:
                     return None
-                return cw.calculator.eval(self.parsed_expression, self.is_differentscenario())
+                return cw.calculator.eval(self.parsed_expression, diffsc)
             except cw.calculator.ComputeException as ex:
                 self.variant_error(ex=ex)
                 return None
@@ -3915,7 +3889,7 @@ class SetVariantContent(BranchContent):
             if result:
                 variant.set(result.value)
 
-        step = cw.cwpy.sdata.find_step(self.step, event)
+        step = cw.cwpy.sdata.find_step(self.step, diffsc, event)
         if not step is None:
             result = eval()
             if result:
@@ -3925,25 +3899,26 @@ class SetVariantContent(BranchContent):
                 else:
                     self.variant_error(msg=u"計算結果 %s は数値ではありません。" % (result.string_value()))
 
-        flag = cw.cwpy.sdata.find_flag(self.flag, event)
+        flag = cw.cwpy.sdata.find_flag(self.flag, diffsc, event)
         if not flag is None:
             result = eval()
             if result:
                 if result.type == "Boolean":
                     flag.set(result.value)
+                    flag.redraw_cards()
                 else:
                     self.variant_error(msg=u"計算結果 %s は真偽値ではありません。" % (result.string_value()))
 
         return 0
 
     def get_status(self, event):
-        variant = cw.cwpy.sdata.find_variant(self.variant, event)
+        variant = cw.cwpy.sdata.find_variant(self.variant, self.is_differentscenario(event), event)
         if variant:
             return u"〔 %s 〕の結果をコモン『%s』へ代入" % (self.expression, variant.name)
-        step = cw.cwpy.sdata.find_step(self.step, event)
+        step = cw.cwpy.sdata.find_step(self.step, self.is_differentscenario(event), event)
         if not step is None:
             return u"〔 %s 〕の結果をステップ『%s』へ代入" % (self.expression, step.name)
-        flag = cw.cwpy.sdata.find_flag(self.flag, event)
+        flag = cw.cwpy.sdata.find_flag(self.flag, self.is_differentscenario(event), event)
         if not flag is None:
             return u"〔 %s 〕の結果をフラグ『%s』へ代入" % (self.expression, flag.name)
 
@@ -4451,12 +4426,10 @@ class SubstituteStepContent(EventContentBase):
 
     def action(self):
         """ステップ代入コンテント。"""
-        if self.is_differentscenario():
-            return 0
-
         event = cw.cwpy.event.get_nowrunningevent()
-        fromstep = cw.cwpy.sdata.find_step(self.fromstep, event)
-        tostep = cw.cwpy.sdata.find_step(self.tostep, event)
+        diffsc = self.is_differentscenario()
+        fromstep = cw.cwpy.sdata.find_step(self.fromstep, diffsc, event)
+        tostep = cw.cwpy.sdata.find_step(self.tostep, diffsc, event)
         if not fromstep is None and not tostep is None:
             tostep.set(fromstep.value)
         elif self.fromstep.lower() == "??random":
@@ -4475,8 +4448,8 @@ class SubstituteStepContent(EventContentBase):
         return 0
 
     def get_status(self, event):
-        fromstep = cw.cwpy.sdata.find_step(self.fromstep, event)
-        tostep = cw.cwpy.sdata.find_step(self.tostep, event)
+        fromstep = cw.cwpy.sdata.find_step(self.fromstep, self.is_differentscenario(event), event)
+        tostep = cw.cwpy.sdata.find_step(self.tostep, self.is_differentscenario(event), event)
         if not fromstep is None and not tostep is None:
             return u"ステップ『%s』の値を『%s』へ代入" % (fromstep.name, tostep.name)
         elif self.fromstep.lower() == "??random" and not tostep is None:
@@ -4500,12 +4473,10 @@ class SubstituteFlagContent(EventContentBase):
 
     def action(self):
         """フラグ代入コンテント。"""
-        if self.is_differentscenario():
-            return 0
-
         event = cw.cwpy.event.get_nowrunningevent()
-        fromflag = cw.cwpy.sdata.find_flag(self.fromflag, event)
-        toflag = cw.cwpy.sdata.find_flag(self.toflag, event)
+        diffsc = self.is_differentscenario()
+        fromflag = cw.cwpy.sdata.find_flag(self.fromflag, diffsc, event)
+        toflag = cw.cwpy.sdata.find_flag(self.toflag, diffsc, event)
         if not fromflag is None and not toflag is None:
             toflag.set(fromflag.value)
             toflag.redraw_cards(self.cardspeed, self.overridecardspeed)
@@ -4520,8 +4491,8 @@ class SubstituteFlagContent(EventContentBase):
         return 0
 
     def get_status(self, event):
-        fromflag = cw.cwpy.sdata.find_flag(self.fromflag, event)
-        toflag = cw.cwpy.sdata.find_flag(self.toflag, event)
+        fromflag = cw.cwpy.sdata.find_flag(self.fromflag, self.is_differentscenario(event), event)
+        toflag = cw.cwpy.sdata.find_flag(self.toflag, self.is_differentscenario(event), event)
         if not fromflag is None and not toflag is None:
             return u"フラグ『%s』の値を『%s』へ代入" % (self.fromflag, self.toflag)
         elif self.fromflag.lower() == "??random" and not toflag is None:
@@ -4541,12 +4512,10 @@ class BranchStepValueContent(BranchContent):
 
     def action(self):
         """ステップ比較分岐コンテント。"""
-        if self.is_differentscenario():
-            return 0
-
         event = cw.cwpy.event.get_nowrunningevent()
-        fromstep = cw.cwpy.sdata.find_step(self.fromstep, event)
-        tostep = cw.cwpy.sdata.find_step(self.tostep, event)
+        diffsc = self.is_differentscenario()
+        fromstep = cw.cwpy.sdata.find_step(self.fromstep, diffsc, event)
+        tostep = cw.cwpy.sdata.find_step(self.tostep, diffsc, event)
         if not fromstep is None and not tostep is None:
             value = cw.util.cmp(fromstep.value, tostep.value)
             index = self.get_compare_index(value)
@@ -4556,16 +4525,16 @@ class BranchStepValueContent(BranchContent):
         return index
 
     def get_status(self, event):
-        fromstep = cw.cwpy.sdata.find_step(self.fromstep, event)
-        tostep = cw.cwpy.sdata.find_step(self.tostep, event)
+        fromstep = cw.cwpy.sdata.find_step(self.fromstep, self.is_differentscenario(event), event)
+        tostep = cw.cwpy.sdata.find_step(self.tostep, self.is_differentscenario(event), event)
         if not fromstep is None and not tostep is None:
             return u"ステップ『%s』と『%s』を比較" % (fromstep.name, tostep.name)
         else:
             return u"ステップが指定されていません"
 
     def get_childname(self, child, event):
-        fromstep = cw.cwpy.sdata.find_step(self.fromstep, event)
-        tostep = cw.cwpy.sdata.find_step(self.tostep, event)
+        fromstep = cw.cwpy.sdata.find_step(self.fromstep, self.is_differentscenario(event), event)
+        tostep = cw.cwpy.sdata.find_step(self.tostep, self.is_differentscenario(event), event)
         if not fromstep is None and not tostep is None:
             if self.get_contentname(child) == ">":
                 return u"ステップ『%s』が『%s』より大きい" % (fromstep.name, tostep.name)
@@ -4584,32 +4553,31 @@ class BranchFlagValueContent(BranchContent):
         self.toflag = self.data.get("to")
 
     def action(self):
-        """フラグ比較分岐コンテント。"""
-        if self.is_differentscenario():
-            return 0
-
         event = cw.cwpy.event.get_nowrunningevent()
-        fromflag = cw.cwpy.sdata.find_flag(self.fromflag, event)
-        toflag = cw.cwpy.sdata.find_flag(self.toflag, event)
+        diffsc = self.is_differentscenario()
+        fromflag = cw.cwpy.sdata.find_flag(self.fromflag, diffsc, event)
+        toflag = cw.cwpy.sdata.find_flag(self.toflag, diffsc, event)
         if not fromflag is None and not toflag is None:
             value = fromflag.value == toflag.value
             index = self.get_boolean_index(value)
+        elif diffsc:
+            return 0
         else:
             index = cw.IDX_TREEEND
 
         return index
 
     def get_status(self, event):
-        fromflag = cw.cwpy.sdata.find_flag(self.fromflag, event)
-        toflag = cw.cwpy.sdata.find_flag(self.toflag, event)
+        fromflag = cw.cwpy.sdata.find_flag(self.fromflag, self.is_differentscenario(event), event)
+        toflag = cw.cwpy.sdata.find_flag(self.toflag, self.is_differentscenario(event), event)
         if not fromflag is None and not toflag is None:
             return u"フラグ『%s』と『%s』を比較" % (fromflag.name, toflag.name)
         else:
             return u"フラグが指定されていません"
 
     def get_childname(self, child, event):
-        fromflag = cw.cwpy.sdata.find_flag(self.fromflag, event)
-        toflag = cw.cwpy.sdata.find_flag(self.toflag, event)
+        fromflag = cw.cwpy.sdata.find_flag(self.fromflag, self.is_differentscenario(event), event)
+        toflag = cw.cwpy.sdata.find_flag(self.toflag, self.is_differentscenario(event), event)
         if not fromflag is None and not toflag is None:
             if self.get_contentname(child) == u"○":
                 return u"フラグ『%s』が『%s』と同値" % (fromflag.name, toflag.name)

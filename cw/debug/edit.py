@@ -1451,7 +1451,7 @@ class VariantEditDialog(wx.Dialog):
             self.value_num.Enable()
         else:
             self.type_str.SetValue(True)
-            self.value_str.SetValue(cw.data.Variant.value_to_str(value))
+            self.value_str.SetValue(cw.data.Variant.value_to_unicode(value))
             self.value_str.Enable()
 
         # btn

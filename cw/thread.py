@@ -2930,11 +2930,11 @@ class CWPy(_Singleton, threading.Thread):
 
     def update_mcardnames(self):
         for mcard in self.mcards_expandspchars:
-            name = mcard.name
-            mcard.update_name()
-            if mcard.name != name:
-                self.add_lazydraw(mcard.rect)
-                self.set_lazydraw()
+            if mcard.is_initialized():
+                name = mcard.name
+                mcard.update_name()
+                if mcard.name != name:
+                    self.add_lazydraw(mcard.rect)
 
     def set_autospread(self, mcards, maxcol, campwithfriend=False, anime=False):
         """自動整列設定時のメニューカードの配置位置を設定する。

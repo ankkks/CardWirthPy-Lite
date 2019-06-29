@@ -253,32 +253,32 @@ class SystemData(object):
 
         self.resource_cache_size += size
 
-    def find_flag(self, path, event):
+    def find_flag(self, path, is_differentscenario, event):
         """
         pathが指すフラグを返す。
         eventにローカル変数がある場合は優先する。
         """
         if event and path in event.flags:
             return event.flags[path]
-        return self.flags.get(path, None)
+        return self.flags.get(path, None) if not is_differentscenario else None
 
-    def find_step(self, path, event):
+    def find_step(self, path, is_differentscenario, event):
         """
         pathが指すステップを返す。
         eventにローカル変数がある場合は優先する。
         """
         if event and path in event.steps:
             return event.steps[path]
-        return self.steps.get(path, None)
+        return self.steps.get(path, None) if not is_differentscenario else None
 
-    def find_variant(self, path, event):
+    def find_variant(self, path, is_differentscenario, event):
         """
         pathが指すコモンを返す。
         eventにローカル変数がある場合は優先する。
         """
         if event and path in event.variants:
             return event.variants[path]
-        return self.variants.get(path, None)
+        return self.variants.get(path, None) if not is_differentscenario else None
 
     def start(self):
         pass
@@ -1831,8 +1831,17 @@ class Variant(object):
         else:
             return str(value)
 
+    @staticmethod
+    def value_to_unicode(value):
+        if isinstance(value, bool):
+            return unicode(value).upper()
+        else:
+            return unicode(value)
+
     def string_value(self):
-        return Variant.value_to_str(self.value)
+        #PyLite: Python2でユニコードエラーが出るのでUnicode変換で対処
+        #return Variant.value_to_str(self.value)
+        return Variant.value_to_unicode(self.value)
 
     def write_value(self):
         if self.is_writable and self.initialization != "EventExit":
@@ -2877,9 +2886,9 @@ class YadoData(object):
         """
         e_gossips = self.environment.find("Gossips")
         if not e_gossips is None:
-            for i, e_gossip in enumerate(e_gossips):
+            for i, e_gossip in enumerate(e_gossips[startindex:]):
                 if matcher(e_gossip.text):
-                    return i
+                    return i + startindex
         return -1
 
     def get_gossip_at(self, index):
@@ -3164,26 +3173,20 @@ class YadoData(object):
             d[key] = (e, flags, steps, variants)
         return d
 
-    def save_variables(self, scenario, author, complete, flags, steps, variants, debuglog):
+    def save_variables(self, scenario, author, complete, flags, steps, variants):
         target = ("None",) if complete else ("Complete", "None")
         d_flags = {}
         for flag in flags.values():
             if flag.initialization in target:
                 d_flags[flag.name] = flag.value
-                if debuglog:
-                    debuglog.add_flag(flag.name)
         d_steps = {}
         for step in steps.values():
             if step.initialization in target:
                 d_steps[step.name] = step.value
-                if debuglog:
-                    debuglog.add_step(step.name)
         d_variants = {}
         for variant in variants.values():
             if variant.initialization in target:
                 d_variants[variant.name] = variant.value
-                if debuglog:
-                    debuglog.add_variant(variant.name)
         key = (scenario, author)
 
         if key in self.saved_variables:
@@ -3191,8 +3194,6 @@ class YadoData(object):
             e, _, _, _ = self.saved_variables[key]
             if not d_flags and not d_steps and not d_variants:
                 data.remove(e)
-                if debuglog:
-                    debuglog.remove_variables()
                 self.environment.is_edited = True
                 return
             e.clear()

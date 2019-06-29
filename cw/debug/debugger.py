@@ -777,6 +777,9 @@ class Debugger(wx.Frame):
             return
 
         # エディタ起動
+        encoding = sys.getfilesystemencoding()
+        editor = editor.encode(encoding)
+        fpath = fpath.encode(encoding)
         seq = [editor, fpath]
         cwxpath = ""
         packid = 0

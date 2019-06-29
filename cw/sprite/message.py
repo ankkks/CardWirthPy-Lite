@@ -4,6 +4,7 @@
 import math
 import os
 import re
+import itertools
 import pygame
 import pygame.locals
 
@@ -144,8 +145,8 @@ class MessageWindow(base.CWPySprite):
                     self.talker_image.append((cw.s(talker_image_noscale), info))
                     w, h = talker_image_noscale.get_size()
                     scr_scale = talker_image_noscale.scr_scale if hasattr(talker_image_noscale, "scr_scale") else 1
-                    w /= scr_scale
-                    h /= scr_scale
+                    w //= scr_scale
+                    h //= scr_scale
                     talkersize_noscale.append(((w, h), info))
 
         self.talker_top_noscale = 0x7fffffff
@@ -544,8 +545,8 @@ class MessageWindow(base.CWPySprite):
                 py = pos[1]
 
                 if image:
-                    px += (cwidth-image.get_width() + cw.s(2)) / 2
-                py += (lineheight-cheight) / 2
+                    px += (cwidth-image.get_width() + cw.s(2)) // 2
+                py += (lineheight-cheight) // 2
                 frame_base += speed
                 frame = int(round(frame_base))
                 images.append(((px, py), image, image2, image3, self._linerect, frame))
@@ -604,7 +605,8 @@ class MessageWindow(base.CWPySprite):
                 return None, namelistindex
 
         else:
-            v = cw.cwpy.sdata.find_step(key, cw.cwpy.event.get_nowrunningevent())
+            # BUG: CardWirthでは状態変数値の表示で異なるシナリオかのチェックは行われない
+            v = cw.cwpy.sdata.find_step(key, False, cw.cwpy.event.get_nowrunningevent())
             if v is None:
                 v, namelistindex = _get_spstep(key, full, updatetype, basenamelist, namelist, namelistindex)
                 if v is None:
@@ -644,12 +646,13 @@ class MessageWindow(base.CWPySprite):
             else:
                 return None, namelistindex
         else:
-            v = cw.cwpy.sdata.find_variant(key, cw.cwpy.event.get_nowrunningevent())
+            v = cw.cwpy.sdata.find_variant(key, _is_differentscenario(), cw.cwpy.event.get_nowrunningevent())
             if v is None:
                 return None, namelistindex
 
         self.variant_table[key] = v
         s = v.string_value()
+        return s, namelistindex
 
     def get_fontcolour(self, s):
         """引数の文字列からフォントカラーを返す。"""
@@ -1309,7 +1312,8 @@ def _create_nametable(full, talker):
     return name_table
 
 def _get_stepvalue(key, full, updatetype, name_table, basenamelist, startindex, spcharinfo, namelist, namelistindex, stack):
-    v = cw.cwpy.sdata.find_step(key, cw.cwpy.event.get_nowrunningevent() if (full & _SP_LOCAL_VARIABLES) != 0 else None)
+    # BUG: CardWirthでは状態変数値の表示で異なるシナリオかのチェックは行われない
+    v = cw.cwpy.sdata.find_step(key, False, cw.cwpy.event.get_nowrunningevent() if (full & _SP_LOCAL_VARIABLES) != 0 else None)
     if v is None:
         v, namelistindex = _get_spstep(key, full, updatetype, basenamelist, namelist, namelistindex)
     if v is None:
@@ -1382,7 +1386,8 @@ def _get_spstep(name, full, updatetype, basenamelist, namelist, namelistindex):
     return None, namelistindex
 
 def _get_flagvalue(key, full, updatetype, name_table, basenamelist, startindex, spcharinfo, namelist, namelistindex, stack):
-    v = cw.cwpy.sdata.find_flag(key, cw.cwpy.event.get_nowrunningevent() if (full & _SP_LOCAL_VARIABLES) != 0 else None)
+    # BUG: CardWirthでは状態変数値の表示で異なるシナリオかのチェックは行われない
+    v = cw.cwpy.sdata.find_flag(key, False, cw.cwpy.event.get_nowrunningevent() if (full & _SP_LOCAL_VARIABLES) != 0 else None)
     if not v is None:
         if updatetype == "Fixed":
             if not basenamelist is None:
@@ -1404,11 +1409,11 @@ def _get_flagvalue(key, full, updatetype, name_table, basenamelist, startindex, 
 
 def _get_variantvalue(key, full, updatetype, name_table, basenamelist, startindex, spcharinfo,
                       namelist, namelistindex, stack):
-    v = cw.cwpy.sdata.find_variant(key, cw.cwpy.event.get_nowrunningevent() if (full & _SP_LOCAL_VARIABLES) != 0 else None)
+    v = cw.cwpy.sdata.find_variant(key, _is_differentscenario(), cw.cwpy.event.get_nowrunningevent() if (full & _SP_LOCAL_VARIABLES) != 0 else None)
     if not v is None:
         if updatetype == "Fixed":
             if not basenamelist is None:
-                s = cw.data.Variant.value_to_str(basenamelist[namelistindex].name)
+                s = cw.data.Variant.value_to_unicode(basenamelist[namelistindex].name)
             else:
                 s = v.string_value()
                 namelist.append(NameListItem(v, v.value))
@@ -1419,6 +1424,16 @@ def _get_variantvalue(key, full, updatetype, name_table, basenamelist, startinde
         return None, namelistindex
 
     return s, namelistindex
+
+def _is_differentscenario():
+    if cw.cwpy.is_playingscenario():
+        inusecard = cw.cwpy.event.get_inusecard()
+        if cw.cwpy.event.in_inusecardevent and inusecard:
+            return inusecard.scenario != cw.cwpy.sdata.name or inusecard.author != cw.cwpy.sdata.author
+        else:
+            return False
+    else:
+        return False
 
 _SP_EXPAND_SHARPS = 0x1
 _SP_FULL = 0x2
@@ -1451,7 +1466,8 @@ def _rpl_specialstr(full, updatetype, s, name_table, get_step, get_flag, get_var
             if nextpos < 0:
                 return 0, namelistindex
             fl = s[i+1:i+1+nextpos]
-            val, namelistindex = get(fl, full, updatetype, name_table, basenamelist, buflen, spcharinfo, namelist, namelistindex, stack)
+            val, namelistindex = get(fl, full, updatetype, name_table, basenamelist, buflen, spcharinfo, namelist,
+                                     namelistindex, stack)
             if val is None:
                 if (full & _SP_FULL) == 0 and c in ('$', '%'):
                     # BUG: 存在しない状態変数を表示しようとすると
@@ -1643,7 +1659,7 @@ def store_messagelogimage(path, can_loaded_scaledimage):
                                 if scale in fdict2:
                                     image_noscale = fdict2[scale]
                                     break
-                                scale /= 2
+                                scale //= 2
                             return image_noscale, True
                         log.specialchars.set(name, load)
                         break

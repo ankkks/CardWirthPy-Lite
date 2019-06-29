@@ -176,6 +176,7 @@ class EventList(wx.TreeCtrl):
 
         def append(parent, data, tag, e_flags=None, e_steps=None, e_variants=None):
             e = cw.event.Event(data)
+            e.is_active = False
             if len(e.treekeys) == 0:
                 return
             if not e_flags is None:

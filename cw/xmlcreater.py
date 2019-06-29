@@ -1162,9 +1162,10 @@ def create_scenariolog(sdata, path, recording, logfilepath):
         e_variant = cw.data.make_element("Variants")
         element.append(e_variant)
 
-        for name, variant in sdata.variants.items():
+        for name, variant in sdata.variants.iteritems():
+            #PyLite:UnicodeErrorを回避
             e = cw.data.make_element("Variant", name, {"type": variant.type,
-                                                        "value": str(variant.value)})
+                                                        "value": unicode(variant.value)})
             e_variant.append(e)
 
     if not recording:

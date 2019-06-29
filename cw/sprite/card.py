@@ -996,9 +996,9 @@ class EnemyCard(CWPyCard, character.Enemy):
         else:
             self.dealspeed = cw.util.numwrap(int(self.dealspeed), 0, 10)
 
-        self._init = False
-
         self.spchars = mcarddata.getbool("Property/Name", "override", False)
+
+        self._init = False
 
         # 表示するまでデータを作らない
         if status == "hidden":
@@ -1052,7 +1052,7 @@ class EnemyCard(CWPyCard, character.Enemy):
         character.Enemy.__init__(self)
         self.deck.set(self, draw=False)
 
-        self._name = self.data.gettext("Property/Name", "")
+        self._name = self.mcarddata.gettext("Property/Name", "")
         if self.spchars:
             override_name = cw.sprite.message.rpl_specialstr(self._name, expandsharps=False, localvariables=False)[0]
         else:
