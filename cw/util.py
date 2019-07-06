@@ -1084,24 +1084,7 @@ def _sorted_by_attr_impl(d, seq, *attr):
     else:
         return sorted(seq, key=functools.cmp_to_key(logical_cmp))
 
-def cmp(a, b):
-    if a is None and b is None:
-        return 0
-    elif a is None:
-        return -1
-    elif b is None:
-        return 1
-    elif type(a) is type(b):
-        if a < b:
-            return -1
-        elif b < a:
-            return 1
-    else:
-        if type(a) is int:
-            return -1
-        else:
-            return 1
-    return 0
+
 
 def sorted_by_attr(seq, *attr):
     """非破壊的にオブジェクトの属性でソートする。

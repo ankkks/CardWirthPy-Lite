@@ -1040,7 +1040,7 @@ def create_scenariolog(sdata, path, recording, logfilepath):
             if namelist:
                 e = cw.data.make_element("Names")
                 for item in namelist:
-                    e_name = cw.data.make_element("Name", item.name)
+                    e_name = cw.data.make_element("Name", unicode(item.name))#PyLite：コモンのnumberがバグるためUnicodeに変換
                     if isinstance(item.data, cw.data.YadoData):
                         e_name.set("type", "Yado")
                     elif isinstance(item.data, cw.data.Party):
@@ -1164,8 +1164,7 @@ def create_scenariolog(sdata, path, recording, logfilepath):
 
         for name, variant in sdata.variants.iteritems():
             #PyLite:UnicodeErrorを回避
-            e = cw.data.make_element("Variant", name, {"type": variant.type,
-                                                        "value": unicode(variant.value)})
+            e = cw.data.make_element("Variant", name, {"type": variant.type, "value": unicode(variant.value)})
             e_variant.append(e)
 
     if not recording:

@@ -33,7 +33,6 @@ class StatusBar(base.CWPySprite):
         self.rect = self.image.get_rect()
         self.rect.topleft = cw.s((0, 420))
         self.showbuttons = False
-        self._statusbarmask = cw.cwpy.setting.statusbarmask
         self.maskmode = None
         self.loading = False
         self.volumebar = VolumeBar()
@@ -46,9 +45,9 @@ class StatusBar(base.CWPySprite):
         self.image = pygame.Surface(cw.s((633, 33))).convert()
         #ステータスバー スケーリング時
         subimg = cw.cwpy.rsrc.get_statusbtnbmp(2, 0)
-        self.maskmode = not self.showbuttons and self._statusbarmask and cw.cwpy.is_statusbarmask()
+        self.maskmode = not self.showbuttons and cw.cwpy.is_statusbarmask()
         if self.maskmode:
-            subimg.fill((64, 64, 64), special_flags=pygame.locals.BLEND_RGB_SUB)
+            subimg.fill((74, 74, 74), special_flags=pygame.locals.BLEND_RGB_SUB)
         self.image.fill((240, 240, 240))
         self.image.blit(subimg, cw.s((0, 0)))
         self.rect = self.image.get_rect()
@@ -66,13 +65,13 @@ class StatusBar(base.CWPySprite):
             showbuttons = False
 
         self.showbuttons = showbuttons
-        maskmode = not self.showbuttons and self._statusbarmask and cw.cwpy.is_statusbarmask()
+        maskmode = not self.showbuttons and cw.cwpy.is_statusbarmask()
 
         if self.maskmode <> maskmode:
             self.maskmode = maskmode
             subimg = cw.cwpy.rsrc.get_statusbtnbmp(2, 0)
             if maskmode:
-                subimg.fill((64, 64, 64), special_flags=pygame.locals.BLEND_RGB_SUB)
+                subimg.fill((74, 74, 74), special_flags=pygame.locals.BLEND_RGB_SUB)
             self.image.fill((240, 240, 240))
             self.image.blit(subimg, cw.s((0, 0)))
 

@@ -784,6 +784,7 @@ class Debugger(wx.Frame):
         cwxpath = ""
         packid = 0
 
+
         if not content is None:
             cwxpath = content.get_cwxpath()
             if not cwxpath and cw.cwpy.is_runningevent():
@@ -801,18 +802,18 @@ class Debugger(wx.Frame):
                 packid = cw.cwpy.event.get_packageid()
 
         if cwxpath:
-            seq.append(cwxpath)
+            seq.append(cwxpath.encode(encoding))
         elif packid:
             # 古いバージョンのCWXEditorでは
             # -a -b -pオプションつきの起動で
             # 同一のシナリオが複数開かれてしまう
-            seq.append(("package:id:%s" % (packid)))
+            seq.append(("package:id:%s" % (packid)).encode(encoding))
         elif cw.cwpy.is_battlestatus():
-            seq.append(("battle:id:%s" % (cw.cwpy.areaid)))
+            seq.append(("battle:id:%s" % (cw.cwpy.areaid)).encode(encoding))
         elif 0 <= cw.cwpy.areaid:
-            seq.append(("area:id:%s" % (cw.cwpy.areaid)))
+            seq.append(("area:id:%s" % (cw.cwpy.areaid)).encode(encoding))
         elif cw.cwpy.pre_areaids:
-            seq.append(("area:id:%s" % (cw.cwpy.pre_areaids[0][0])))
+            seq.append(("area:id:%s" % (cw.cwpy.pre_areaids[0][0])).encode(encoding))
 
         def func(parent, seq):
             if not parent:
@@ -2247,7 +2248,7 @@ class EventView(wx.ScrolledWindow):
             content = cw.content.get_content(item.content)
             self.set_selectionitem(item)
             self.selectionindex = index
-            self.Parent.statusbar.SetStatusText(content.get_status(self.current_event), 0)
+            self.Parent.statusbar.SetStatusText(content.get_status(self.current_event), 1)
             self.Refresh()
 
     def OnDClick(self, event):
