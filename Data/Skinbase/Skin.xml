@@ -403,29 +403,34 @@
   <SampleTypes>
     <SampleType>
       <Physical agl="0" dex="0" int="0" min="0" str="0" vit="0" />
-      <Mental aggressive="0.0" brave="0.0" cautious="0.0" cheerful="0.0" trickish="0.0" />
-      <Name>バランス</Name>
-    </SampleType>
-    <SampleType>
+   <Mental aggressive="0.0" brave="0.0" cautious="0.0" cheerful="0.0" trickish="0.0" />
+   <Name>バランス</Name>
+      <Description>TYPE:バランス\n身体特性、性格傾向ともに全能力値が平均値のキャラクターです。どんな作業でも、ほどほどにこなします。</Description>
+   </SampleType>
+  <SampleType>
       <Physical agl="0" dex="-3" int="-3" min="0" str="4" vit="2" />
-      <Mental aggressive="1.0" brave="1.0" cautious="-1.0" cheerful="0.0" trickish="0.0" />
-      <Name>ファイター</Name>
-    </SampleType>
-    <SampleType>
+   <Mental aggressive="1.0" brave="1.0" cautious="-1.0" cheerful="0.0" trickish="0.0" />
+   <Name>ファイター</Name>
+      <Description>TYPE:ファイター\n標準的な戦士です。腕力と耐久力に優れ、知力と器用さに劣ります。性格は好戦的、勇猛、大胆です。武器による戦闘を得意とします。</Description>
+   </SampleType>
+  <SampleType>
       <Physical agl="3" dex="3" int="-1" min="-3" str="0" vit="-2" />
-      <Mental aggressive="0.0" brave="-1.0" cautious="1.0" cheerful="0.0" trickish="1.0" />
-      <Name>シーフ</Name>
-    </SampleType>
-    <SampleType>
+   <Mental aggressive="0.0" brave="-1.0" cautious="1.0" cheerful="0.0" trickish="1.0" />
+   <Name>シーフ</Name>
+      <Description>TYPE:シーフ\n標準的な盗賊です。素早さと器用さに優れ耐久力と精神力に劣ります。性格は慎重、狡猾、臆病です。鍵開けなどの技を得意とします。</Description>
+   </SampleType>
+  <SampleType>
       <Physical agl="-3" dex="-3" int="2" min="4" str="0" vit="0" />
-      <Mental aggressive="-1.0" brave="0.0" cautious="0.0" cheerful="1.0" trickish="-1.0" />
-      <Name>プリースト</Name>
-    </SampleType>
-    <SampleType>
+   <Mental aggressive="-1.0" brave="0.0" cautious="0.0" cheerful="1.0" trickish="-1.0" />
+   <Name>プリースト</Name>
+      <Description>TYPE:プリースト\n標準的な僧侶です。精神力と知力に優れ、素早さと器用さに劣ります。性格は穏和、正直、社交的です。援護魔法や交渉を得意とします。</Description>
+   </SampleType>
+  <SampleType>
       <Physical agl="0" dex="0" int="4" min="2" str="-3" vit="-3" />
-      <Mental aggressive="1.0" brave="0.0" cautious="1.0" cheerful="-1.0" trickish="0.0" />
-      <Name>メイジ</Name>
-    </SampleType>
+   <Mental aggressive="1.0" brave="0.0" cautious="1.0" cheerful="-1.0" trickish="0.0" />
+   <Name>メイジ</Name>
+      <Description>TYPE:メイジ\n標準的な魔術師です。知力と精神力に優れ腕力と耐久力に劣ります。性格は好戦的、慎重、内気です。攻撃魔法や知識判定を得意とします。</Description>
+   </SampleType>
   </SampleTypes>
   <Sounds>
     <Sound key="error">システム・エラー</Sound>
