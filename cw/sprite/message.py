@@ -627,7 +627,8 @@ class MessageWindow(base.CWPySprite):
             else:
                 return None, namelistindex
         else:
-            v = cw.cwpy.sdata.find_flag(key, cw.cwpy.event.get_nowrunningevent())
+            # BUG: CardWirthでは状態変数値の表示で異なるシナリオかのチェックは行われない
+            v = cw.cwpy.sdata.find_flag(key, False, cw.cwpy.event.get_nowrunningevent())
             if v is None:
                 return None, namelistindex
 

@@ -979,8 +979,8 @@ class GeneralSettingPanel(wx.Panel):
         self.box_gene = wx.StaticBox(self, -1, u"動作モード")
         self.cb_debug = wx.CheckBox(self, -1, u"デバッグモードでプレイする" + u"(Ctrl+D)")
         self.cb_debug.SetValue(cw.cwpy.debug)
-        #PyLite:トレード・解散・ゲームオーバーでは動作モードを変更できなくする
-        if cw.cwpy.areaid in (-1, -2, -3, -5) or cw.cwpy.status == "GameOver":
+        #PyLite:バトル・トレード・解散・ゲームオーバーでは動作モードを変更できなくする
+        if cw.cwpy.areaid in (-1, -2, -3, -5) or cw.cwpy.status == "GameOver" or cw.cwpy.is_battlestatus():
             self.cb_debug.Disable()
 
         self.st_display_sbb = wx.StaticText(self, -1, u"ショートカットボタン:")

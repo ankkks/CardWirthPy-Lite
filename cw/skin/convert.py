@@ -866,6 +866,12 @@ class Converter(threading.Thread):
             self.curnum = 10
             self.message = u"リソースを抽出中..."
 
+            e_source = self.data.find("Property/SourceOfMaterialsIsClassicEngine")
+            if e_source is None:
+                e_source = cw.data.make_element("SourceOfMaterialsIsClassicEngine")
+                self.data.find("Property").append(e_source)
+            self.data.edit("Property/SourceOfMaterialsIsClassicEngine", str(True))
+
             self.data.fpath = cw.util.join_paths(dpath, u"Skin.xml")
             self.data.write()
 

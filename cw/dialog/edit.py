@@ -3,9 +3,12 @@
 
 import os
 import sys
+import threading
+import time
 import shutil
 import wx
 import wx.combo
+import colorsys
 
 import cw
 
@@ -1147,6 +1150,448 @@ class LevelEditDialog(wx.Dialog):
         cw.cwpy.play_sound("click")
         btnevent = wx.PyCommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, wx.ID_CANCEL)
         self.ProcessEvent(btnevent)
+
+
+#-------------------------------------------------------------------------------
+#  背景色変更ダイアログ
+#-------------------------------------------------------------------------------
+
+class BackColorEditDialog(wx.Dialog):
+    def __init__(self, parent, ccard):
+        wx.Dialog.__init__(self, parent, -1, cw.cwpy.msgs["edit_bgcolor"],
+                style=wx.CAPTION|wx.SYSTEM_MENU|wx.CLOSE_BOX|wx.MINIMIZE_BOX)
+        self.cwpy_debug = False
+
+        self.huepanel = wx.Panel(self, -1, size=cw.wins((181, 32)))
+        self.huepanel.SetDoubleBuffered(True)
+        self.saturationpanel = wx.Panel(self, -1, size=cw.wins((181, 32)))
+        self.saturationpanel.SetDoubleBuffered(True)
+        self.valuepanel = wx.Panel(self, -1, size=cw.wins((181, 32)))
+        self.valuepanel.SetDoubleBuffered(True)
+
+        self.presetcolor_list = []
+        self.presetcolor_names = [cw.cwpy.msgs["edit_bgcolor_preset"]]
+        if os.path.isfile("Data/BackColors.xml"):
+            try:
+                data = cw.data.xml2element("Data/BackColors.xml")
+                for e in data:
+                    if e.tag == "PresetColor":
+                        r = e.getattr(".", "r", "")
+                        g = e.getattr(".", "g", "")
+                        b = e.getattr(".", "b", "")
+                        name = u"%s" % (e.text)
+                        if r and g and b and name:
+                            r = max(0, min(192, int(r)))
+                            g = max(0, min(192, int(g)))
+                            b = max(0, min(192, int(b)))
+                            self.presetcolor_list.append((name, r, g, b))
+                            self.presetcolor_names.append(name)
+            except:
+                pass
+        else:
+            #PyLite:設定ファイルが無くてもサンプルを用意
+            samplecolors = [[u"Navy(デフォルト)", 0, 0, 128],
+                            [u"Maroon", 128, 0, 0],
+                            [u"Black", 0, 0, 0]]
+            self.presetcolor_list += samplecolors
+            self.presetcolor_names += [x[0] for x in samplecolors]
+
+        self.colorchoice = wx.Choice(self, choices=self.presetcolor_names)
+        self.colorchoice.SetFont(cw.cwpy.rsrc.get_wxfont("combo", pixelsize=cw.wins(14)))
+        self.colorchoice.SetSelection(0)
+
+        self.is_select_huepanel = True
+        self.is_select_saturationpanel = False
+        self.is_select_valuepanel = False
+
+        self.dragging_huepanel = False
+        self.dragging_saturationpanel = False
+        self.dragging_valuepanel = False
+
+        self.ccard = ccard
+        self.hsv = self.rgb2hsv(self.get_rgblist())
+
+        # btn
+        self.okbtn = cw.cwpy.rsrc.create_wxbutton(self, -1,
+                                                      cw.wins((100, 30)), cw.cwpy.msgs["entry_decide"])
+        self.cnclbtn = cw.cwpy.rsrc.create_wxbutton(self, wx.ID_CANCEL,
+                                                      cw.wins((100, 30)), cw.cwpy.msgs["entry_cancel"])
+
+
+        # ドラッグ中に離されたらドラッグを中止する
+        self._destroyed = False
+
+        def func():
+            while not self._destroyed:
+                time.sleep(0.001)
+                if self.dragging_huepanel or self.dragging_saturationpanel or self.dragging_valuepanel:
+                    def end_drag(self):
+                        if not self:
+                            return
+                        st = wx.GetMouseState()
+                        if not st.LeftIsDown():
+                            self.dragging_huepanel = False
+                            self.dragging_saturationpanel = False
+                            self.dragging_valuepanel = False
+                    cw.cwpy.frame.exec_func(end_drag, self)
+
+        thr = threading.Thread(target=func)
+        thr.start()
+
+        self._do_layout()
+        self._bind()
+
+    def hsv2rgb(self, hsv):
+        return list(map(lambda x: round(x * 256), colorsys.hsv_to_rgb(hsv[0], hsv[1], hsv[2])))
+
+    def rgb2hsv(self, rgb):
+        #PyLite：TODO：Python3の整数除算 Floatにする
+        return colorsys.rgb_to_hsv(rgb[0] / 256.0, rgb[1] / 256.0, rgb[2] / 256.0)
+
+    def get_rgblist(self):
+        r = cw.util.numwrap(self.ccard.data.getint("Property/BackColor", "r", -1), -1, 192)
+        g = cw.util.numwrap(self.ccard.data.getint("Property/BackColor", "g", -1), -1, 192)
+        b = cw.util.numwrap(self.ccard.data.getint("Property/BackColor", "b", -1), -1, 192)
+
+        if r == -1 or g == -1 or b == -1:
+            r = 0
+            g = 0
+            b = 128
+        return (r, g, b)
+
+    def _bind(self):
+        self.huepanel.Bind(wx.EVT_PAINT, self.OnPaintHuePanel)
+        self.huepanel.Bind(wx.EVT_LEFT_DOWN, self.OnLeftClickHuePanel)
+        self.huepanel.Bind(wx.EVT_MOTION, self.OnDragHuePanel)
+        self.huepanel.Bind(wx.EVT_LEFT_UP, self.OnReleaseHuePanel)
+        self.huepanel.Bind(wx.EVT_KILL_FOCUS, self.OnReleaseHuePanel)
+        self.huepanel.Bind(wx.EVT_SET_FOCUS, self.OnSetFocusHuePanel)
+        self.huepanel.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocusHuePanel)
+        self.huepanel.Bind(wx.EVT_CHAR_HOOK, self.OnKeyDownHuePanel)
+        # wx.EVT_KEY_DOWNではカーソルキーが反応しない
+
+        self.saturationpanel.Bind(wx.EVT_PAINT, self.OnPaintSaturationPanel)
+        self.saturationpanel.Bind(wx.EVT_LEFT_DOWN, self.OnLeftClickSaturationPanel)
+        self.saturationpanel.Bind(wx.EVT_MOTION, self.OnDragSaturationPanel)
+        self.saturationpanel.Bind(wx.EVT_LEFT_UP, self.OnReleaseSaturationPanel)
+        self.saturationpanel.Bind(wx.EVT_KILL_FOCUS, self.OnReleaseSaturationPanel)
+        self.saturationpanel.Bind(wx.EVT_SET_FOCUS, self.OnSetFocusSaturationPanel)
+        self.saturationpanel.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocusSaturationPanel)
+        self.saturationpanel.Bind(wx.EVT_CHAR_HOOK, self.OnKeyDownSaturationPanel)
+
+        self.valuepanel.Bind(wx.EVT_PAINT, self.OnPaintValuePanel)
+        self.valuepanel.Bind(wx.EVT_LEFT_DOWN, self.OnLeftClickValuePanel)
+        self.valuepanel.Bind(wx.EVT_MOTION, self.OnDragValuePanel)
+        self.valuepanel.Bind(wx.EVT_LEFT_UP, self.OnReleaseValuePanel)
+        self.valuepanel.Bind(wx.EVT_KILL_FOCUS, self.OnReleaseValuePanel)
+        self.valuepanel.Bind(wx.EVT_SET_FOCUS, self.OnSetFocusValuePanel)
+        self.valuepanel.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocusValuePanel)
+        self.valuepanel.Bind(wx.EVT_CHAR_HOOK, self.OnKeyDownValuePanel)
+
+        self.colorchoice.Bind(wx.EVT_CHOICE, self.OnChoicePreset)
+
+        self.Bind(wx.EVT_PAINT, self.OnPaint)
+        self.Bind(wx.EVT_BUTTON, self.OnOk, self.okbtn)
+        self.Bind(wx.EVT_RIGHT_UP, self.OnCancel)
+        self.Bind(wx.EVT_WINDOW_DESTROY, self.OnDestroy)
+
+        def recurse(ctrl):
+            if not isinstance(ctrl, (wx.TextCtrl, wx.SpinCtrl)):
+                ctrl.Bind(wx.EVT_RIGHT_UP, self.OnCancel)
+            for child in ctrl.GetChildren():
+                recurse(child)
+        recurse(self)
+
+    def _do_layout(self):
+        sizer_panel = wx.BoxSizer(wx.VERTICAL)
+        sizer_panel.Add(self.huepanel, 1, wx.CENTER | wx.ALL, cw.wins(5))
+        sizer_panel.Add(self.saturationpanel, 1, wx.CENTER | wx.ALL, cw.wins(5))
+        sizer_panel.Add(self.valuepanel, 1, wx.CENTER | wx.ALL, cw.wins(5))
+
+        sizer_panel.Add(self.colorchoice, 0, wx.CENTER, 0)
+
+        sizer_btn = wx.BoxSizer(wx.HORIZONTAL)
+        sizer_btn.Add(self.okbtn, 0, 0, cw.wins(0))
+        sizer_btn.Add(self.cnclbtn, 0, wx.LEFT, cw.wins(30))
+
+        sizer_v1 = wx.BoxSizer(wx.VERTICAL)
+        sizer_v1.Add(sizer_panel, 0, wx.CENTER|wx.TOP, cw.wins(5))
+        sizer_v1.Add(sizer_btn, 0, wx.CENTER|wx.TOP, cw.wins(10))
+
+        sizer = wx.BoxSizer(wx.VERTICAL)
+        sizer.Add(sizer_v1, 0, wx.ALL, cw.wins(15))
+        self.SetSizer(sizer)
+        sizer.Fit(self)
+        self.Layout()
+
+    def update_panels(self):
+        self.huepanel.Refresh()
+        self.saturationpanel.Refresh()
+        self.valuepanel.Refresh()
+
+    def OnLeftClickHuePanel(self, evt):
+        h = evt.GetX() / cw.UP_WIN / 180.0
+        self.hsv = (h, self.hsv[1], self.hsv[2])
+        self.dragging_huepanel = True
+        self.huepanel.SetFocus()
+        self.update_panels()
+
+    def OnSetFocusHuePanel(self, evt):
+        self.is_select_huepanel = True
+        self.huepanel.Refresh()
+
+    def OnKillFocusHuePanel(self, evt):
+        self.is_select_huepanel = False
+        self.huepanel.Refresh()
+
+    def OnDragHuePanel(self, evt):
+        if self.dragging_huepanel:
+            h = evt.GetX() / cw.UP_WIN / 180.0
+            self.hsv = (h, self.hsv[1], self.hsv[2])
+            self.update_panels()
+
+    def OnReleaseHuePanel(self, evt):
+        self.dragging_huepanel = False
+
+    def OnKeyDownHuePanel(self, evt):
+        keycode = evt.GetKeyCode()
+        if keycode == wx.WXK_LEFT:
+            h = max(self.hsv[0] - 0.05, 0)
+            self.hsv = (h, self.hsv[1], self.hsv[2])
+            self.update_panels()
+        elif keycode == wx.WXK_RIGHT:
+            h = min(self.hsv[0] + 0.05, 1)
+            self.hsv = (h, self.hsv[1], self.hsv[2])
+            self.update_panels()
+        else:
+            evt.Skip()
+
+    def OnPaintHuePanel(self, evt):
+        self.draw_huepanel()
+
+    def draw_huepanel(self, update=False):
+        if update:
+            dc = wx.ClientDC(self.huepanel)
+        else:
+            dc = wx.PaintDC(self.huepanel)
+        hsize = self.huepanel.GetClientSize()
+
+        # カラースケールの入力
+        for i in range(0, 362, 2):
+            #PyLite:Python3除算
+            h = i / 360.0
+            s = self.hsv[1]
+            v = self.hsv[2]
+            rgb = self.hsv2rgb((h, s, v))
+            #rgb = map(int, self.hsv2rgb((h, s, v)))
+            #PyLite:wx.Colourを指定する必要ない？
+            dc.SetBrush(wx.Brush(rgb))
+            dc.SetPen(wx.Pen(rgb))
+            #dc.SetBrush(wx.Brush(wx.Colour(rgb)))
+            #dc.SetPen(wx.Pen(wx.Colour(rgb)))
+            dc.DrawRectangle(cw.wins(i // 2), cw.wins(0), cw.wins(2), hsize[1])
+
+        # パネルを選んでいれば枠線の記入
+        if self.is_select_huepanel:
+            dc.SetBrush(wx.TRANSPARENT_BRUSH)
+            dc.SetPen(wx.Pen(colour="white", style=wx.PENSTYLE_DOT))
+            dc.DrawRectangle(cw.wins(2), cw.wins(2), hsize[0] - cw.wins(4), hsize[1] - cw.wins(4))
+
+        # 選択値に丸印
+        dc.SetBrush(wx.TRANSPARENT_BRUSH)
+        dc.SetPen(wx.Pen("white"))
+        dc.DrawCircle(cw.wins(self.hsv[0] * 180), hsize[1] // 2, hsize[1] // 4)
+
+    def OnLeftClickSaturationPanel(self, evt):
+        s = evt.GetX() / cw.UP_WIN / 180.0
+        self.hsv = (self.hsv[0], s, self.hsv[2])
+        self.dragging_saturationpanel = True
+        self.saturationpanel.SetFocus()
+        self.update_panels()
+
+    def OnSetFocusSaturationPanel(self, evt):
+        self.is_select_saturationpanel = True
+        self.saturationpanel.Refresh()
+
+    def OnKillFocusSaturationPanel(self, evt):
+        self.is_select_saturationpanel = False
+        self.saturationpanel.Refresh()
+
+    def OnDragSaturationPanel(self, evt):
+        if self.dragging_saturationpanel:
+            s = evt.GetX() / cw.UP_WIN / 180.0
+            self.hsv = (self.hsv[0], s, self.hsv[2])
+            self.update_panels()
+
+    def OnReleaseSaturationPanel(self, evt):
+        self.dragging_saturationpanel = False
+
+    def OnKeyDownSaturationPanel(self, evt):
+        keycode = evt.GetKeyCode()
+        if keycode == wx.WXK_LEFT:
+            s = max(self.hsv[1] - 0.05, 0)
+            self.hsv = (self.hsv[0], s, self.hsv[2])
+            self.update_panels()
+        elif keycode == wx.WXK_RIGHT:
+            s = min(self.hsv[1] + 0.05, 1)
+            self.hsv = (self.hsv[0], s, self.hsv[2])
+            self.update_panels()
+        else:
+            evt.Skip()
+
+    def OnPaintSaturationPanel(self, evt):
+        self.draw_saturationpanel()
+
+    def draw_saturationpanel(self, update=False):
+        if update:
+            dc = wx.ClientDC(self.saturationpanel)
+            dc = wx.BufferedDC(dc, self.saturationpanel.GetClientSize())
+        else:
+            dc = wx.PaintDC(self.saturationpanel)
+        ssize = self.saturationpanel.GetClientSize()
+
+        # スケールの入力
+        for i in range(0, 181):
+            h = self.hsv[0]
+            s = i / 180.0
+            v = self.hsv[2]
+            rgb = self.hsv2rgb((h, s, v))
+            dc.SetBrush(wx.Brush(rgb))
+            dc.SetPen(wx.Pen(rgb))
+            dc.DrawRectangle(cw.wins(i), cw.wins(0), cw.wins(2), ssize[1])
+
+        # パネルを選んでいれば枠線の記入
+        if self.is_select_saturationpanel:
+            dc.SetBrush(wx.TRANSPARENT_BRUSH)
+            dc.SetPen(wx.Pen(colour="white", style=wx.PENSTYLE_DOT))
+            dc.DrawRectangle(cw.wins(2), cw.wins(2), ssize[0] - cw.wins(4), ssize[1] - cw.wins(4))
+
+        # 選択値に丸印
+        dc.SetBrush(wx.TRANSPARENT_BRUSH)
+        dc.SetPen(wx.Pen("white"))
+        dc.DrawCircle(cw.wins(self.hsv[1] * 180), ssize[1] // 2, ssize[1] // 4)
+
+    def OnLeftClickValuePanel(self, evt):
+        #v = 0.125 + (evt.GetX() / cw.UP_WIN) / 480.0
+        v = (evt.GetX() / cw.UP_WIN) / 240.0
+        self.hsv = (self.hsv[0], self.hsv[1], v)
+        self.dragging_valuepanel = True
+        self.valuepanel.SetFocus()
+        self.update_panels()
+
+    def OnSetFocusValuePanel(self, evt):
+        self.is_select_valuepanel = True
+        self.valuepanel.Refresh()
+
+    def OnKillFocusValuePanel(self, evt):
+        self.is_select_valuepanel = False
+        self.valuepanel.Refresh()
+
+    def OnDragValuePanel(self, evt):
+        if self.dragging_valuepanel:
+            #v = 0.125 + (evt.GetX() / cw.UP_WIN) / 480.0
+            v = (evt.GetX() / cw.UP_WIN) / 240.0
+            self.hsv = (self.hsv[0], self.hsv[1], v)
+            self.update_panels()
+
+    def OnReleaseValuePanel(self, evt):
+        self.dragging_valuepanel = False
+
+    def OnKeyDownValuePanel(self, evt):
+        keycode = evt.GetKeyCode()
+        if keycode == wx.WXK_LEFT:
+            #v = max(self.hsv[2] - 0.01875, 0.125)
+            v = max(self.hsv[2] - 0.02, 0)
+            self.hsv = (self.hsv[0], self.hsv[1], v)
+            self.update_panels()
+        elif keycode == wx.WXK_RIGHT:
+            #v = min(self.hsv[2] + 0.01875, 0.5)
+            v = min(self.hsv[2] + 0.02, 0.75)
+            self.hsv = (self.hsv[0], self.hsv[1], v)
+            self.update_panels()
+        else:
+            evt.Skip()
+
+    def OnPaintValuePanel(self, evt):
+        self.draw_valuepanel()
+
+    def draw_valuepanel(self, update=False):
+        if update:
+            dc = wx.ClientDC(self.valuepanel)
+            dc = wx.BufferedDC(dc, self.valuepanel.GetClientSize())
+        else:
+            dc = wx.PaintDC(self.valuepanel)
+        vsize = self.valuepanel.GetClientSize()
+
+        # スケールの入力
+        # 明度を0.125～0.5の間で選択する
+        for i in range(0, 181):
+            h = self.hsv[0]
+            s = self.hsv[1]
+            #v = 0.125 + i / 480.0
+            v = i / 240.0
+            rgb = self.hsv2rgb((h, s, v))
+            dc.SetBrush(wx.Brush(rgb))
+            dc.SetPen(wx.Pen(rgb))
+            dc.DrawRectangle(cw.wins(i), cw.wins(0), cw.wins(2), vsize[1])
+
+        # パネルを選んでいれば枠線の記入
+        if self.is_select_valuepanel:
+            dc.SetBrush(wx.TRANSPARENT_BRUSH)
+            dc.SetPen(wx.Pen(colour="white", style=wx.PENSTYLE_DOT))
+            dc.DrawRectangle(cw.wins(2), cw.wins(2), vsize[0] - cw.wins(4), vsize[1] - cw.wins(4))
+
+        # 選択値に丸印
+        dc.SetBrush(wx.TRANSPARENT_BRUSH)
+        dc.SetPen(wx.Pen("white"))
+        #dc.DrawCircle(cw.wins((self.hsv[2] - 0.125) * 480), vsize[1] // 2, vsize[1] // 4)
+        dc.DrawCircle(cw.wins((self.hsv[2]) * 240.0), vsize[1] // 2, vsize[1] // 4)
+
+    def OnChoicePreset(self, evt):
+        index = self.colorchoice.GetSelection()
+        if index > 0:
+            selected = self.colorchoice.GetString(index)
+            for name, r, g, b in self.presetcolor_list:
+                if name == selected:
+                    self.hsv = self.rgb2hsv((r, g, b))
+                    self.update_panels()
+
+    def OnPaint(self, evt):
+        dc = wx.PaintDC(self)
+        bmp = cw.cwpy.rsrc.dialogs["CAUTION"]
+        csize = self.GetClientSize()
+        cw.util.fill_bitmap(dc, bmp, csize)
+
+    def OnOk(self, event):
+        def func(ccard, rgb):
+            if not ccard.data.find("Property/BackColor") is None:
+                ccard.data.edit("Property/BackColor", int(rgb[0]), "r")
+                ccard.data.edit("Property/BackColor", int(rgb[1]), "g")
+                ccard.data.edit("Property/BackColor", int(rgb[2]), "b")
+            else:
+                e = cw.data.make_element("BackColor", "")
+                ccard.data.insert("Property", e, 0)
+                ccard.data.edit("Property/BackColor", int(rgb[0]), "r")
+                ccard.data.edit("Property/BackColor", int(rgb[1]), "g")
+                ccard.data.edit("Property/BackColor", int(rgb[2]), "b")
+            if cw.cwpy.ydata:
+                cw.cwpy.ydata.changed()
+
+            cw.cwpy.play_sound("harvest")
+            cw.animation.animate_sprite(ccard, "hide")
+            cw.animation.animate_sprite(ccard, "deal")
+
+        cw.cwpy.exec_func(func, self.ccard, self.hsv2rgb(self.hsv))
+
+        self.EndModal(wx.ID_OK)
+
+    def OnCancel(self, event):
+        cw.cwpy.play_sound("click")
+        btnevent = wx.PyCommandEvent(wx.wxEVT_COMMAND_BUTTON_CLICKED, wx.ID_CANCEL)
+        self.ProcessEvent(btnevent)
+
+    def OnDestroy(self, event):
+        self._destroyed = True
 
 #-------------------------------------------------------------------------------
 # テキスト入力ダイアログ

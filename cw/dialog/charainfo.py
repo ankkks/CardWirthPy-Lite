@@ -740,7 +740,6 @@ class TitlePanel(wx.Panel):
     def __init__(self, parent, notebook):
         wx.Panel.__init__(self, parent, -1, size=(parent.width, cw.wins(24)), style=wx.SUNKEN_BORDER)
         self.SetDoubleBuffered(True)
-        self.SetBackgroundColour(wx.Colour(0, 0, 128))
         self.notebook = notebook
         self.is_playingscenario = cw.cwpy.is_playingscenario()
 
@@ -757,7 +756,6 @@ class TitlePanel(wx.Panel):
             dc = wx.ClientDC(self)
         else:
             dc = wx.PaintDC(self)
-
 
         index = self.notebook.GetSelection()
         if index == 0:
@@ -791,8 +789,8 @@ class DescPanel(wx.ScrolledWindow):
         wx.ScrolledWindow.__init__(self, parent, -1, size=(parent.Parent.width-cw.wins(8), cw.wins(173)), style=wx.SUNKEN_BORDER)
         self.SetDoubleBuffered(True)
         self.csize = self.GetClientSize()
-        self.SetBackgroundColour(wx.Colour(0, 0, 128))
         self.SetScrollRate(cw.wins(10), cw.wins(10))
+        apply_bgcolor(self, ccard)
 
         # エレメントオブジェクト
         self.ccard = ccard
@@ -821,6 +819,7 @@ class DescPanel(wx.ScrolledWindow):
             self.Parent.Parent.historypanel.draw(True)
 
     def _init_view(self):
+        apply_bgcolor(self, self.ccard)
         self.text = self.ccard.data.gettext("Property/Description", "")
         self.text = cw.util.txtwrap(self.text, 4)
         dc = wx.ClientDC(self)
@@ -841,6 +840,7 @@ class DescPanel(wx.ScrolledWindow):
         vx *= cw.wins(10)
         vy *= cw.wins(10)
 
+        apply_bgcolor(self, self.ccard)
         dc = wx.PaintDC(self)
         dc.SetFont(cw.cwpy.rsrc.get_wxfont("charadesc", pixelsize=cw.wins(13)))
         maxwidth = dc.GetTextExtent(u"―"*19)[0]
@@ -869,7 +869,7 @@ class HistoryPanel(wx.ScrolledWindow):
         wx.ScrolledWindow.__init__(self, parent, -1, size=(parent.Parent.width-cw.wins(8), cw.wins(173)), style=wx.SUNKEN_BORDER)
         self.SetDoubleBuffered(True)
         self.csize = self.GetClientSize()
-        self.SetBackgroundColour(wx.Colour(0, 0, 128))
+        apply_bgcolor(self, ccard)
         self.SetScrollRate(cw.wins(10), cw.wins(10))
         # エレメントオブジェクト
         self.ccard = ccard
@@ -933,6 +933,7 @@ class HistoryPanel(wx.ScrolledWindow):
             self._init_view()
 
     def _init_view(self):
+        apply_bgcolor(self, self.ccard)
         csize = self.csize
 
         # クーポンリスト
@@ -1045,7 +1046,7 @@ class EditPanel(wx.Panel):
         wx.Panel.__init__(self, parent, -1, size=(parent.Parent.width-cw.wins(8), cw.wins(173)), style=wx.SUNKEN_BORDER)
         self._destroy = False
         self.SetDoubleBuffered(True)
-        self.SetBackgroundColour(wx.Colour(0, 0, 128))
+        apply_bgcolor(self, ccard)
         self.csize = self.GetClientSize()
         # エレメントオブジェクト
         self.list = mlist
@@ -1081,7 +1082,7 @@ class EditPanel(wx.Panel):
                                 panel.Parent.Parent.descpanel.draw(True)
                         cw.cwpy.exec_func(cw.cwpy.frame.exec_func, func, self)
                     dlg.Destroy()
-                else:
+                elif header.type == 1:
                     # レベルを調節する
                     cw.cwpy.play_sound("click")
                     mlist = self.get_charalist()
@@ -1095,6 +1096,28 @@ class EditPanel(wx.Panel):
                                 panel.Parent.Parent.toppanel.Refresh()
                         self.update_charalist(mlist)
                         cw.cwpy.exec_func(cw.cwpy.frame.exec_func, func, self)
+                    dlg.Destroy()
+                else:
+                    # 背景色を変更する
+                    cw.cwpy.play_sound("click")
+
+                    dlg = cw.dialog.edit.BackColorEditDialog(self.Parent.Parent, ccard=self.ccard)
+                    cw.cwpy.frame.move_dlg(dlg)
+                    if dlg.ShowModal() == wx.ID_OK:
+                        colour = get_bgcolor(self.ccard)
+                        def func(panel, ccard):
+                            if panel:
+                                tabs = [panel.Parent.Parent.titlepanel, panel.Parent.Parent.descpanel,
+                                        panel.Parent.Parent.historypanel, panel.Parent.Parent.editpanel]
+                                if ccard.data.hasfind("SkillCards"):
+                                    tabs.extend([panel.Parent.Parent.skillpanel,
+                                                 panel.Parent.Parent.itempanel,
+                                                 panel.Parent.Parent.beastpanel])
+
+                                for tab in tabs:
+                                    tab.SetBackgroundColour(colour)
+                                    tab.draw(True)
+                        cw.cwpy.exec_func(cw.cwpy.frame.exec_func, func, self, self.ccard)
                     dlg.Destroy()
                 self.draw(True)
                 return
@@ -1212,6 +1235,7 @@ class EditPanel(wx.Panel):
         else:
             dc = wx.PaintDC(self)
 
+        apply_bgcolor(self, self.ccard)
         dc.BeginDrawing()
         # 背景の透かし
         dc.DrawBitmap(self.watermark, (self.csize[0]-self.watermark.GetWidth())/2, (self.csize[1]-self.watermark.GetHeight())/2, True)
@@ -1226,7 +1250,9 @@ class EditPanel(wx.Panel):
         # 編集項目名
         height = cw.wins(10)
         if not self.headers:
-            self.headers = (EditButton(cw.cwpy.msgs["edit_design"], 0), EditButton(cw.cwpy.msgs["regulate_level"], 1))
+            self.headers = (EditButton(cw.cwpy.msgs["edit_design"], 0),
+                            EditButton(cw.cwpy.msgs["regulate_level"], 1),
+                            EditButton(cw.cwpy.msgs["edit_bgcolor"], 2))
         for header in self.headers:
             if header.negaflag:
                 dc.SetTextForeground(wx.RED)
@@ -1250,7 +1276,8 @@ class StatusPanel(wx.ScrolledWindow):
     def __init__(self, parent, mlist, ccard, editable):
         wx.ScrolledWindow.__init__(self, parent, -1, size=(parent.Parent.width-cw.wins(8), cw.wins(173)), style=wx.SUNKEN_BORDER)
         self.SetDoubleBuffered(True)
-        self.SetBackgroundColour(wx.Colour(0, 0, 128))
+        apply_bgcolor(self, ccard)
+        #PyLite todo self.SetBackgroundColour(wx.Colour(0, 0, 128))
         self.SetScrollRate(cw.wins(10), cw.wins(10))
         self.csize = self.GetClientSize()
         self.list = mlist
@@ -1514,7 +1541,7 @@ class CardPanel(wx.Panel):
     def __init__(self, parent, ccard, pocket):
         wx.Panel.__init__(self, parent, -1, size=(parent.Parent.width-cw.wins(8), cw.wins(173)), style=wx.SUNKEN_BORDER)
         self.SetDoubleBuffered(True)
-        self.SetBackgroundColour(wx.Colour(0, 0, 128))
+        apply_bgcolor(self, ccard)
         self.csize = self.GetClientSize()
         # エレメントオブジェクト
         self.ccard = ccard
@@ -1697,6 +1724,7 @@ class CardPanel(wx.Panel):
         else:
             dc = wx.PaintDC(self)
 
+        apply_bgcolor(self, self.ccard)
         dc.BeginDrawing()
         # 背景の透かし
         dc.DrawBitmap(self.watermark, (self.csize[0]-self.watermark.GetWidth())/2, (self.csize[1]-self.watermark.GetHeight())/2, True)
@@ -1849,6 +1877,34 @@ class BeastPanel(SkillPanel):
 
 def main():
     pass
+
+def get_bgcolor(ccard):
+    """キャラクター情報ダイアログ用の背景色を取得する。
+    デフォルト値は濃い青。
+    """
+    r = cw.util.numwrap(ccard.data.getint("Property/BackColor", "r", -1), -1, 192)
+    g = cw.util.numwrap(ccard.data.getint("Property/BackColor", "g", -1), -1, 192)
+    b = cw.util.numwrap(ccard.data.getint("Property/BackColor", "b", -1), -1, 192)
+
+    if r == -1 or g == -1 or b == -1:
+        r = 0
+        g = 0
+        b = 128
+    return wx.Colour(r, g, b)
+
+def apply_bgcolor(currentpanel, ccard):
+    """キャラクター情報ダイアログの背景色を適用する。
+    """
+
+    colour = get_bgcolor(ccard)
+    currentpanel.SetBackgroundColour(colour)
+    def func(panel):
+        if panel:
+            panel.Parent.Parent.titlepanel.SetBackgroundColour(colour)
+            panel.Parent.Parent.titlepanel.draw(True)
+
+    cw.cwpy.exec_func(cw.cwpy.frame.exec_func, func, currentpanel)
+
 
 if __name__ == "__main__":
     main()

@@ -4517,7 +4517,7 @@ class BranchStepValueContent(BranchContent):
         fromstep = cw.cwpy.sdata.find_step(self.fromstep, diffsc, event)
         tostep = cw.cwpy.sdata.find_step(self.tostep, diffsc, event)
         if not fromstep is None and not tostep is None:
-            value = cw.util.cmp(fromstep.value, tostep.value)
+            value = cw.util.cmp2(fromstep.value, tostep.value)
             index = self.get_compare_index(value)
         else:
             index = cw.IDX_TREEEND

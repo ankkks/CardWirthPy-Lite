@@ -574,8 +574,8 @@ class EventHandler(object):
 
         if ctrldown and key == ord('D'):
             if not cw.cwpy.is_showingdlg():
-                #PyLite:キャンプ以外の特殊エリアでのデバッグモード切替を禁止
-                if cw.cwpy.areaid in (-1, -2, -3, -5) or cw.cwpy.status == "GameOver":
+                #PyLite:バトル・トレード・解散・ゲームオーバーでは動作モードを変更できなくする
+                if cw.cwpy.areaid in (-1, -2, -3, -5) or cw.cwpy.status == "GameOver" or cw.cwpy.is_battlestatus():
                     cw.cwpy.play_sound("error")
                 else:
                     cw.cwpy.play_sound("page")

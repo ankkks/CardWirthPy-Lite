@@ -607,6 +607,7 @@ def load_image(path, mask=False, maskpos=(0, 0), f=None, retry=True, isback=Fals
                 isbmp = get_imageext(d16) == ".bmp"
                 ispng = get_imageext(d16) == ".png"
                 isgif = get_imageext(d16) == ".gif"
+                isjpg = get_imageext(d16) == ".jpg"
                 f.seek(pos)
                 image = pygame.image.load(f, "")
             except:
@@ -617,6 +618,7 @@ def load_image(path, mask=False, maskpos=(0, 0), f=None, retry=True, isback=Fals
             isbmp = ext == ".bmp"
             ispng = ext == ".png"
             isgif = ext == ".gif"
+            isjpg = ext == ".jpg"
             if ext == ".bmp":
                 data = cw.image.patch_rle4bitmap(data)
                 bmpdepth = cw.image.get_bmpdepth(data)
@@ -632,6 +634,7 @@ def load_image(path, mask=False, maskpos=(0, 0), f=None, retry=True, isback=Fals
             isbmp = ext == ".bmp"
             ispng = ext == ".png"
             isgif = ext == ".gif"
+            isjpg = ext in (".jpg", ".jpeg")
             if ext == ".bmp":
                 with open(path, "rb") as f2:
                     data = f2.read()
@@ -689,6 +692,10 @@ def load_image(path, mask=False, maskpos=(0, 0), f=None, retry=True, isback=Fals
         imageb = image
         if image.get_bitsize() <= 8 and image.get_colorkey() and not isgif and isback:
             # BUG: 環境によってイメージセルのマスク処理を行うと透過色が壊れる issue #723
+            mask = False
+        if isjpg and isback and not (cw.cwpy and cw.cwpy.sdata and cw.cwpy.sct.lessthan("1.30", cw.cwpy.sdata.get_versionhint())):
+            # BUG: JPEGイメージのマスク指定が無視される
+            #      CardWirth 1.50
             mask = False
         # BUG: パレット使用時にconvert()を行うと同一色が全て透過されてしまう
         #      CardWirth 1.50
@@ -1085,6 +1092,25 @@ def _sorted_by_attr_impl(d, seq, *attr):
         return sorted(seq, key=functools.cmp_to_key(logical_cmp))
 
 
+def cmp2(a, b):
+    #PyLite:TODO:保存時にエラーが出るのでリネーム
+    if a is None and b is None:
+        return 0
+    elif a is None:
+        return -1
+    elif b is None:
+        return 1
+    elif type(a) is type(b):
+        if a < b:
+            return -1
+        elif b < a:
+            return 1
+    else:
+        if type(a) is int:
+            return -1
+        else:
+            return 1
+    return 0
 
 def sorted_by_attr(seq, *attr):
     """非破壊的にオブジェクトの属性でソートする。
@@ -3086,6 +3112,7 @@ def load_wxbmp(name="", mask=False, image=None, maskpos=(0, 0), f=None, retry=Tr
     haspngalpha = False
     bmpdepth = 0
     maskcolour = None
+    isjpg = False
     if mask:
         if not image:
             try:
