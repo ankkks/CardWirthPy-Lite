@@ -390,8 +390,8 @@ class CWPy(_Singleton, threading.Thread):
         if self.ydata:
             self.ydata.set_skinname(skindirname, self.setting.skintype)
         self.skindir = self.setting.skindir
-        oldskindir = cw.util.join_paths("Data/Skin", oldskindirname)
-        newskindir = cw.util.join_paths("Data/Skin", skindirname)
+        oldskindir = cw.util.join_paths(u"Data/Skin", oldskindirname)
+        newskindir = cw.util.join_paths(u"Data/Skin", skindirname)
         self.background.update_skin(oldskindir, newskindir)
         def repl_cardimg(sprite):
             if hasattr(sprite, "cardimg"):
@@ -418,7 +418,7 @@ class CWPy(_Singleton, threading.Thread):
             self.set_mcards(self.sdata.get_mcarddata(data=self.sdata.data), False, True, setautospread=True)
             self.deal_cards()
             if self.is_playingscenario():
-                self.background.reload(doanime=False, ttype=("None", "None"), redraw=False)
+                self.background.reload(doanime=False, ttype=("None", "None"), redraw=False, nocheckvisible=True)
             else:
                 self.background.load(self.sdata.get_bgdata(), False, ("None", "None"), redraw=False)
             if not self.is_playingscenario():
@@ -1889,6 +1889,8 @@ class CWPy(_Singleton, threading.Thread):
             self.ydata.losted_sdata.end(failure=True)
             self.ydata.losted_sdata = None
             self.load_party(None, chgarea=False)
+        if isinstance(self.sdata, cw.data.SystemData):
+            self.sdata.save_variables()
         self.set_status("Title")
         self._init_attrs()
         self.update_titlebar()
@@ -1927,6 +1929,7 @@ class CWPy(_Singleton, threading.Thread):
         self.background.clear_background()
         msglog = self.sdata.backlog
         self.sdata = cw.data.SystemData()
+        self.sdata.load_variables()
         self.sdata.backlog = msglog
         self.update_titlebar()
         # 冒険の中断やF9時のためにカーテン消去
@@ -2001,6 +2004,8 @@ class CWPy(_Singleton, threading.Thread):
                 if self.is_showingdebugger() and self.event:
                     self.event.refresh_variablelist()
             try:
+                if isinstance(self.sdata, cw.data.SystemData):
+                    self.sdata.save_variables()
                 self.sdata = cw.data.ScenarioData(header)
                 if cw.cwpy.ydata:
                     cw.cwpy.ydata.changed()
@@ -2128,6 +2133,8 @@ class CWPy(_Singleton, threading.Thread):
 
         self.ydata.losted_sdata = self.sdata
         self.sdata = cw.data.SystemData()
+        if isinstance(self.sdata, cw.data.SystemData):
+            self.sdata.load_variables()
         self.sdata.backlog = self.ydata.losted_sdata.backlog
         self.update_titlebar()
         self.statusbar.change()
@@ -2514,6 +2521,8 @@ class CWPy(_Singleton, threading.Thread):
             if self.lastsound_scenario[i]:
                 self.lastsound_scenario[i].stop(True)
                 self.lastsound_scenario[i] = None
+        if self.ydata and isinstance(self.sdata, cw.data.SystemData):
+            self.sdata.save_variables()
         self.ydata = cw.data.YadoData(self.yadodir, self.tempdir)
         self.setting.lastyado = yadodirname
         self.setting.insert_yadoorder(yadodirname)

@@ -210,7 +210,6 @@ for arg in OPTIONS.leftovers:
         SKIN_CONV_ARGS.append(arg)
         sys.argv.remove(arg)
 
-
 def wins(num):
     """numを実際の表示サイズに変換する。
     num: int or 座標(x,y) or 矩形(x,y,width,height)
