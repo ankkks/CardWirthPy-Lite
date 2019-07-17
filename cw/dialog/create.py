@@ -2217,7 +2217,7 @@ class YadoCreater(wx.Dialog):
             self._msg2 = cw.util.txtwrap(cw.cwpy.msgs["edit_base_message_2"], 0, 32)
             self.skindirname = self.data.gettext("Property/Skin", cw.cwpy.setting.skindirname)
             skin = self.skindirname
-            skinpath = cw.util.join_paths(u"Data/Skin", self.skindirname, "Skin.xml")
+            skinpath = cw.util.join_paths(u"Data/Skin", self.skindirname, u"Skin.xml")
             if os.path.isfile(skinpath):
                 skintype = cw.header.GetProperty(skinpath).properties.get(u"Type", u"")
             else:

@@ -100,7 +100,7 @@ class CharaInfo(wx.Dialog):
         self.toppanel = TopPanel(self, self.ccard, redrawfunc)
 
         # titlepanel
-        self.titlepanel = TitlePanel(self, self.notebook)
+        self.titlepanel = TitlePanel(self, self.ccard, self.notebook)
 
         # layout
         self._do_layout()
@@ -307,6 +307,7 @@ class CharaInfo(wx.Dialog):
                 else:
                     index += 1
             self.notebook.SetSelection(index)
+            self.titlepanel.draw(True)
             #AUIでは不要？
             #btnevent = wx.PyCommandEvent(wx.wxEVT_COMMAND_NOTEBOOK_PAGE_CHANGED, self.notebook.GetId())
             #self.ProcessEvent(btnevent)
@@ -348,6 +349,9 @@ class CharaInfo(wx.Dialog):
         self.toppanel.ccard = self.ccard
         self.toppanel.Refresh()
 
+        self.titlepanel.ccard = self.ccard
+        self.titlepanel.draw(True)
+
         for win in self.bottompanel:
             win.ccard = self.ccard
             win.headers = []
@@ -381,6 +385,8 @@ class CharaInfo(wx.Dialog):
 
         self.toppanel.ccard = self.ccard
         self.toppanel.Refresh()
+        self.titlepanel.ccard = self.ccard
+        self.titlepanel.draw(True)
 
         for win in self.bottompanel:
             win.ccard = self.ccard
@@ -737,10 +743,12 @@ class TitlePanel(wx.Panel):
     """
     タイトルバーを描画するパネルを作る。
     """
-    def __init__(self, parent, notebook):
+    def __init__(self, parent, ccard, notebook):
         wx.Panel.__init__(self, parent, -1, size=(parent.width, cw.wins(24)), style=wx.SUNKEN_BORDER)
         self.SetDoubleBuffered(True)
         self.notebook = notebook
+        apply_bgcolor(self, ccard)
+        self.ccard = ccard
         self.is_playingscenario = cw.cwpy.is_playingscenario()
 
         # bind
@@ -757,6 +765,7 @@ class TitlePanel(wx.Panel):
         else:
             dc = wx.PaintDC(self)
 
+        apply_bgcolor(self, self.ccard)
         index = self.notebook.GetSelection()
         if index == 0:
             self.text = cw.cwpy.msgs["description"]
@@ -847,7 +856,7 @@ class DescPanel(wx.ScrolledWindow):
         x = (csize[0]-maxwidth) / 2
 
         # 背景の透かし
-        dc.DrawBitmap(self.watermark, (self.csize[0]-self.watermark.GetWidth())/2, (self.csize[1]-self.watermark.GetHeight())/2, True)
+        dc.DrawBitmap(self.watermark, (self.csize[0]-self.watermark.GetWidth())//2, (self.csize[1]-self.watermark.GetHeight())//2, True)
 
         # 解説文
         dc.SetTextForeground(wx.WHITE)
@@ -982,7 +991,7 @@ class HistoryPanel(wx.ScrolledWindow):
         dc = wx.PaintDC(self)
 
         # 背景の透かし
-        dc.DrawBitmap(self.watermark, (self.csize[0]-self.watermark.GetWidth())/2, (self.csize[1]-self.watermark.GetHeight())/2, True)
+        dc.DrawBitmap(self.watermark, (self.csize[0]-self.watermark.GetWidth())//2, (self.csize[1]-self.watermark.GetHeight())//2, True)
 
         # クーポン
         dc.SetFont(cw.cwpy.rsrc.get_wxfont("charadesc", pixelsize=cw.wins(13)))
@@ -1068,6 +1077,7 @@ class EditPanel(wx.Panel):
         self._destroy = True
 
     def OnLeftUp(self, event):
+
         for header in self.headers:
             if header.negaflag:
                 if header.type == 0:
@@ -1104,20 +1114,25 @@ class EditPanel(wx.Panel):
                     dlg = cw.dialog.edit.BackColorEditDialog(self.Parent.Parent, ccard=self.ccard)
                     cw.cwpy.frame.move_dlg(dlg)
                     if dlg.ShowModal() == wx.ID_OK:
-                        colour = get_bgcolor(self.ccard)
+                        #PyLite;TODO:titlePanelより先にeditpanelが更新されてしまう
+                        #colour = get_bgcolor(self.ccard)
                         def func(panel, ccard):
                             if panel:
+                                #tabs = [panel.Parent.Parent.titlepanel, panel.Parent.Parent.descpanel,
                                 tabs = [panel.Parent.Parent.titlepanel, panel.Parent.Parent.descpanel,
-                                        panel.Parent.Parent.historypanel, panel.Parent.Parent.editpanel]
+                                        panel.Parent.Parent.historypanel]
+                                #editpanelは常時更新されているため必要ない？, panel.Parent.Parent.editpanel]
                                 if ccard.data.hasfind("SkillCards"):
                                     tabs.extend([panel.Parent.Parent.skillpanel,
                                                  panel.Parent.Parent.itempanel,
                                                  panel.Parent.Parent.beastpanel])
 
                                 for tab in tabs:
-                                    tab.SetBackgroundColour(colour)
+                                    #tab.SetBackgroundColour(colour)
                                     tab.draw(True)
+                        #cw.cwpy.exec_func(func, self, self.ccard)
                         cw.cwpy.exec_func(cw.cwpy.frame.exec_func, func, self, self.ccard)
+                        #self.SetBackgroundColour(colour)
                     dlg.Destroy()
                 self.draw(True)
                 return
@@ -1232,13 +1247,15 @@ class EditPanel(wx.Panel):
         if update:
             dc = wx.ClientDC(self)
             self.ClearBackground()
+
         else:
             dc = wx.PaintDC(self)
 
         apply_bgcolor(self, self.ccard)
         dc.BeginDrawing()
+
         # 背景の透かし
-        dc.DrawBitmap(self.watermark, (self.csize[0]-self.watermark.GetWidth())/2, (self.csize[1]-self.watermark.GetHeight())/2, True)
+        dc.DrawBitmap(self.watermark, (self.csize[0]-self.watermark.GetWidth())//2, (self.csize[1]-self.watermark.GetHeight())//2, True)
 
         # 編集ボタン
         dc.SetTextForeground(wx.WHITE)
@@ -1314,8 +1331,9 @@ class StatusPanel(wx.ScrolledWindow):
             dc = wx.PaintDC(self)
 
         dc.BeginDrawing()
+        apply_bgcolor(self, self.ccard)
         # 背景の透かし
-        dc.DrawBitmap(self.watermark, (self.csize[0]-self.watermark.GetWidth())/2, (self.csize[1]-self.watermark.GetHeight())/2, True)
+        dc.DrawBitmap(self.watermark, (self.csize[0]-self.watermark.GetWidth())//2, (self.csize[1]-self.watermark.GetHeight())//2, True)
 
         # 状態
         dc.SetTextForeground(wx.WHITE)
@@ -1724,10 +1742,10 @@ class CardPanel(wx.Panel):
         else:
             dc = wx.PaintDC(self)
 
-        apply_bgcolor(self, self.ccard)
         dc.BeginDrawing()
+        apply_bgcolor(self, self.ccard)
         # 背景の透かし
-        dc.DrawBitmap(self.watermark, (self.csize[0]-self.watermark.GetWidth())/2, (self.csize[1]-self.watermark.GetHeight())/2, True)
+        dc.DrawBitmap(self.watermark, (self.csize[0]-self.watermark.GetWidth())//2, (self.csize[1]-self.watermark.GetHeight())//2, True)
         # 所持スキル
         dc.SetTextForeground(wx.WHITE)
         dc.SetFont(cw.cwpy.rsrc.get_wxfont("charadesc", pixelsize=cw.wins(13)))
@@ -1898,12 +1916,12 @@ def apply_bgcolor(currentpanel, ccard):
 
     colour = get_bgcolor(ccard)
     currentpanel.SetBackgroundColour(colour)
-    def func(panel):
-        if panel:
-            panel.Parent.Parent.titlepanel.SetBackgroundColour(colour)
-            panel.Parent.Parent.titlepanel.draw(True)
+    #def func(panel):
+    #    if panel:
+    #        panel.Parent.Parent.titlepanel.SetBackgroundColour(colour)
+    #        panel.Parent.Parent.titlepanel.draw(True)
 
-    cw.cwpy.exec_func(cw.cwpy.frame.exec_func, func, currentpanel)
+    #cw.cwpy.exec_func(cw.cwpy.frame.exec_func, func, currentpanel)
 
 
 if __name__ == "__main__":

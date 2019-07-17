@@ -667,7 +667,7 @@ class SkinPanel(wx.Panel):
 
         for name in os.listdir(u"Data/Skin"):
             path = cw.util.join_paths(u"Data/Skin", name)
-            skinpath = cw.util.join_paths(u"Data/Skin", name, "Skin.xml")
+            skinpath = cw.util.join_paths(u"Data/Skin", name, u"Skin.xml")
 
             if os.path.isdir(path) and os.path.isfile(skinpath):
                 try:
@@ -691,7 +691,7 @@ class SkinPanel(wx.Panel):
     def _load_skinproperties(self, name):
         if name in self.skin_summarys:
             return
-        skinpath = cw.util.join_paths(u"Data/Skin", name, "Skin.xml")
+        skinpath = cw.util.join_paths(u"Data/Skin", name, u"Skin.xml")
         try:
             prop = cw.header.GetProperty(skinpath)
             skintype = prop.properties.get("Type", "")

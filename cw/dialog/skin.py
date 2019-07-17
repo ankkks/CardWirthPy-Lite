@@ -600,7 +600,7 @@ class SkinInfoPanel(wx.Panel):
         if os.path.exists(u"Data/Skin"):
             for name in os.listdir(u"Data/Skin"):
                 path = cw.util.join_paths(u"Data/Skin", name)
-                skinpath = cw.util.join_paths(u"Data/Skin", name, "Skin.xml")
+                skinpath = cw.util.join_paths(u"Data/Skin", name, u"Skin.xml")
                 if os.path.isdir(path) and os.path.isfile(skinpath):
                     e = cw.data.xml2element(skinpath, "Property")
                     self.types.add(e.gettext("Type", ""))
