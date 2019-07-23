@@ -779,9 +779,9 @@ class Character(object):
             if value == 0:
                 return self.is_enhanced_act()
             elif value < 0:
-                return value < self.get_enhance_act()
+                return value < self.enhance_act
             elif 0 < value:
-                return self.get_enhance_act() < value
+                return self.enhance_act < value
         elif mtype == "EnhanceAvoid":
             if self.is_unconscious():
                 return False
@@ -789,9 +789,9 @@ class Character(object):
             if value == 0:
                 return self.is_enhanced_avo()
             elif value < 0:
-                return value < self.get_enhance_avo()
+                return value < self.enhance_avo
             elif 0 < value:
-                return self.get_enhance_avo() < value
+                return self.enhance_avo < value
         elif mtype == "EnhanceResist":
             if self.is_unconscious():
                 return False
@@ -799,9 +799,9 @@ class Character(object):
             if value == 0:
                 return self.is_enhanced_res()
             elif value < 0:
-                return value < self.get_enhance_res()
+                return value < self.enhance_res
             elif 0 < value:
-                return self.get_enhance_res() < value
+                return self.enhance_res < value
         elif mtype == "EnhanceDefense":
             if self.is_unconscious():
                 return False
@@ -809,9 +809,9 @@ class Character(object):
             if value == 0:
                 return self.is_enhanced_def()
             elif value < 0:
-                return value < self.get_enhance_def()
+                return value < self.enhance_def
             elif 0 < value:
-                return self.get_enhance_def() < value
+                return self.enhance_def < value
         elif mtype == "VanishCard":
             return self.is_active()
         elif mtype == "VanishBeast":
@@ -1999,7 +1999,7 @@ class Character(object):
         if cw.cwpy.ydata:
             cw.cwpy.ydata.changed()
         value = int(value)
-        value = cw.util.numwrap(value, -992147483648, 2147483647)
+        value = cw.util.numwrap(value, -2147483648, 2147483647)
         removed = self._remove_coupon(name, False)
         e = self.data.make_element("Coupon", name, {"value" : str(value)})
         self.data.append("Property/Coupons", e)
