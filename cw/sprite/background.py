@@ -49,6 +49,8 @@ class BackGround(base.CWPySprite):
         self.reload_jpdcimage = True
         self.has_jpdcimage = False
 
+        self.use_excache = False
+
         self.curtained = False
         self._curtains = []
         self.curtain_all = False
@@ -77,6 +79,10 @@ class BackGround(base.CWPySprite):
                     self._reload(doanime=doanime, ttype=ttype, redraw=True, force=False)
                 if self.curtained:
                     self.set_curtain(curtain_all=self.curtain_all)
+                # 内部状態の復元
+                self._bgs = bgs
+                self._elements = elements
+                self._ttype = ttype
             cw.cwpy.exec_func(func)
         else:
             self.image.fill((0, 0, 0))
@@ -241,7 +247,8 @@ class BackGround(base.CWPySprite):
                 cachable = jpy1.is_cacheable
                 image = jpy1.get_image()
             else:
-                image = cw.util.load_image(path, mask, isback=True, can_loaded_scaledimage=can_loaded_scaledimage)
+                image = cw.util.load_image(path, mask, isback=True, can_loaded_scaledimage=can_loaded_scaledimage,
+                                           use_excache=self.use_excache)
         except cw.event.EffectBreakError, ex:
             raise ex
         except cw.effectbooster.ScreenRescale, ex:
@@ -297,7 +304,13 @@ class BackGround(base.CWPySprite):
         self._bgs = list(oldbgs)
         self._elements = elements
 
+        if not cw.cwpy.update_scaling:
+            cw.cwpy.file_updates_bg = False
+            self.use_excache = False
+            self.pc_cache.clear()
+
         cw.cwpy.file_updates_bg = False
+        self.use_excache = False
         self.reload_jpdcimage = True
 
         animated = False
@@ -669,8 +682,10 @@ class BackGround(base.CWPySprite):
         oldbgs = list(self.bgs)
         bgs = []
 
-        if not movedata:
+        if not cw.cwpy.update_scaling:
             cw.cwpy.file_updates_bg = False
+            self.use_excache = False
+            self.pc_cache.clear()
         self.reload_jpdcimage = True
 
         animated = False
@@ -958,19 +973,8 @@ class BackGround(base.CWPySprite):
             if pcnumber in self.pc_cache:
                 paths, can_loaded_scaledimage = self.pc_cache[pcnumber]
             else:
-                paths = []
-                can_loaded_scaledimage = False
-                pcards = cw.cwpy.ydata.party.members
                 pi = pcnumber - 1
-                if 0 <= pi and pi < len(pcards):
-                    can_loaded_scaledimage = pcards[pi].getbool(".", "scaledimage", False)
-                    for info2 in cw.image.get_imageinfos(pcards[pi].find("Property")):
-                        path = info2.path
-                        if path:
-                            path = cw.util.join_yadodir(path)
-                            if path:
-                                paths.append((path, info2))
-                self.pc_cache[pcnumber] = (paths, can_loaded_scaledimage)
+                paths, can_loaded_scaledimage = self.put_pccache(pi)
 
             if expand:
                 image = pygame.Surface(cw.s(cw.SIZE_CARDIMAGE)).convert_alpha()
@@ -982,7 +986,8 @@ class BackGround(base.CWPySprite):
                     #      1.60ではPCイメージとしてそのようなイメージを表示すると、
                     #      マスクされた状態で表示される。従ってマスクの効く・効かないという
                     #      挙動をエミュレートするための`isback`フラグは常にFalseとする。
-                    bmp = cw.util.load_image(path, True, isback=False, can_loaded_scaledimage=can_loaded_scaledimage)
+                    bmp = cw.util.load_image(path, True, isback=False, can_loaded_scaledimage=can_loaded_scaledimage,
+                                             use_excache=self.use_excache)
                     iw, ih = bmp.get_size()
                     scr_scale = bmp.scr_scale if hasattr(bmp, "scr_scale") else 1
                     iw //= scr_scale
@@ -1004,7 +1009,8 @@ class BackGround(base.CWPySprite):
                 image.fill((0, 0, 0, 0))
 
                 for path, info in paths:
-                    bmp = cw.util.load_image(path, True, isback=False, can_loaded_scaledimage=can_loaded_scaledimage)
+                    bmp = cw.util.load_image(path, True, isback=False, can_loaded_scaledimage=can_loaded_scaledimage,
+                                             use_excache=self.use_excache)
                     iw, ih = bmp.get_size()
                     scr_scale = bmp.scr_scale if hasattr(bmp, "scr_scale") else 1
                     iw //= scr_scale
@@ -1022,6 +1028,20 @@ class BackGround(base.CWPySprite):
             oldbgs.append((BG_PC, d))
         return visible
 
+    def put_pccache(self, pi):
+        pcards = cw.cwpy.ydata.party.members
+        paths = []
+        can_loaded_scaledimage = False
+        if 0 <= pi and pi < len(pcards):
+            can_loaded_scaledimage = pcards[pi].getbool(".", "scaledimage", False)
+            for info2 in cw.image.get_imageinfos(pcards[pi].find("Property")):
+                path = info2.path
+                if path:
+                    path = cw.util.join_yadodir(path)
+                    if path:
+                        paths.append((path, info2))
+        self.pc_cache[pi+1] = (paths, can_loaded_scaledimage)
+        return paths, can_loaded_scaledimage
 
     def _load_after(self, bginhrt, blitlist, doanime, animated, ttype, oldbgs, redraw, redisplay):
         # 背景を更新する(呼び出し時点でエフェクトブースターは実行済み)

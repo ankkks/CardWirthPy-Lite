@@ -182,6 +182,9 @@ $indent <Gossips>$gossips
 $indent </Gossips>
 $indent</Environment>"""
 
+SkinVariables = """$indent<SkinVariables>
+$indent</SkinVariables>"""
+
 InfoCard = """$indent<InfoCard>
 $indent <Property>
 $indent  <Id>$id</Id>

@@ -25,6 +25,7 @@ import unicodedata
 import functools
 import webbrowser
 import math
+import itertools
 
 if sys.platform == "win32":
     import win32api
@@ -585,7 +586,7 @@ def find_noscalepath(path):
 
 
 def load_image(path, mask=False, maskpos=(0, 0), f=None, retry=True, isback=False, can_loaded_scaledimage=True,
-               noscale=False, up_scr=None):
+               noscale=False, up_scr=None, use_excache=False):
     """pygame.Surface(読み込めなかった場合はNone)を返す。
     path: 画像ファイルのパス。
     mask: True時、(0,0)のカラーを透過色に設定する。透過画像の場合は無視される。
@@ -596,7 +597,26 @@ def load_image(path, mask=False, maskpos=(0, 0), f=None, retry=True, isback=Fals
 
     if up_scr is None:
         up_scr = cw.UP_SCR
-    path, up_scr = find_scaledimagepath(path, up_scr, can_loaded_scaledimage, noscale)
+    if use_excache and path:
+        # JPDC撮影等で更新されたイメージは正式に差し替えが完了するのがイベント終了後となる
+        # それまではキャッシュを使用する
+        npath = os.path.normcase(os.path.normpath(os.path.abspath(path)))
+        if cw.cwpy.sdata and npath in cw.cwpy.sdata.ex_cache:
+            caches = cw.cwpy.sdata.ex_cache[npath]
+            data = None
+            up_scr2 = 1
+            for i, scale in enumerate(itertools.chain((1,), cw.SCALE_LIST)):
+                if caches[i]:
+                    data = caches[i]
+                    up_scr2 = scale
+                if scale == up_scr:
+                    break
+            up_scr = up_scr2
+            if data:
+                f = io.BytesIO(data)
+
+    if not f:
+        path, up_scr = find_scaledimagepath(path, up_scr, can_loaded_scaledimage, noscale)
 
     bmpdepth = 0
     try:
@@ -1782,37 +1802,39 @@ def get_materialpathfromskin(path, mtype, findskin=True):
         elif path.startswith(cw.cwpy.skindir):
             fname = cw.util.splitext(path)[0]
             if mtype == cw.M_IMG:
-                path = cw.util.find_resource(fname, cw.cwpy.rsrc.ext_img)
+                path2 = cw.util.find_resource(fname, cw.cwpy.rsrc.ext_img)
             elif mtype == cw.M_MSC:
-                path = cw.util.find_resource(fname, cw.cwpy.rsrc.ext_bgm)
+                path2 = cw.util.find_resource(fname, cw.cwpy.rsrc.ext_bgm)
             elif mtype == cw.M_SND:
-                path = cw.util.find_resource(fname, cw.cwpy.rsrc.ext_snd)
-        else:
-            fname = os.path.basename(path)
-            lfname = fname.lower()
-            eb = lfname.endswith(".jpy1") or lfname.endswith(".jptx") or lfname.endswith(".jpdc")
-            if not eb:
-                fname = cw.util.splitext(fname)[0]
-            dpaths = [cw.cwpy.skindir]
-            if os.path.isdir(u"Data/Materials"):
-                dpaths.extend(map(lambda d: cw.util.join_paths(u"Data/Materials", d), os.listdir(u"Data/Materials")))
-            for dpath in dpaths:
-                if eb:
-                    # エフェクトブースターのファイルは他の拡張子への付替を行わない
-                    path = cw.cwpy.rsrc.get_filepath(cw.util.join_paths(dpath, "Table", fname))
-                elif mtype == cw.M_IMG:
-                    path = cw.util.find_resource(cw.util.join_paths(dpath, "Table", fname), cw.cwpy.rsrc.ext_img)
-                elif mtype == cw.M_MSC:
-                    path = cw.util.find_resource(cw.util.join_paths(dpath, "Bgm", fname), cw.cwpy.rsrc.ext_bgm)
-                    if not path:
-                        path = cw.util.find_resource(cw.util.join_paths(dpath, "BgmAndSound", fname), cw.cwpy.rsrc.ext_bgm)
-                elif mtype == cw.M_SND:
-                    path = cw.util.find_resource(cw.util.join_paths(dpath, "Sound", fname), cw.cwpy.rsrc.ext_snd)
-                    if not path:
-                        path = cw.util.find_resource(cw.util.join_paths(dpath, "BgmAndSound", fname), cw.cwpy.rsrc.ext_snd)
+                path2 = cw.util.find_resource(fname, cw.cwpy.rsrc.ext_snd)
+            if path2:
+                return path2
 
-                if path:
-                    break
+        fname = os.path.basename(path)
+        lfname = fname.lower()
+        eb = lfname.endswith(".jpy1") or lfname.endswith(".jptx") or lfname.endswith(".jpdc")
+        if not eb:
+            fname = cw.util.splitext(fname)[0]
+        dpaths = [cw.cwpy.skindir]
+        if os.path.isdir(u"Data/Materials"):
+            dpaths.extend(map(lambda d: cw.util.join_paths(u"Data/Materials", d), os.listdir(u"Data/Materials")))
+        for dpath in dpaths:
+            if eb:
+                # エフェクトブースターのファイルは他の拡張子への付替を行わない
+                path = cw.cwpy.rsrc.get_filepath(cw.util.join_paths(dpath, "Table", fname))
+            elif mtype == cw.M_IMG:
+                path = cw.util.find_resource(cw.util.join_paths(dpath, "Table", fname), cw.cwpy.rsrc.ext_img)
+            elif mtype == cw.M_MSC:
+                path = cw.util.find_resource(cw.util.join_paths(dpath, "Bgm", fname), cw.cwpy.rsrc.ext_bgm)
+                if not path:
+                    path = cw.util.find_resource(cw.util.join_paths(dpath, "BgmAndSound", fname), cw.cwpy.rsrc.ext_bgm)
+            elif mtype == cw.M_SND:
+                path = cw.util.find_resource(cw.util.join_paths(dpath, "Sound", fname), cw.cwpy.rsrc.ext_snd)
+                if not path:
+                    path = cw.util.find_resource(cw.util.join_paths(dpath, "BgmAndSound", fname), cw.cwpy.rsrc.ext_snd)
+
+            if path:
+                break
 
     return path
 
@@ -3405,7 +3427,8 @@ def get_boxpointlist(pos, size):
     poslist.append((x, y + height, x + width, y + height))
     return poslist
 
-def create_fileselection(parent, target, message, wildcard="*.*", seldir=False, getbasedir=None, callback=None, winsize=False):
+def create_fileselection(parent, target, message, wildcard="*.*", seldir=False, getbasedir=None, callback=None,
+                         winsize=False, multiple=False):
     """ファイルまたはディレクトリを選択する
     ダイアログを表示するボタンを生成する。
     parent: ボタンの親パネル。
@@ -3436,21 +3459,36 @@ def create_fileselection(parent, target, message, wildcard="*.*", seldir=False, 
                     target.SetValue(dpath)
                 if callback:
                     callback(dpath)
+            dlg.Destroy()
         else:
             dpath = os.path.dirname(fpath)
             fpath = os.path.basename(fpath)
-            dlg = wx.FileDialog(parent.TopLevelParent, message, dpath, fpath, wildcard, wx.FD_OPEN)
+            flags = wx.FD_OPEN
+            if multiple:
+                flags |= wx.FD_MULTIPLE
+            dlg = wx.FileDialog(parent.TopLevelParent, message, dpath, fpath, wildcard, flags)
             if dlg.ShowModal() == wx.ID_OK:
-                fpath = os.path.join(dlg.GetDirectory(), dlg.GetFilename())
-                if getbasedir:
-                    base = getbasedir()
-                    fpath2 = cw.util.relpath(fpath, base)
-                    if not fpath2.startswith(".." + os.path.sep):
-                        fpath = fpath2
-                if target is not None:
-                    target.SetValue(fpath)
+                files = dlg.GetFilenames()
+                seq = []
+                fnames = ""
+                for fname in files:
+                    fpath = os.path.join(dlg.GetDirectory(), fname)
+                    if getbasedir:
+                        base = getbasedir()
+                        fpath2 = cw.util.relpath(fpath, base)
+                        if not fpath2.startswith(".." + os.path.sep):
+                            fpath = fpath2
+                    if target is not None:
+                        if fnames != "":
+                            fnames += "; "
+                        fnames += fpath
+                    seq.append(fpath)
                 if callback:
-                    callback(fpath)
+                    callback(seq if multiple else seq[0])
+                if target is not None:
+                    target.SetValue(fnames)
+            dlg.Destroy()
+
 
     if winsize:
         size = (cw.wins(20), -1)

@@ -229,6 +229,10 @@ class CardImage(Image):
         self.is_scenariocard = is_scenariocard
         self.scedir = scedir
 
+        self.use_excache = False
+        self.paths_upd = None
+        self.can_loaded_scaledimage_upd = None
+
         self.update_scale()
 
     def update_scale(self):
@@ -243,6 +247,14 @@ class CardImage(Image):
         self._bmp = None
         self._wxbmp = None
         self.image_mtime.clear()
+
+    def fix_pcimage_updated(self):
+        if not self.paths_upd is None:
+            self.paths = self.paths_upd
+            self.can_loaded_scaledimage = self.can_loaded_scaledimage_upd
+            self.paths_upd = None
+            self.can_loaded_scaledimage_upd = None
+            self.clear_cache()
 
     def _upwinmemo(self):
         return (cw.UP_WIN, cw.UP_SCR, cw.cwpy.setting.fontsmoothing_cardname,
@@ -319,7 +331,8 @@ class CardImage(Image):
                     can_loaded_scaledimage = self.can_loaded_scaledimage[i]
                 else:
                     can_loaded_scaledimage = self.can_loaded_scaledimage
-                subimg = cw.s(cw.util.load_image(path, True, can_loaded_scaledimage=can_loaded_scaledimage))
+                subimg = cw.s(cw.util.load_image(path, True, can_loaded_scaledimage=can_loaded_scaledimage,
+                                                 use_excache=self.use_excache))
 
                 baserect = info.calc_basecardposition(subimg.get_size(), noscale=False,
                                                       basecardtype="NormalCard",
@@ -720,7 +733,8 @@ class LargeCardImage(CardImage):
                     can_loaded_scaledimage = self.can_loaded_scaledimage[i]
                 else:
                     can_loaded_scaledimage = self.can_loaded_scaledimage
-                subimg = cw.s(cw.util.load_image(path, True, can_loaded_scaledimage=can_loaded_scaledimage))
+                subimg = cw.s(cw.util.load_image(path, True, can_loaded_scaledimage=can_loaded_scaledimage,
+                                                 use_excache=self.use_excache))
 
                 baserect = info.calc_basecardposition(subimg.get_size(), noscale=False,
                                                       basecardtype="LargeCard",
@@ -843,6 +857,10 @@ class CharacterCardImage(CardImage):
         self.anotherscenariocard = False
         self.is_scenariocard = is_scenariocard
         self.image_mtime = {}
+        self.use_excache = False
+        self.override_images_upd = None
+        self.paths_upd = None
+        self.can_loaded_scaledimage_upd = None
         self.scedir = scedir
         self.update_scale()
 
@@ -860,6 +878,13 @@ class CharacterCardImage(CardImage):
         # rect
         self.rect = pygame.Rect(cw.s(self._pos_noscale), cw.s((95, 130)))
 
+    def fix_pcimage_updated(self):
+        CardImage.fix_pcimage_updated(self)
+        if not self.override_images_upd is None:
+            self.override_images = self.override_images_upd
+            self.override_images_upd = None
+            self.clear_cache()
+
     def set_faceimgs(self, paths, can_loaded_scaledimage):
         self.paths = paths
         self.can_loaded_scaledimage = can_loaded_scaledimage
@@ -870,7 +895,8 @@ class CharacterCardImage(CardImage):
                 if not cw.binary.image.path_is_code(path) and isinstance(self.ccard, cw.sprite.card.PlayerCard) and\
                         not self.is_scenariocard:
                     path = cw.util.get_yadofilepath(path)
-                self.cardimgs.append(cw.s(cw.util.load_image(path, True, can_loaded_scaledimage=self.can_loaded_scaledimage)))
+                self.cardimgs.append(cw.s(cw.util.load_image(path, True, can_loaded_scaledimage=self.can_loaded_scaledimage,
+                                                             use_excache=self.use_excache)))
 
     def set_nameimg(self, name):
         if name:
@@ -965,7 +991,8 @@ class CharacterCardImage(CardImage):
 
                 if pisc or os.path.isfile(path):
                     can_loaded_scaledimage = self.override_images[1][i]
-                    subimg = cw.s(cw.util.load_image(path, True, can_loaded_scaledimage=can_loaded_scaledimage))
+                    subimg = cw.s(cw.util.load_image(path, True, can_loaded_scaledimage=can_loaded_scaledimage,
+                                                     use_excache=self.use_excache))
                     baserect = info.calc_basecardposition(subimg.get_size(), noscale=False,
                                                           basecardtype="LargeCard",
                                                           cardpostype="LargeCard")

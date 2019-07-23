@@ -1192,6 +1192,7 @@ class BackColorEditDialog(wx.Dialog):
             #PyLite:設定ファイルが無くてもサンプルを用意
             samplecolors = [[u"Navy(デフォルト)", 0, 0, 128],
                             [u"Maroon", 128, 0, 0],
+                            [u"Green", 0, 128, 0],
                             [u"Black", 0, 0, 0]]
             self.presetcolor_list += samplecolors
             self.presetcolor_names += [x[0] for x in samplecolors]
@@ -1384,7 +1385,7 @@ class BackColorEditDialog(wx.Dialog):
             v = self.hsv[2]
             rgb = self.hsv2rgb((h, s, v))
             #rgb = map(int, self.hsv2rgb((h, s, v)))
-            #PyLite:wx.Colourを指定する必要ない？
+            #PyLite:wx.Colourを指定する必要がない？
             dc.SetBrush(wx.Brush(rgb))
             dc.SetPen(wx.Pen(rgb))
             #dc.SetBrush(wx.Brush(wx.Colour(rgb)))

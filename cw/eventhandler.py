@@ -340,7 +340,7 @@ class EventHandler(object):
             # 選択エリアの時、キャンセル
             if ((cw.cwpy.is_curtained() and cw.cwpy.areaid != cw.AREA_CAMP) or cw.cwpy.selectedheader) and\
                     (cw.cwpy.statusbar.showbuttons or cw.cwpy.status == "Yado"):
-                #TODO;Lite:宿でESCキーが効かないため暫定処置
+                #TODO;PyLite:宿でESCキーが効かないため暫定処置
                 cw.cwpy.cancel_cardcontrol()
                 return
 
@@ -353,6 +353,37 @@ class EventHandler(object):
                     cw.cwpy.clear_specialarea()
                 else:
                     cw.cwpy.change_specialarea(-4)
+                return
+
+            # スキン固有のエリアにいる時
+            elif cw.cwpy.status == "Yado" and cw.SKIN_AREAS_MIN <= cw.cwpy.areaid <= cw.SKIN_AREAS_MAX:
+                act = cw.cwpy.sdata.data.gettext("Property/BackgroundAction", "")
+                if act == "ReturnTitle":
+                    cw.cwpy.play_sound("click")
+                    cw.cwpy.call_modaldlg("RETURNTITLE")
+                elif act == "ReturnSystemArea":
+                    cw.cwpy.play_sound("click")
+                    e_ba = cw.cwpy.sdata.data.find("Property/BackgroundAction")
+                    assert e_ba is not None
+                    ttype = cw.content.EventContentBase.get_transitiontype_static(e_ba)
+                    if cw.cwpy.ydata.party:
+                        cw.cwpy.change_area(2, ttype=ttype)
+                    else:
+                        cw.cwpy.change_area(1, ttype=ttype)
+                elif act == "Close":
+                    cw.cwpy.play_sound("click")
+                    cw.cwpy.call_modaldlg("CLOSE")
+                elif act == "ChangeArea":
+                    resid = cw.cwpy.sdata.data.getint("Property/BackgroundAction", "id", 0)
+                    if resid and cw.content.check_areaid(resid) and cw.cwpy.sdata.get_areaname(resid) is not None:
+                        e_ba = cw.cwpy.sdata.data.find("Property/BackgroundAction")
+                        assert e_ba is not None
+                        ttype = cw.content.EventContentBase.get_transitiontype_static(e_ba)
+                        cw.cwpy.change_area(resid, ttype=ttype)
+                        return
+                    cw.cwpy.play_sound("error")
+                else:
+                    cw.cwpy.play_sound("error")
                 return
 
             # パーティの宿滞在時、冒険の中断

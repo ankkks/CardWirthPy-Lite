@@ -484,10 +484,19 @@ class AdventurerCreater(wx.Dialog):
             self.prevbtn.MoveBeforeInTabOrder(self.nextbtn)
 
     def OnNUpKeyDown(self, event):
+        def focus_lastctrl():
+            for lastctrl in reversed(self.page.last_ctrls):
+                if lastctrl and lastctrl.IsShown() and lastctrl.IsEnabled():
+                    lastctrl.SetFocus()
+                    return True
+            return False
+
         fc = wx.Window.FindFocus()
         if self.page.AcceptsFocusFromKeyboard():
             if self.autobtn:
                 if (fc is self.autobtn and not self.prevbtn.IsEnabled()) or fc is self.prevbtn:
+                    if focus_lastctrl():
+                        return
                     self.page.SetFocusIgnoringChildren()
                     if event.GetId() <> self.shifttabkeyid:
                         self.page.move_up()
@@ -497,13 +506,16 @@ class AdventurerCreater(wx.Dialog):
                 for i, c in enumerate(fcs):
                     if c.IsEnabled():
                         if c is fc:
+                            if focus_lastctrl():
+                                return
                             self.page.SetFocusIgnoringChildren()
                             if event.GetId() <> self.shifttabkeyid:
                                 self.page.move_up()
                             return
                         else:
                             break
-        fc.Navigate(wx.NavigationKeyEvent.IsBackward)
+        if fc:
+            fc.Navigate(wx.NavigationKeyEvent.IsBackward)
 
     def _init_pages(self):
         self.page1 = NamePage(self)
@@ -684,6 +696,7 @@ class AdventurerCreaterPage(wx.Panel):
         self.SetMinSize(size)
         self.next = None
         self.prev = None
+        self.last_ctrls = []
         # key: name, value: (pygame.Rect, 実行するメソッド)の辞書
         self.clickables = {}
         # キー操作で選択しているアイテム(name)
@@ -696,7 +709,7 @@ class AdventurerCreaterPage(wx.Panel):
         self.ch_imgdpath = None
         self.sex = ""
         self.age = ""
-        self._dropkey = (-1, u"<ドロップされたイメージ>", "/drop_files")
+        self._dropkey = (-1, "<%s>" % cw.cwpy.msgs["external_image_file"], "/drop_files")
 
         self.Bind(wx.EVT_SET_FOCUS, self.OnSetFocus)
         self.Bind(wx.EVT_KILL_FOCUS, self.OnKillFocus)
@@ -904,6 +917,9 @@ class AdventurerCreaterPage(wx.Panel):
         """
         files = event.GetFiles()
 
+        self._put_image(files)
+
+    def _put_image(self, files):
         seq = []
         for fpath in files:
             ext = os.path.splitext(fpath)[1].lower()
@@ -1130,6 +1146,8 @@ class NamePage(AdventurerCreaterPage):
         else:
             self.autoname = None
 
+        self.ref_image = create_refimage(self, cw.cwpy.msgs["select_image_file"] + "...", True, self._put_image)
+
         self.ch_imgdpath = wx.Choice(self, size=(cw.wins(140), -1))
         font = cw.cwpy.rsrc.get_wxfont("combo", pixelsize=cw.wins(14))
         self.ch_imgdpath.SetFont(font)
@@ -1140,6 +1158,8 @@ class NamePage(AdventurerCreaterPage):
         bmp = cw.wins(cw.util.load_wxbmp(path, can_loaded_scaledimage=True))
         self.cb_centering.set_background(bmp)
         self.centering_shown = True
+
+        self.last_ctrls = [self.ref_image, self.ch_imgdpath, self.cb_centering]
 
         self.name = ""
         self.input_name = ""
@@ -1184,14 +1204,23 @@ class NamePage(AdventurerCreaterPage):
         self.Bind(wx.EVT_MENU, self.OnNUpKeyDown, id=self.shifttabkeyid)
         self.Bind(wx.EVT_MENU, self.OnNDownKeyDown, id=self.tabkeyid)
         self._set_acceleratortable(False, True)
+
         def OnTextCtrlSetFocus(event):
             self._set_acceleratortable(False, True)
             event.Skip(True)
         self.textctrl.Bind(wx.EVT_SET_FOCUS, OnTextCtrlSetFocus)
+
         def OnChoiceSetFocus(event):
             self._set_acceleratortable(True, False)
             event.Skip(True)
         self.ch_imgdpath.Bind(wx.EVT_SET_FOCUS, OnChoiceSetFocus)
+
+        def OnSkipFocus(event):
+            self._set_acceleratortable(True, True)
+            event.Skip(True)
+        self.cb_centering.Bind(wx.EVT_SET_FOCUS, OnSkipFocus)
+        self.ref_image.Bind(wx.EVT_SET_FOCUS, OnSkipFocus)
+
         def OnKillFocus(event):
             self._set_acceleratortable(True, True)
             event.Skip(True)
@@ -1242,12 +1271,31 @@ class NamePage(AdventurerCreaterPage):
                 self.autoname.SetFocus()
             else:
                 self.SetFocusIgnoringChildren()
-        elif event.GetId() == self.tabkeyid and fc is self.ch_imgdpath:
-            self.Navigate(wx.NavigationKeyEvent.IsForward)
         elif fc is self.autoname:
             self.SetFocusIgnoringChildren()
         elif fc is self and ((self.selected_clickable and self.is_selectionend()) or\
                 event.GetId() == self.tabkeyid):
+            if self.ref_image.IsShown():
+                self.ref_image.SetFocus()
+            elif self.ch_imgdpath.IsShown():
+                self.ch_imgdpath.SetFocus()
+            elif self.cb_centering.IsShown():
+                self.cb_centering.SetFocus()
+            else:
+                self.Navigate(wx.NavigationKeyEvent.IsForward)
+        elif fc is self.ref_image:
+            if self.ch_imgdpath.IsShown():
+                self.ch_imgdpath.SetFocus()
+            elif self.cb_centering.IsShown():
+                self.cb_centering.SetFocus()
+            else:
+                self.Navigate(wx.NavigationKeyEvent.IsForward)
+        elif event.GetId() == self.tabkeyid and fc is self.ch_imgdpath:
+            if self.cb_centering.IsShown():
+                self.cb_centering.SetFocus()
+            else:
+                self.Navigate(wx.NavigationKeyEvent.IsForward)
+        elif fc is self.cb_centering:
             self.Navigate(wx.NavigationKeyEvent.IsForward)
         else:
             AdventurerCreaterPage.OnNDownKeyDown(self, event)
@@ -1264,8 +1312,26 @@ class NamePage(AdventurerCreaterPage):
                 self.autoname.SetFocus()
             else:
                 self.textctrl.SetFocus()
-        elif event.GetId() == self.shifttabkeyid and fc is self.ch_imgdpath:
+        elif fc is self.ref_image:
             self.SetFocusIgnoringChildren()
+            if event.GetId() != self.shifttabkeyid:
+                self.move_up()
+        elif event.GetId() == self.shifttabkeyid and fc is self.ch_imgdpath:
+            if self.ref_image.IsShown():
+                self.ref_image.SetFocus()
+            else:
+                self.SetFocusIgnoringChildren()
+                if event.GetId() != self.shifttabkeyid:
+                    self.move_up()
+        elif fc is self.cb_centering:
+            if self.ch_imgdpath.IsShown():
+                self.ch_imgdpath.SetFocus()
+            elif self.ref_image.IsShown():
+                self.ref_image.SetFocus()
+            else:
+                self.SetFocusIgnoringChildren()
+                if event.GetId() != self.shifttabkeyid:
+                    self.move_up()
         else:
             AdventurerCreaterPage.OnNUpKeyDown(self, event)
 
@@ -1363,18 +1429,24 @@ class NamePage(AdventurerCreaterPage):
         w1, _h1 = self.textctrl.GetSize()
         w2, h2 = self.ch_imgdpath.GetSize()
 
-        self.textctrl.SetPosition(((csize[0]-w1)/2, cw.wins(90)))
+        self.textctrl.SetPosition(((csize[0]-w1)//2, cw.wins(90)))
         if self.autoname:
             x, y, w, h = self.textctrl.GetRect()
             self.autoname.SetPosition((x+w+cw.wins(1), y-(self.autoname.GetSize()[1]-h)/2))
 
-        x = cw.wins(275) + cw.wins(cw.SIZE_CARDIMAGE[0])/2 - w2/2
+        x = cw.wins(275) + cw.wins(cw.SIZE_CARDIMAGE[0])//2 - w2//2
         self.ch_imgdpath.SetPosition((x, cw.wins(225)))
         w3, _h3 = self.cb_centering.GetSize()
         if self.ch_imgdpath.IsShown():
             self.cb_centering.SetPosition((x+(w2-w3), cw.wins(225)+h2+cw.wins(1)))
         else:
             self.cb_centering.SetPosition((x+(w2-w3), cw.wins(225)))
+
+        cpos = self.ch_imgdpath.GetPosition()
+        cs = self.ch_imgdpath.GetSize()
+        rs = self.ref_image.GetSize()
+        self.ref_image.SetPosition((cpos[0]+cs[0]-rs[0], cpos[1]-rs[1]-cw.wins(1)))
+
 
     def draw(self, update=False):
         if update:
@@ -2186,13 +2258,9 @@ class YadoCreater(wx.Dialog):
         font = cw.cwpy.rsrc.get_wxfont("inputname", pixelsize=cw.wins(16))
         self.textctrl.SetFont(font)
 
-        tip = u"画像ファイル (*.jpg;*.png;*.gif;*.bmp;*.tiff;*.xpm)|*.jpg;*.png;*.gif;*.bmp;*.tiff;*.xpm|全てのファイル (*.*)|*.*"
-        self.ref_image = cw.util.create_fileselection(self, None, cw.cwpy.msgs["select_signboard"], tip,
-                                                      callback=self._put_image)
-
-        self.ref_image.SetToolTip(wx.ToolTip(cw.cwpy.msgs["select_signboard"] + u"..."))
-        self.del_image = cw.cwpy.rsrc.create_wxbutton(self, -1, cw.wins((self.ref_image.GetSize()[0], 30)),
-                                                      bmp=cw.cwpy.rsrc.buttons["TRUSH"])
+        self.ref_image = create_refimage(self, cw.cwpy.msgs["select_signboard"] + "...", False, self._put_image)
+        self.del_image = cw.cwpy.rsrc.create_wxbutton(self, -1, (self.ref_image.GetSize()[0], cw.wins(30)),
+                                                      bmp=cw.cwpy.rsrc.dialogs["DELETE_FILE"])
         self.del_image.SetToolTip(wx.ToolTip(cw.cwpy.msgs["delete_signboard"]))
         refsize = self.ref_image.GetSize()
         delsize = self.del_image.GetSize()
@@ -2738,6 +2806,20 @@ class DesignPanel(AdventurerCreaterPage):
         font = cw.cwpy.rsrc.get_wxfont("inputname", pixelsize=cw.wins(16))
         self.namectrl.SetFont(font)
 
+        if cw.cwpy.setting.show_autobuttoninentrydialog:
+            dc = wx.ClientDC(self)
+            font = cw.cwpy.rsrc.get_wxfont("button", pixelsize=cw.wins(14))
+            dc.SetFont(font)
+            s = cw.cwpy.msgs["auto"]
+            tw = dc.GetTextExtent(s)[0] + 16
+            self.autoname = cw.cwpy.rsrc.create_wxbutton(self, -1, (tw, cw.wins(20)), s)
+            self.autoname.SetFont(font)
+
+        else:
+            self.autoname = None
+
+        self.ref_image = create_refimage(self, cw.cwpy.msgs["select_image_file"] + "...", True, self._put_image)
+
         self.ch_imgdpath = wx.Choice(self, size=(cw.wins(140), -1))
         font = cw.cwpy.rsrc.get_wxfont("combo", pixelsize=cw.wins(14))
         self.ch_imgdpath.SetFont(font)
@@ -2863,24 +2945,72 @@ class DesignPanel(AdventurerCreaterPage):
 
     def OnShiftTab(self, event):
         fc = wx.Window.FindFocus()
-        if fc is self.descctrl:
-            self.SetFocusIgnoringChildren()
-        elif fc is self:
+        if fc and fc is self.autoname:
             self.namectrl.SetFocus()
-        elif fc is self.ch_imgdpath:
+        elif fc is self:
+            if self.autoname:
+                self.autoname.SetFocus()
+            else:
+                self.namectrl.SetFocus()
+        elif fc is self.ref_image:
             self.SetFocusIgnoringChildren()
-        else:
+        elif fc is self.ch_imgdpath:
+            if self.ref_image.IsShown():
+                self.ref_image.SetFocus()
+            else:
+                self.SetFocusIgnoringChildren()
+        elif fc is self.cb_centering:
+            if self.ch_imgdpath.IsShown():
+                self.ch_imgdpath.SetFocus()
+            elif self.ref_image.IsShown():
+                self.ref_image.SetFocus()
+            else:
+                self.SetFocusIgnoringChildren()
+        elif fc is self.descctrl:
+            if self.cb_centering.IsShown():
+                self.cb_centering.SetFocus()
+            elif self.ch_imgdpath.IsShown():
+                self.ch_imgdpath.SetFocus()
+            elif self.ref_image.IsShown():
+                self.ref_image.SetFocus()
+            else:
+                self.SetFocusIgnoringChildren()
+        elif fc:
             fc.Navigate(wx.NavigationKeyEvent.IsBackward)
 
     def OnTab(self, event):
         fc = wx.Window.FindFocus()
-        if fc is self.namectrl:
+        if fc and fc is self.autoname:
             self.SetFocusIgnoringChildren()
+        elif fc is self.namectrl:
+            if self.autoname:
+                self.autoname.SetFocus()
+            else:
+                self.SetFocusIgnoringChildren()
         elif fc is self:
-            self.descctrl.SetFocus()
+            if self.ref_image.IsShown():
+                self.ref_image.SetFocus()
+            elif self.ch_imgdpath.IsShown():
+                self.ch_imgdpath.SetFocus()
+            elif self.cb_centering.IsShown():
+                self.cb_centering.SetFocus()
+            else:
+                self.descctrl.SetFocus()
+        elif fc is self.ref_image:
+            if self.ch_imgdpath.IsShown():
+                self.ch_imgdpath.SetFocus()
+            elif self.cb_centering.IsShown():
+                self.cb_centering.SetFocus()
+            else:
+                self.descctrl.SetFocus()
         elif fc is self.ch_imgdpath:
+            if self.cb_centering.IsShown():
+                self.cb_centering.SetFocus()
+            else:
+                self.descctrl.SetFocus()
+        elif fc is self.cb_centering:
             self.descctrl.SetFocus()
-        else:
+        elif fc:
             fc.Navigate(wx.NavigationKeyEvent.IsForward)
 
     def OnCtrlLeftKeyDown(self, event):
@@ -2914,6 +3044,8 @@ class DesignPanel(AdventurerCreaterPage):
         self.namectrl.Bind(wx.EVT_TEXT, self.OnInputName)
         self.ch_imgdpath.Bind(wx.EVT_CHOICE, self.OnChoiceImgDPath)
         self.cb_centering.Bind(wx.EVT_CHECKBOX, self.OnCentering)
+        if self.autoname:
+            self.Bind(wx.EVT_BUTTON, self.OnAutoName, self.autoname)
 
     def OnMouseWheel(self, event):
         if cw.util.has_modalchild(self):
@@ -2961,6 +3093,16 @@ class DesignPanel(AdventurerCreaterPage):
         else:
             self.Parent.okbtn.Disable()
 
+    def OnAutoName(self, event):
+
+        if self.ccard.get_sex() not in cw.cwpy.setting.sexcoupons:
+            return
+        cw.cwpy.play_sound("signal")
+        sindex = cw.cwpy.setting.sexcoupons.index(self.ccard.get_sex())
+        randomname = get_randomname(cw.cwpy.setting.sexsubnames[sindex])
+        if randomname:
+            self.namectrl.SetValue(randomname)
+
     def OnChoiceImgDPath(self, event):
         index = self.ch_imgdpath.GetSelection()
         if index <> self.imgdpath:
@@ -2985,33 +3127,34 @@ class DesignPanel(AdventurerCreaterPage):
 
 
     def _do_layout(self):
-        sizer_1 = wx.BoxSizer(wx.VERTICAL)
-        sizer_1.SetMinSize(cw.wins((400, 370)))
-
-        sizer_2 = wx.BoxSizer(wx.HORIZONTAL)
-        space = cw.wins(cw.SIZE_CARDIMAGE)[0] + cw.wins(10)
-        sizer_2.Add((self.cb_centering.GetSize()), 0, wx.RIGHT, space)
-        sizer_2.Add(self.cb_centering, 0, 0, 0)
+        cs = cw.wins((400, 370))
+        self.SetClientSize(cs)
 
         if self.ch_imgdpath.IsShown():
-            #sizer_1.Add(self.namectrl, 0, wx.TOP|wx.CENTER, cw.wins(55))
-            #sizer_1.Add(self.ch_imgdpath, 0, wx.TOP|wx.CENTER, cw.wins(130))
-            #h = self.ch_imgdpath.GetSize()[1]
-            #sizer_1.Add(self.descctrl, 0, wx.TOP|wx.CENTER, cw.wins(45)-h)
-            sizer_1.Add(self.namectrl, 0, wx.TOP|wx.CENTER, cw.wins(57))
-            sizer_1.Add(sizer_2, 0, wx.TOP|wx.CENTER, cw.wins(115))
-            sizer_1.Add(self.ch_imgdpath, 0, wx.TOP|wx.CENTER, cw.wins(1))
-            sizer_1.Add(self.descctrl, 0, wx.TOP|wx.CENTER, cw.wins(25))
+            self.namectrl.SetPosition(((cs[0]-self.namectrl.GetSize()[0])//2, cw.wins(57)))
+            self.ch_imgdpath.SetPosition(((cs[0]-self.ch_imgdpath.GetSize()[0])//2, cw.wins(206)))
+            self.descctrl.SetPosition(((cs[0]-self.descctrl.GetSize()[0])//2, cw.wins(254)))
         else:
-            #sizer_1.Add(self.namectrl, 0, wx.TOP|wx.CENTER, cw.wins(60))
-            #sizer_1.Add(self.descctrl, 0, wx.TOP|wx.CENTER, cw.wins(158))
-            sizer_1.Add(self.namectrl, 0, wx.TOP|wx.CENTER, cw.wins(62))
-            sizer_1.Add(sizer_2, 0, wx.TOP|wx.CENTER, cw.wins(110))
-            sizer_1.Add(self.descctrl, 0, wx.TOP|wx.CENTER, cw.wins(31))
+            self.namectrl.SetPosition(((cs[0]-self.namectrl.GetSize()[0])//2, cw.wins(62)))
+            self.ch_imgdpath.SetPosition(((cs[0]-self.ch_imgdpath.GetSize()[0])//2, cw.wins(206)))
+            self.descctrl.SetPosition(((cs[0]-self.descctrl.GetSize()[0])//2, cw.wins(239)))
 
-        self.SetSizer(sizer_1)
-        sizer_1.Fit(self)
-        self.Layout()
+        cpos = self.ch_imgdpath.GetPosition()
+        cs = self.ch_imgdpath.GetSize()
+        rs = self.ref_image.GetSize()
+        self.ref_image.SetPosition((cpos[0]+cs[0]-rs[0], cpos[1]-rs[1]-cw.wins(1)))
+
+        if self.ch_imgdpath.IsShown():
+            self.cb_centering.SetPosition((cpos[0]+cs[0]+cw.wins(2),
+                                           cpos[1]-self.cb_centering.GetSize()[1]//2-cw.wins(1)))
+        else:
+            rp = self.ref_image.GetPosition()
+            self.cb_centering.SetPosition((rp[0]+rs[0]+cw.wins(2), (rp[1]+(rs[1]-self.cb_centering.GetSize()[1])//2)))
+
+        if self.autoname:
+            np = self.namectrl.GetPosition()
+            ns = self.namectrl.GetSize()
+            self.autoname.SetPosition((np[0]+ns[0], np[1]+(ns[1]-self.autoname.GetSize()[1])//2))
 
     def draw(self, update=False):
         if update:
@@ -3163,6 +3306,17 @@ def _set_previmg(panel, name):
             panel.imgpaths = _path_to_imageinfo(imgpathlist[index])
 
         panel.Refresh()
+
+def create_refimage(parent, tooltip, multiple, callback, setsize=True):
+    """イメージファイルの選択ダイアログを開く。"""
+    tip = u"画像ファイル (*.jpg;*.png;*.gif;*.bmp;*.tiff;*.xpm)|*.jpg;*.png;*.gif;*.bmp;*.tiff;*.xpm|全てのファイル (*.*)|*.*"
+    ref_image = cw.util.create_fileselection(parent, None, cw.cwpy.msgs["select_signboard"], tip,
+                                             callback=callback, multiple=multiple)
+    ref_image.SetToolTipString(tooltip)
+    if setsize:
+        ref_image.SetFont(cw.cwpy.rsrc.get_wxfont("button", pixelsize=cw.wins(12)))
+        ref_image.SetSize((cw.wins(18), cw.wins(20)))
+    return ref_image
 
 def main():
     pass

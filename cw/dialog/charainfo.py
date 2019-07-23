@@ -707,8 +707,10 @@ class TopPanel(wx.Panel):
                 if not isinstance(self.race, cw.header.UnknownRaceHeader):
                     s = self.race.name
                 else:
+                    dc.SetTextForeground(wx.Colour(0, 0, 128))
                     s = self.otherrace
                 cw.util.draw_witharound_simple(dc, s, cw.wins(5), cw.wins(82), backcolor)
+                dc.SetTextForeground(wx.BLACK)
 
             # 年代
             dc.SetFont(cw.cwpy.rsrc.get_wxfont("charaparam2", pixelsize=cw.wins(16)))
@@ -1120,8 +1122,7 @@ class EditPanel(wx.Panel):
                             if panel:
                                 #tabs = [panel.Parent.Parent.titlepanel, panel.Parent.Parent.descpanel,
                                 tabs = [panel.Parent.Parent.titlepanel, panel.Parent.Parent.descpanel,
-                                        panel.Parent.Parent.historypanel]
-                                #editpanelは常時更新されているため必要ない？, panel.Parent.Parent.editpanel]
+                                        panel.Parent.Parent.historypanel, panel.Parent.Parent.editpanel]
                                 if ccard.data.hasfind("SkillCards"):
                                     tabs.extend([panel.Parent.Parent.skillpanel,
                                                  panel.Parent.Parent.itempanel,

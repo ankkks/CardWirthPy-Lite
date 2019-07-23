@@ -91,6 +91,10 @@ class SystemData(object):
         self.moved_mcards = {}
         self.instructions = []
 
+        # イベント終了時まで保持されるJPDC撮影などで上書きされたイメージのキャッシュ
+        # [path] = (x1 binary, x2 binary, ..., x16 binary)
+        self.ex_cache = {}
+
         # "file.x2.bmp"などのスケーリングされたイメージを読み込むか
         self.can_loaded_scaledimage = True
 
@@ -330,7 +334,9 @@ class SystemData(object):
         dpaths = (cw.util.join_paths(cw.cwpy.skindir, u"Resource/Xml", cw.cwpy.status),
                   cw.util.join_paths(u"Data/SkinBase/Resource/Xml", cw.cwpy.status),
                   cw.util.join_paths(cw.cwpy.skindir, u"Resource/Xml/Package"),
-                  u"Data/SkinBase/Resource/Xml/Package")
+                  u"Data/SkinBase/Resource/Xml/Package",
+                  cw.util.join_paths(cw.cwpy.skindir, u"Resource/Xml/Area"),
+                  u"Data/SkinBase/Resource/Xml/Area")
 
         for dpath in dpaths:
             if not os.path.isdir(dpath):
@@ -345,9 +351,12 @@ class SystemData(object):
                     if os.path.basename(dpath) == "Package":
                         if resid not in self._packs:
                             self._packs[resid] = (name, path)
-                    else:
-                        if resid not in self._areas:
-                            self._areas[resid] = (name, path)
+                    elif os.path.basename(dpath) == "Title" and resid not in cw.AREAS_TITLE:
+                        continue
+                    elif os.path.basename(dpath) == "Yado" and resid not in cw.AREAS_YADO:
+                        continue
+                    elif resid not in self._areas:
+                        self._areas[resid] = (name, path)
 
     def update_scenariopath(self, normpath, dst, dstisfile):
         if not self.fpath:
@@ -1088,6 +1097,10 @@ class ScenarioData(SystemData):
         self.backlog = []
         # カード再配置コンテントで移動されたメニューカード
         self.moved_mcards = {}
+
+        # イベント終了時まで保持されるJPDC撮影などで上書きされたイメージのキャッシュ
+        # [path] = (x1 binary, x2 binary, ..., x16 binary)
+        self.ex_cache = {}
 
         # イベントが任意箇所に到達した時に実行を停止するためのブレークポイント
         self.breakpoints = cw.cwpy.breakpoint_table.get((self.name, self.author), set())
