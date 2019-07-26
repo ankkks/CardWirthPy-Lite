@@ -35,24 +35,6 @@ def create_versioninfo(parent):
     parent.versioninfo.SetMinSize((w + cw.ppis(15), h))
 
 
-def apply_levelupparams(can_levelup):
-    """レベル調節に関する状況が変わった時に呼び出され、
-    レベルアップ不可→可能になった時にレベル上昇処理を行う。
-    """
-    def check_levelup(can_levelup_old):
-        if cw.cwpy.is_playingscenario():
-            return
-
-        can_levelup = not (cw.cwpy.is_debugmode() and cw.cwpy.setting.no_levelup_in_debugmode)
-        if not can_levelup_old and can_levelup:
-            # レベルアップが可能な設定になったので
-            # レベル上昇処理を行う
-            for pcard in cw.cwpy.get_pcards():
-                if 0 < pcard.check_level():
-                    pcard.adjust_level(False)
-    cw.cwpy.exec_func(check_levelup, can_levelup)
-
-
 class SettingsDialog(wx.Dialog):
     def __init__(self, parent):
         """設定ダイアログ。
@@ -416,10 +398,6 @@ class SettingsPanel(wx.Panel):
                 updatecardimg = False
                 updatemcardimg = False
                 updatebg = False
-
-        # レベル調節
-        if update:
-            apply_levelupparams(can_levelup)
 
         # シナリオ
         value = self.pane_scenario.tx_editor.GetValue()
@@ -2712,16 +2690,18 @@ class FontSettingPanel(wx.Panel):
         faceset = set(facenames)
         cw.util.sort_by_attr(facenames)
         self.str_default = u"[付属フォント]" # デフォルトフォント名
-        self._fontface_array = [self.str_default]
-        #self._fontface_array = []
+        #self._fontface_array = [self.str_default]
+        self.fname = [name for name in facenames if not name.startswith(u"@")]
+        self._fontface_array = [self.str_default] + self.fname
         self._has_default = [True] * len(self.bases)
-        self._types = []
-        for base in self.bases:
-            self._types.append(u"[%s]" % (self.typenames[base]))
-        for name in facenames:
-            if not name.startswith(u"@"):
-                self._fontface_array.append(name)
-                self._types.append(name)
+        self._types = [u"[%s]" % (self.typenames[base]) for base in self.bases] + self.fname
+        #for base in self.bases:
+        #    self._types.append(u"[%s]" % (self.typenames[base]))
+
+        #for name in facenames:
+        #    if not name.startswith(u"@"):
+        #        self._fontface_array.append(name)
+        #        self._types.append(name)
 
         if self._for_local:
             self.cb_important = wx.CheckBox(self, -1, u"このスキンのフォント設定を基本設定よりも優先して使用する")

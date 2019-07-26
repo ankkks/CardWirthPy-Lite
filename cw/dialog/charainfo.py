@@ -61,25 +61,23 @@ class CharaInfo(wx.Dialog):
         cut= self.GetClientSize()[0] / 6 - 1
         self.notebook.SetMinMaxTabWidth(cut, cut)
 
-        self.bottompanel = []
-
         # 解説
         self.descpanel = DescPanel(self.notebook, self.ccard, editable)
-        self.bottompanel.append(self.descpanel)
         self.notebook.AddPage(self.descpanel, cw.cwpy.msgs["description"])
         # 経歴
         self.historypanel = HistoryPanel(self.notebook, self.ccard, editable)
-        self.bottompanel.append(self.historypanel)
         self.notebook.AddPage(self.historypanel,  cw.cwpy.msgs["history"])
+
         # 編集または状態
         if self.is_playingscenario:
             self.editpanel = StatusPanel(self.notebook, self.list, self.ccard, editable)
-            self.bottompanel.append(self.editpanel)
             self.notebook.AddPage(self.editpanel, cw.cwpy.msgs["status"])
         elif editable:
             self.editpanel = EditPanel(self.notebook, self.list, self.ccard)
-            self.bottompanel.append(self.editpanel)
             self.notebook.AddPage(self.editpanel, cw.cwpy.msgs["edit"])
+
+        #PyLite:appendはオーバーヘッドがあるので最初から内包した方が若干早い
+        self.bottompanel = [self.descpanel, self.historypanel, self.editpanel]
 
         # 各種所持カード
         if self.ccard.data.hasfind("SkillCards"):
@@ -1036,12 +1034,9 @@ class HistoryPanel(wx.ScrolledWindow):
 
 
     def get_detailtext(self):
-        lines = []
-        for text, value in self.coupons:
-            if 0 <= value:
-                lines.append(u"%s (+%s)" % (text, value))
-            else:
-                lines.append(u"%s (%s)" % (text, value))
+        #PyLite：Ctrl+Cの内包表記
+        lines = [(u"%s (+%s)" % (text, value)) if 0 <= value else ((u"%s (%s)" % (text, value)))
+          for text, value in self.coupons]
 
         return u"\n".join(lines)
 
@@ -1252,9 +1247,9 @@ class EditPanel(wx.Panel):
         else:
             dc = wx.PaintDC(self)
 
-        apply_bgcolor(self, self.ccard)
         dc.BeginDrawing()
 
+        apply_bgcolor(self, self.ccard)
         # 背景の透かし
         dc.DrawBitmap(self.watermark, (self.csize[0]-self.watermark.GetWidth())//2, (self.csize[1]-self.watermark.GetHeight())//2, True)
 
@@ -1283,6 +1278,7 @@ class EditPanel(wx.Panel):
             header.subrect = pygame.Rect(cw.wins(12), height - cw.wins(1), cw.wins(20) + size[0], bmp.Height)
             height += cw.wins(17)
 
+        dc.EndDrawing()
         if update:
             self.Refresh()
 

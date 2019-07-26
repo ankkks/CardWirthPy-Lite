@@ -2260,7 +2260,7 @@ class YadoCreater(wx.Dialog):
 
         self.ref_image = create_refimage(self, cw.cwpy.msgs["select_signboard"] + "...", False, self._put_image)
         self.del_image = cw.cwpy.rsrc.create_wxbutton(self, -1, (self.ref_image.GetSize()[0], cw.wins(30)),
-                                                      bmp=cw.cwpy.rsrc.dialogs["DELETE_FILE"])
+                                                      bmp=cw.cwpy.rsrc.buttons["TRUSH"])
         self.del_image.SetToolTip(wx.ToolTip(cw.cwpy.msgs["delete_signboard"]))
         refsize = self.ref_image.GetSize()
         delsize = self.del_image.GetSize()

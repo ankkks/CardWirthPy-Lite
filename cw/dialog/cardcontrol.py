@@ -32,8 +32,8 @@ class CardControl(wx.Dialog):
                 style=wx.CAPTION|wx.SYSTEM_MENU|wx.CLOSE_BOX)
         self.cwpy_debug = False
         self.SetDoubleBuffered(True)
-        self.additionals = []
-        self.change_bgs = []
+        #self.additionals = []
+        #self.change_bgs = [] PyLite:TODO:最後に内包表記する
         self._redraw = True
 
         self._quit = False
@@ -62,12 +62,12 @@ class CardControl(wx.Dialog):
         bmp = cw.cwpy.rsrc.buttons["RMOVE"]
         self.rightbtn = cw.cwpy.rsrc.create_wxbutton(self.panel, -1, cw.wins((30, 30)), bmp=bmp, chain=True)
         # toppanel
-        #size = cw.wins((501, 284)) size = cw.wins((501, 254))
+        #size = cw.wins((501, 284))
         self.toppanel = wx.Panel(self, -1, size=cw.wins((501, 254)))
         #self.toppanel.SetMinSize(cw.wins((501, 258)))
         self.toppanel.SetBackgroundStyle(wx.BG_STYLE_CUSTOM)
         self.toppanel.SetDoubleBuffered(True)
-        self.change_bgs.append(self.toppanel)
+        #self.change_bgs.append(self.toppanel)
 
         self._sizer_topbar = wx.BoxSizer(wx.HORIZONTAL)
 
@@ -101,14 +101,22 @@ class CardControl(wx.Dialog):
         def can_sort():
             return self.callname in ("STOREHOUSE", "BACKPACK", "CARDPOCKETB")
         #self.additionals.append((self.sort, can_sort))
-        self.additionals.append((self.sortwithstar, can_sort))
-        self.change_bgs.append(self.sortwithstar)
-        self.change_bgs.append(self.editstar)
+        #self.additionals.append((self.sortwithstar, can_sort))
+        #self.change_bgs.append(self.sortwithstar)
+        #self.change_bgs.append(self.editstar)
+
+        #PyLite：固定オブジェクトはまとめて追加
+        self.additionals = [(self.sortwithstar, can_sort)]
+        self.change_bgs = [self.toppanel,self.sortwithstar,self.editstar]
 
         self.show = [None] * 3
         self._typeicon_e = [None] * 3
         self._typeicon_d = [None] * 3
         show = (cw.cwpy.msgs["show_object"])
+
+        #PyLite:appendの参照追い出し
+        append1 = self.additionals.append
+        append2 = self.change_bgs.append
         for cardtype, bmp, msg in ((cw.POCKET_SKILL, cw.cwpy.rsrc.dialogs["STATUS8"], (show % cw.cwpy.msgs["skillcard"])),
                                    (cw.POCKET_ITEM, cw.cwpy.rsrc.dialogs["STATUS9"], (show % cw.cwpy.msgs["itemcard"])),
                                    (cw.POCKET_BEAST, cw.cwpy.rsrc.dialogs["STATUS10"], (show % cw.cwpy.msgs["beastcard"]))):
@@ -129,8 +137,10 @@ class CardControl(wx.Dialog):
             if not self.callname in ("BACKPACK", "STOREHOUSE") or\
                     not cw.cwpy.setting.show_additional_card:
                 btn.Hide()
-            self.additionals.append((btn, lambda: self.callname in ("BACKPACK", "STOREHOUSE")))
-            self.change_bgs.append(btn)
+            append1((btn, lambda: self.callname in ("BACKPACK", "STOREHOUSE")))
+            append2(btn)
+            #self.additionals.append((btn, lambda: self.callname in ("BACKPACK", "STOREHOUSE")))
+            #self.change_bgs.append(btn)
 
         # smallleft
         bmp = cw.cwpy.rsrc.buttons["LSMALL"]
@@ -150,7 +160,8 @@ class CardControl(wx.Dialog):
         if self.callname in ("STOREHOUSE", "BACKPACK", "CARDPOCKET", "CARDPOCKETB", "INFOVIEW"):
             self.addctrlbtn = wx.lib.buttons.ThemedGenBitmapToggleButton(self.toppanel, -1, None, size=cw.wins((24, 24)))
             self.addctrlbtn.SetToggle(cw.cwpy.setting.show_additional_card)
-            self.change_bgs.append(self.addctrlbtn)
+            #self.change_bgs.append(self.addctrlbtn)
+            append2(self.addctrlbtn)
             if not cw.cwpy.setting.show_addctrlbtn:
                 self.addctrlbtn.Hide()
         else:
@@ -197,8 +208,10 @@ class CardControl(wx.Dialog):
             self.narrow.Hide()
             self.narrow_type.Hide()
 
-        self.additionals.append((self.narrow, can_narrow))
-        self.additionals.append((self.narrow_type, can_narrow))
+        #self.additionals.append((self.narrow, can_narrow))
+        #self.additionals.append((self.narrow_type, can_narrow))
+        append1((self.narrow, can_narrow))
+        append1((self.narrow_type, can_narrow))
 
         self._drawlist = {}
         self._leftmarks = []
@@ -2631,17 +2644,20 @@ def get_poslist(num, mode=1):
         # 左,上の余白
         leftm = cw.wins(83)
 
-        poslist = []
-
         #if cw.cwpy.setting.show_additional_card:
         y1 = cw.wins(27)
         y2 = cw.wins(140)
 
-        for cnt in xrange(num):
-            if cnt < 5:
-                poslist.append((leftm+cw.wins(83)*cnt, y1))
-            else:
-                poslist.append((leftm+cw.wins(83)*(cnt-5), y2))
+        #poslist = []
+        #for cnt in xrange(num):
+        #    if cnt < 5:
+        #        poslist.append((leftm+cw.wins(83)*cnt, y1))
+        #    else:
+        #        poslist.append((leftm+cw.wins(83)*(cnt-5), y2))
+        #PyLite：内包表記
+
+        poslist = [(leftm+cw.wins(83)*cnt, y1) if cnt < 5 else (leftm+cw.wins(83)*(cnt-5), y2)
+                   for cnt in xrange(num)]
 
     else:
         if mode == 2:

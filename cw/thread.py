@@ -1326,10 +1326,10 @@ class CWPy(_Singleton, threading.Thread):
                   "####         ##...##                            ",
                   "###          ##...##                            ",
                   "##            ##...##                           ",
-                  "              ##..###                           ",
-                  "               #####                            ",
-                  "               ###                              ",
-                  "                                                ",
+                  "               ##...##                          ",
+                  "               ##..###                          ",
+                  "                #####                           ",
+                  "                ###                             ",
                   "                                                ",
                   "                                                ",
                   "                                                ",
@@ -1342,6 +1342,7 @@ class CWPy(_Singleton, threading.Thread):
             else:
                 # 24x24
                 s = (
+                  "#                       ",
                   "##                      ",
                   "#.#                     ",
                   "#..#                    ",
@@ -1352,17 +1353,16 @@ class CWPy(_Singleton, threading.Thread):
                   "#.......#               ",
                   "#........#              ",
                   "#.........#             ",
-                  "#..........#            ",
                   "#......#####            ",
                   "#...#..#                ",
-                  "#.####..#               ",
+                  "#..##..#                ",
+                  "#.#  #..#               ",
                   "##   #..#               ",
+                  "#     #..#              ",
                   "      #..#              ",
-                  "      #..#              ",
-                  "       #.#              ",
-                  "       ##               ",
-                  "                        ",
-                  "                        ",
+                  "       #..#             ",
+                  "       #..#             ",
+                  "        ###             ",
                   "                        ",
                   "                        ",
                   "                        ",)
@@ -1373,6 +1373,8 @@ class CWPy(_Singleton, threading.Thread):
                 cursor = pygame.cursors.compile(s, ".", "#", "o")
             pygame.mouse.set_cursor((len(s[0]), len(s)), (0, 0), *cursor)
             #pygame.mouse.set_cursor(*pygame.cursors.arrow)
+            #pygame.mouse.set_visible(False)#PyLiteカーソル非表示
+
         elif name == "diamond":
             pygame.mouse.set_cursor(*pygame.cursors.diamond)
         elif name == "broken_x":

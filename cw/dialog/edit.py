@@ -1191,8 +1191,7 @@ class BackColorEditDialog(wx.Dialog):
         else:
             #PyLite:設定ファイルが無くてもサンプルを用意
             samplecolors = [[u"Navy(デフォルト)", 0, 0, 128],
-                            [u"Maroon", 128, 0, 0],
-                            [u"Green", 0, 128, 0],
+                            [u"Green69", 0, 69, 0],
                             [u"Black", 0, 0, 0]]
             self.presetcolor_list += samplecolors
             self.presetcolor_names += [x[0] for x in samplecolors]
