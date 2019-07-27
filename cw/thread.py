@@ -1039,7 +1039,6 @@ class CWPy(_Singleton, threading.Thread):
         if not force and (not self.is_playingscenario() or self.is_runningevent()):
             return
 
-        self.clear_selection()
 
         if self.sdata.ex_cache:
             if self.background.use_excache:
@@ -1326,7 +1325,7 @@ class CWPy(_Singleton, threading.Thread):
                   "####         ##...##                            ",
                   "###          ##...##                            ",
                   "##            ##...##                           ",
-                  "               ##...##                          ",
+                  "              ##...##                           ",
                   "               ##..###                          ",
                   "                #####                           ",
                   "                ###                             ",
@@ -3715,7 +3714,8 @@ class CWPy(_Singleton, threading.Thread):
 
     def clear_selection(self):
         """全ての選択状態を解除する。"""
-        self.change_selection(None)
+        if self.selection:
+            self.change_selection(None)
 
         cw.cwpy.update_mousepos()
         cw.cwpy.sbargrp.update(cw.cwpy.scr_draw)

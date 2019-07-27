@@ -1291,7 +1291,6 @@ class StatusPanel(wx.ScrolledWindow):
         wx.ScrolledWindow.__init__(self, parent, -1, size=(parent.Parent.width-cw.wins(8), cw.wins(173)), style=wx.SUNKEN_BORDER)
         self.SetDoubleBuffered(True)
         apply_bgcolor(self, ccard)
-        #PyLite todo self.SetBackgroundColour(wx.Colour(0, 0, 128))
         self.SetScrollRate(cw.wins(10), cw.wins(10))
         self.csize = self.GetClientSize()
         self.list = mlist
@@ -1383,6 +1382,7 @@ class StatusPanel(wx.ScrolledWindow):
                                     self.ccard.enhance_def_dur, "UP3", "DOWN3", height)
 
         self.SetVirtualSize((-1, height - cw.wins(17) + cw.wins(8)))
+        dc.EndDrawing()
         if update:
             self.Scroll(0, 0)
             self.Refresh()
@@ -1501,6 +1501,7 @@ class StatusPanel(wx.ScrolledWindow):
             colour = wx.Colour(255, 255, 255)
             bmp = cw.cwpy.rsrc.wxstatuses[enhimage]
             msg = (cw.cwpy.msgs["maximum_bonus"] + u" (%s)") % (enhname, dur)
+            msg = msg.replace(u"最大", "")
         elif 10 == value:
             colour = wx.Colour(255, 0, 0)
             bmp = cw.cwpy.rsrc.wxstatuses[enhimage]
@@ -1521,6 +1522,7 @@ class StatusPanel(wx.ScrolledWindow):
             colour = wx.Colour(255, 255, 255)
             bmp = cw.cwpy.rsrc.wxstatuses[pnlimage]
             msg = (cw.cwpy.msgs["maximum_penalty"] + u" (%s)") % (enhname, dur)
+            msg = msg.replace(u"最大", "")
         elif -10 == value:
             colour = wx.Colour(0, 0, 51)
             bmp = cw.cwpy.rsrc.wxstatuses[pnlimage]
@@ -1895,16 +1897,14 @@ def main():
 
 def get_bgcolor(ccard):
     """キャラクター情報ダイアログ用の背景色を取得する。
-    デフォルト値は濃い青。
+    デフォルト値はclNavy(濃い青)。
     """
     r = cw.util.numwrap(ccard.data.getint("Property/BackColor", "r", -1), -1, 192)
     g = cw.util.numwrap(ccard.data.getint("Property/BackColor", "g", -1), -1, 192)
     b = cw.util.numwrap(ccard.data.getint("Property/BackColor", "b", -1), -1, 192)
 
     if r == -1 or g == -1 or b == -1:
-        r = 0
-        g = 0
-        b = 128
+        r, g, b = 0 , 0 , 128
     return wx.Colour(r, g, b)
 
 def apply_bgcolor(currentpanel, ccard):
