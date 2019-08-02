@@ -2199,14 +2199,9 @@ def check_areaid(resid):
             not (cw.SKIN_AREAS_MIN <= resid <= cw.SKIN_AREAS_MAX) and\
             not (resid == 1 and not cw.cwpy.ydata.party) and\
             not (resid == 2 and cw.cwpy.ydata.party):
-        def func():
-            s = u"スキン固有エリアのIDは%s-%sの間で設定してください(指定されたID=%s)。"
-            s = s % (cw.SKIN_AREAS_MIN, cw.SKIN_AREAS_MAX, resid)
-            dlg = cw.dialog.message.ErrorMessage(cw.cwpy.frame, s)
-            cw.cwpy.frame.move_dlg(dlg)
-            ret = dlg.ShowModal()
-            dlg.Destroy()
-        cw.cwpy.frame.exec_func(func)
+        s = u"スキン固有エリアのIDは%s-%sの間で設定してください(指定されたID=%s)。"
+        s = s % (cw.SKIN_AREAS_MIN, cw.SKIN_AREAS_MAX, resid)
+        cw.cwpy.call_dlg("ERROR", text=s)
         return False
     return True
 
@@ -4904,6 +4899,8 @@ class PostEventContent(EventContentBase):
                 def func():
                     cw.cwpy.lock_menucards = lock_menucards
                 cw.cwpy.exec_func(func)
+        else:
+            cw.cwpy.call_dlg("ERROR", text=u"コマンド「%s」は存在しません。" % command)
 
 #-------------------------------------------------------------------------------
 # コンテント取得用関数

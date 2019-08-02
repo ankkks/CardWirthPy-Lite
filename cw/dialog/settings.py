@@ -254,8 +254,16 @@ class SettingsPanel(wx.Panel):
         setting.ssinfoformat = value
         value = self.pane_gene.tx_ssfnameformat.GetValue()
         setting.ssfnameformat = value
-        value = self.pane_gene.tx_cardssfnameformat.GetValue()
-        setting.cardssfnameformat = value
+        #value = self.pane_gene.tx_cardssfnameformat.GetValue()
+        #setting.cardssfnameformat = value
+        #黒いカーソル
+        value = self.pane_gene.cb_blackcursor.GetValue()
+        if value != (setting.cursor_type == cw.setting.CURSOR_BLACK):
+            if value:
+                setting.cursor_type = cw.setting.CURSOR_BLACK
+            else:
+                setting.cursor_type = cw.setting.CURSOR_WHITE
+
         value = self.pane_gene.ch_ssinfocolor.GetSelection()
         if value == 1:
             setting.ssinfofontcolor = (255, 255, 255)
@@ -265,6 +273,8 @@ class SettingsPanel(wx.Panel):
             setting.ssinfobackcolor = (255, 255, 255)
         value = self.pane_gene.tx_ssinfobackimage.GetValue()
         setting.ssinfobackimage = value
+        value = self.pane_gene.cb_sswithstatusbar.GetValue()
+        setting.sswithstatusbar = value
         value = self.pane_gene.ch_messagelog_type.GetSelection()
         if value == 0:
             value = cw.setting.LOG_SINGLE
@@ -966,6 +976,8 @@ class GeneralSettingPanel(wx.Panel):
         #    u"すべて表示", u"画面拡大", u"メッセージログ", u"設定ボタンのみ"])
         self.cb_display_scalebutton = wx.CheckBox(self, -1, u"画面拡大(F4)")
 
+        self.cb_blackcursor = wx.CheckBox(self, -1, u"メイン画面で黒いカーソルを使用する")
+
         self.st_startupscene = wx.StaticText(self, -1, u"起動時の動作:")
         self.ch_startupscene = wx.Choice(self, -1, choices=[u"タイトル画面を開く", u"最後に選択した拠点を開く"])
 
@@ -996,15 +1008,19 @@ class GeneralSettingPanel(wx.Panel):
         #    self, -1, u"自動記録時、同名のパーティ記録へ上書きする")
 
         # スクリーンショット情報
-        self.box_ss = wx.StaticBox(self, -1, u"スクリーンショット情報(PrtScrキーで撮影)")
+        self.box_ss = wx.StaticBox(self, -1, u"スクリーンショット(PrtScr / +Shiftで手札一覧)")
+        self.st_ssinfoformat = wx.StaticText(self, -1, u"タイトル書式:")
+        self.st_ssinfoformat.SetToolTipString(u"タイトル部分に表示する情報\n空欄にした場合は表示されなくなります")
         self.tx_ssinfoformat = wx.TextCtrl(self, -1, size=(cw.ppis(150), -1), style=wx.SIMPLE_BORDER)
         # スクリーンショット情報の色
-        choices = [u"黒文字", u"白文字"]
+        self.st_ssinfocolor = wx.StaticText(self, -1, u"色調: ")
+        self.st_ssinfocolor.SetToolTipString(u"タイトル部分の文字色\n手札一覧の背景色にも影響します")
+        choices = [u"黒文字／白背景", u"白文字／黒背景"]
         self.ch_ssinfocolor = wx.Choice(self, -1, size=(-1, -1), choices=choices)
 
         # 背景イメージ
         self.st_ssinfobackimage = wx.StaticText(self, -1, u"背景画像:")
-        self.st_ssinfobackimage.SetToolTipString(u"スクリーンショットのタイトル部分に表示されます")
+        self.st_ssinfobackimage.SetToolTipString(u"タイトル部分の背景\n指定しない場合はスキンのヘッダ画像が使用されます")
         self.tx_ssinfobackimage = wx.TextCtrl(self, -1, size=(-1, -1), style=wx.SIMPLE_BORDER)
         self.ref_ssinfobackimage = cw.util.create_fileselection(self,
                                                                 target=self.tx_ssinfobackimage,
@@ -1013,17 +1029,13 @@ class GeneralSettingPanel(wx.Panel):
 
         # スクリーンショットのファイル名
         self.st_ssfnameformat = wx.StaticText(self, -1, u"ファイル名:")
-        self.st_ssfnameformat.SetToolTipString(u"スクリーンショットのファイル名\nPrtScr or Ctrl+Pで撮影")
+        self.st_ssfnameformat.SetToolTipString(u"出力するスクリーンショット・手札一覧のファイル名\n各変数の詳細は入力中に「各種情報の挿入」を参照")
         self.tx_ssfnameformat = wx.TextCtrl(self, -1, size=(cw.ppis(150), -1), style=wx.SIMPLE_BORDER)
-        # 所持カード撮影情報のファイル名
-        self.st_cardssfnameformat = wx.StaticText(self, -1, u"所持カード:")
-        self.st_cardssfnameformat.SetToolTipString(u"パーティの所持カード一覧のファイル名\nshift+PrtScrで撮影")
-        self.tx_cardssfnameformat = wx.TextCtrl(self, -1, size=(cw.ppis(150), -1), style=wx.SIMPLE_BORDER)
 
         self.ss_tx = set()
         self.ss_tx.add(self.tx_ssinfoformat)
         self.ss_tx.add(self.tx_ssfnameformat)
-        self.ss_tx.add(self.tx_cardssfnameformat)
+        #self.ss_tx.add(self.tx_cardssfnameformat)
 
         #self.st_ssinfo_brackets = wx.StaticText(self, -1, u"[ ] 内は、各種情報がある場合のみ")
 
@@ -1033,6 +1045,7 @@ class GeneralSettingPanel(wx.Panel):
             -1, u"各種情報の挿入", wx.EmptyBitmap(cw.ppis(0), cw.ppis(0)),
             shortHelp=u"利用可能な環境変数一覧。手動でも入力できます。\n[ ] 内は、情報がない場合出力されません。")
         self.sstoolbar.Realize()
+        self.cb_sswithstatusbar = wx.CheckBox(self, -1, u"撮影範囲にステータスバーを含める")
 
         ssdic = [
             (u"application", u"アプリケーション名"),
@@ -1083,6 +1096,7 @@ class GeneralSettingPanel(wx.Panel):
             self.ch_startupscene.SetSelection(1) # 最後に選択した拠点を開く
         else:
             self.ch_startupscene.SetSelection(0) # タイトル画面を開く
+        self.cb_blackcursor.SetValue(setting.cursor_type == cw.setting.CURSOR_BLACK)
         self.sc_backlogmax.SetValue(setting.backlogmax)
         self.sc_initmoneyamount.SetValue(setting.initmoneyamount)
         self.cb_initmoneyisinitialcash.SetValue(setting.initmoneyisinitialcash)
@@ -1092,12 +1106,13 @@ class GeneralSettingPanel(wx.Panel):
         #self.cb_overwritepartyrecord.Enable(setting.autosave_partyrecord)
         self.tx_ssinfoformat.SetValue(setting.ssinfoformat)
         self.tx_ssfnameformat.SetValue(setting.ssfnameformat)
-        self.tx_cardssfnameformat.SetValue(setting.cardssfnameformat)
+        #self.tx_cardssfnameformat.SetValue(setting.cardssfnameformat)
         if setting.ssinfofontcolor[:3] == (255, 255, 255):
             self.ch_ssinfocolor.Select(1)
         else:
             self.ch_ssinfocolor.Select(0)
         self.tx_ssinfobackimage.SetValue(setting.ssinfobackimage)
+        self.cb_sswithstatusbar.SetValue(setting.sswithstatusbar)
         self.expand.load(setting)
 
     def init_values(self, setting):
@@ -1108,6 +1123,7 @@ class GeneralSettingPanel(wx.Panel):
             self.ch_messagelog_type.SetSelection(1)
         elif setting.messagelog_type_init == cw.setting.LOG_COMPRESS:
             self.ch_messagelog_type.SetSelection(2)
+        self.cb_blackcursor.SetValue(setting.cursor_type_init == cw.setting.CURSOR_BLACK)
 
         self.cb_display_scalebutton.SetValue(setting.display_scalebutton_init)
 
@@ -1132,9 +1148,10 @@ class GeneralSettingPanel(wx.Panel):
         #self.cb_overwritepartyrecord.Enable(self.cb_autosavepartyrecord.GetValue())
         self.tx_ssinfoformat.SetValue(setting.ssinfoformat_init)
         self.tx_ssfnameformat.SetValue(setting.ssfnameformat_init)
-        self.tx_cardssfnameformat.SetValue(setting.cardssfnameformat_init)
+        #self.tx_cardssfnameformat.SetValue(setting.cardssfnameformat_init)
         self.ch_ssinfocolor.Select(1 if setting.ssinfofontcolor_init[:3] == (255, 255, 255) else 0)
         self.tx_ssinfobackimage.SetValue(setting.ssinfobackimage_init)
+        self.cb_sswithstatusbar.SetValue(setting.sswithstatusbar_init)
 
     def OnSSTool(self, event):
         if self.ti_ssins.GetId() == event.GetId():
@@ -1173,6 +1190,7 @@ class GeneralSettingPanel(wx.Panel):
         bsizer_expandmode = wx.StaticBoxSizer(self.box_expandmode, wx.VERTICAL)
 
         bsizer_gene.Add(self.cb_debug, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
+        bsizer_gene.Add(self.cb_blackcursor, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))#黒いカーソル
 
         bsizer_startup = wx.BoxSizer(wx.HORIZONTAL)
         bsizer_startup.Add(self.st_startupscene, 0, wx.ALIGN_CENTER, cw.ppis(0))
@@ -1209,35 +1227,39 @@ class GeneralSettingPanel(wx.Panel):
         #bsizer_party.Add(self.cb_overwritepartyrecord, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM, cw.ppis(3))
 
         bsizer_ss = wx.StaticBoxSizer(self.box_ss, wx.VERTICAL)
-        bsizer_ssl = wx.BoxSizer(wx.HORIZONTAL)
-        bsizer_ssl.Add(self.tx_ssinfoformat, 1, wx.RIGHT|wx.CENTER, cw.ppis(3))
-        bsizer_ssl.Add(self.ch_ssinfocolor, 0, wx.CENTER, cw.ppis(3))
-        bsizer_ss.Add(bsizer_ssl, 0, wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.EXPAND, cw.ppis(3))
         ssinfobackimage_sizer = wx.BoxSizer(wx.HORIZONTAL)
-        ssinfobackimage_sizer.Add(self.tx_ssinfobackimage, 1, wx.RIGHT | wx.CENTER, cw.ppis(3))
+        #ssinfobackimage_sizer.Add(self.st_ssinfobackimage, 1, wx.CENTER, cw.ppis(0))
+        ssinfobackimage_sizer.Add(self.tx_ssinfobackimage, 3, wx.RIGHT | wx.CENTER, cw.ppis(3))
         ssinfobackimage_sizer.Add(self.ref_ssinfobackimage, 0, wx.CENTER, cw.ppis(0))
 
+        #bsizer_ss.Add(self.sstoolbar, 0, wx.TOP |wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.ALIGN_RIGHT, cw.ppis(8))
+        #bsizer_ss.Add(bsizer_ss2, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, cw.ppis(1) - 1)
+        bsizer_ssbtm = wx.BoxSizer(wx.HORIZONTAL)
+        #bsizer_ssbtm.Add(self.st_ssinfocolor, 0, wx.LEFT | wx.CENTER, cw.ppis(3))
+        bsizer_ssbtm.Add(self.ch_ssinfocolor, 0, wx.CENTER, cw.ppis(3))
+        #bsizer_ssbtm2 = wx.BoxSizer(wx.HORIZONTAL)
+        #bsizer_ssbtm2.Add(self.sstoolbar, 0, wx.CENTER|wx.ALIGN_RIGHT, cw.ppis(3))
+        bsizer_ssbtm.Add(cw.ppis((3, 0)), 1, 0, 0)
+        bsizer_ssbtm.Add(self.sstoolbar, 0, wx.CENTER|wx.ALIGN_RIGHT, cw.ppis(3))
+
+
         gsizer_fname = wx.GridBagSizer()
-        gsizer_fname.Add(self.st_ssinfobackimage, pos=(0, 0), flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
-                                  border=cw.ppis(3))
-        gsizer_fname.Add(ssinfobackimage_sizer, pos=(0, 1), flag=wx.ALIGN_CENTER_VERTICAL | wx.EXPAND,
-                                  border=cw.ppis(3))
-        gsizer_fname.Add((0, cw.ppis(3)), pos=(1, 0))
-        gsizer_fname.Add(self.st_ssfnameformat, pos=(2, 0), flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,
-                                  border=cw.ppis(3))
-        gsizer_fname.Add(self.tx_ssfnameformat, pos=(2, 1), flag=wx.ALIGN_CENTER_VERTICAL | wx.EXPAND,
-                                  border=cw.ppis(3))
-        gsizer_fname.Add(self.st_cardssfnameformat, pos=(3, 0),
-                                  flag=wx.TOP | wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=cw.ppis(3))
-        gsizer_fname.Add(self.tx_cardssfnameformat, pos=(3, 1),
-                                  flag=wx.TOP | wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, border=cw.ppis(3))
-        gsizer_fname.AddGrowableCol(1, 4)
+        gsizer_fname.Add(self.st_ssfnameformat, pos=(0, 0), flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=cw.ppis(3))
+        gsizer_fname.Add(self.tx_ssfnameformat, pos=(0, 1), flag=wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, border=cw.ppis(3))
+        gsizer_fname.Add(self.st_ssinfoformat, pos=(1, 0), flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,border=cw.ppis(3))
+        gsizer_fname.Add(self.tx_ssinfoformat, pos=(1, 1), flag=wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, border=cw.ppis(3))
+        #gsizer_fname.Add((0, cw.ppis(3)), pos=(3, 0))
+        gsizer_fname.Add(self.st_ssinfocolor, pos=(2, 0), flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL,border=cw.ppis(3))
+        gsizer_fname.Add(bsizer_ssbtm, pos=(2, 1), flag=wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, border=cw.ppis(3))
+        gsizer_fname.Add(self.st_ssinfobackimage, pos=(3, 0), flag=wx.RIGHT | wx.ALIGN_CENTER_VERTICAL, border=cw.ppis(3))
+        gsizer_fname.Add(ssinfobackimage_sizer, pos=(3, 1), flag=wx.ALIGN_CENTER_VERTICAL | wx.EXPAND, border=cw.ppis(3))
+
+        gsizer_fname.AddGrowableCol(1, 3)
 
         bsizer_ss.Add(gsizer_fname, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, cw.ppis(1) - 1)
-        #bsizer_ss2 = wx.BoxSizer(wx.HORIZONTAL)
-        #bsizer_ss2.Add(self.st_ssinfo_brackets, 0, wx.TOP |wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.ALIGN_LEFT, cw.ppis(3))
-        bsizer_ss.Add(self.sstoolbar, 0, wx.TOP |wx.LEFT|wx.RIGHT|wx.BOTTOM|wx.ALIGN_RIGHT, cw.ppis(8))
-        #bsizer_ss.Add(bsizer_ss2, 0, wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.EXPAND, cw.ppis(1) - 1)
+        #bsizer_ss.Add(bsizer_ssbtm, 0, wx.BOTTOM | wx.ALIGN_RIGHT | wx.EXPAND, cw.ppis(1) - 1)
+        #bsizer_ss.Add(ssinfobackimage_sizer, 0, wx.BOTTOM | wx.ALIGN_RIGHT | wx.EXPAND, cw.ppis(1) - 1)
+        bsizer_ss.Add(self.cb_sswithstatusbar, 0, wx.TOP | wx.LEFT | wx.RIGHT | wx.BOTTOM | wx.ALIGN_RIGHT | wx.EXPAND, cw.ppis(3))
 
         sizer_left.Add(bsizer_gene, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
         sizer_left.Add(bsizer_log, 0, wx.BOTTOM|wx.EXPAND, cw.ppis(3))
@@ -2361,6 +2383,7 @@ class UISettingPanel(wx.Panel):
         # マウスオプション
         self.box_wait = wx.StaticBox(self, -1, u"マウス操作とスキップ")
         self.cb_can_skipwait = wx.CheckBox(self, -1, u"空白時間をスキップ可能にする")
+        #self.cb_can_skipwait.SetToolTipString( u"CW1.28「背景クリックによるイベント間のジャンプ」と同等" )
         self.cb_can_skipanimation = wx.CheckBox(self, -1, u"アニメーションをスキップ可能にする")
         self.cb_can_repeatlclick = wx.CheckBox(self, -1, u"マウスの左ボタンを押し続けた時は連打状態にする")
         self.cb_autoenter_on_sprite = wx.CheckBox(self, -1, u"連打状態の時、カードなどの選択を自動的に決定")

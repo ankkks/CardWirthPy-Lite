@@ -1458,7 +1458,10 @@ def create_screenshot(titledic):
         back = cw.cwpy.setting.ssinfobackcolor
         w = cw.s(cw.SIZE_GAME[0])
         subimg, subimg2, fh, lh = screenshot_header(title, w)
-        h = cw.s(cw.SIZE_GAME[1]) + lh
+        if cw.cwpy.setting.sswithstatusbar:
+            h = cw.s(cw.SIZE_GAME[1]) + lh
+        else:
+            h = cw.s(cw.SIZE_AREA[1]) + lh
         bmp = pygame.Surface((w, h)).convert()
         bmp.fill(back, rect=pygame.Rect(cw.s(0), cw.s(0), w, lh))
         if cw.cwpy.setting.ssinfobackimage and os.path.isfile(cw.cwpy.setting.ssinfobackimage):
@@ -1494,7 +1497,8 @@ def card_screenshot():
         if cw.cwpy.ydata.party:
             cw.cwpy.play_sound("screenshot")
             titledic, titledicfn = cw.cwpy.get_titledic(with_datetime=True, for_fname=True)
-            filename = create_cardscreenshotfilename(titledicfn)
+            #PyLite:通常SSパスと統合
+            filename = create_screenshotfilename(titledicfn)
             try:
                 dpath = os.path.dirname(filename)
                 if os.path.isdir(dpath):
@@ -1510,13 +1514,13 @@ def card_screenshot():
             return True
     return False
 
-def create_cardscreenshotfilename(titledic):
-    """パーティー所持カードスクリーンショット用のファイルパスを作成する。
-    """
-    fpath = format_title(cw.cwpy.setting.cardssfnameformat, titledic)
-    if not os.path.splitext(fpath)[1].lower() in cw.EXTS_IMG:
-        fpath += ".png"
-    return fpath
+#def create_cardscreenshotfilename(titledic):
+#    """パーティー所持カードスクリーンショット用のファイルパスを作成する。
+#    """
+#    fpath = format_title(cw.cwpy.setting.ssfnameformat, titledic)
+#    if not os.path.splitext(fpath)[1].lower() in cw.EXTS_IMG:
+#        fpath += ".png"
+#    return fpath
 
 def create_cardscreenshot(titledic):
     """パーティー所持カードスクリーンショットを作成する。

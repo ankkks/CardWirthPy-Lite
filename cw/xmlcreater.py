@@ -476,9 +476,10 @@ def create_settings(setting, writeplayingdata=True, fpath="Settings_Lite.xml"):
     if setting.ssfnameformat <> setting.ssfnameformat_init:
         e = cw.data.make_element("ScreenShotFileNameFormat", setting.ssfnameformat)
         element.append(e)
-    # 所持カード撮影情報のファイル名
-    if setting.cardssfnameformat <> setting.cardssfnameformat_init:
-        e = cw.data.make_element("ScreenShotOfCardsFileNameFormat", setting.cardssfnameformat)
+
+    # スクリーンショットにステータスバーを含める
+    if setting.sswithstatusbar != setting.sswithstatusbar_init:
+        e = cw.data.make_element("ScreenShotWithStatusBar", str(setting.sswithstatusbar))
         element.append(e)
 
     # イベント中にステータスバーの色を変える
