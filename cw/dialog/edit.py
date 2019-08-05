@@ -1162,11 +1162,16 @@ class BackColorEditDialog(wx.Dialog):
                 style=wx.CAPTION|wx.SYSTEM_MENU|wx.CLOSE_BOX|wx.MINIMIZE_BOX)
         self.cwpy_debug = False
 
-        self.huepanel = wx.Panel(self, -1, size=cw.wins((181, 32)))
+        class NoFlickPanel(wx.Panel, cw.frame.NoFlick):
+            def __init__(self, parent):
+                wx.Panel.__init__(self, parent, -1, size=cw.wins((181, 32)))
+                cw.frame.NoFlick.__init__(self)
+
+        self.huepanel = NoFlickPanel(self)
         self.huepanel.SetDoubleBuffered(True)
-        self.saturationpanel = wx.Panel(self, -1, size=cw.wins((181, 32)))
+        self.saturationpanel = NoFlickPanel(self)
         self.saturationpanel.SetDoubleBuffered(True)
-        self.valuepanel = wx.Panel(self, -1, size=cw.wins((181, 32)))
+        self.valuepanel = NoFlickPanel(self)
         self.valuepanel.SetDoubleBuffered(True)
 
         self.presetcolor_list = []

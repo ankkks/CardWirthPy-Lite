@@ -344,7 +344,7 @@ class SystemData(object):
             for fname in os.listdir(dpath):
                 path = cw.util.join_paths(dpath, fname)
 
-                if os.path.isfile(path) and fname.endswith(".xml"):
+                if os.path.isfile(path) and fname.lower().endswith(".xml"):
                     e = xml2element(path, "Property")
                     resid = e.getint("Id")
                     name = e.gettext("Name")
@@ -1480,7 +1480,7 @@ class ScenarioData(SystemData):
         for fname in os.listdir(dpath):
             path = cw.util.join_paths(dpath, fname)
 
-            if os.path.isfile(path) and fname.endswith(".xml"):
+            if os.path.isfile(path) and fname.lower().endswith(".xml"):
                 e = xml2element(path, "Property")
                 resid = e.getint("Id")
                 name = e.gettext("Name")

@@ -269,12 +269,12 @@ class LocalSetting(object):
 
 class Setting(object):
     def __init__(self, loadfile=None, init=True):
-        # Settings
-        self.init_settings(loadfile, init=init)
         # フレームレート
         self.fps = 60
         # 1frame分のmillseconds
         self.frametime = 1000 / self.fps
+        # Settings
+        self.init_settings(loadfile, init=init)
 
     def init_settings(self, loadfile=None, init=True):
         path = cw.util.join_paths("Data/SkinBase/Skin.xml")
@@ -376,6 +376,9 @@ class Setting(object):
         self.show_roundautostartbutton = True
         self.show_autobuttoninentrydialog = True
         self.unconvert_targetfolder = u"UnconvertedYado"
+        self.enabled_right_flick = False
+        self.flick_time_msec = 300
+        self.flick_distance = 20
         self.can_skipwait = True
         self.can_skipanimation = True
         self.can_skipwait_with_wheel = True
@@ -689,6 +692,8 @@ class Setting(object):
         # 逆変換先ディレクトリ
         self.unconvert_targetfolder = data.gettext("UnconvertTargetFolder", self.unconvert_targetfolder)
 
+        # 右フリックで右クリック相当の操作を行う
+        self.enabled_right_flick = data.getbool("EnabledRightFlick", self.enabled_right_flick_init)
         # 空白時間をスキップ可能にする
         self.can_skipwait = data.getbool("CanSkipWait", self.can_skipwait)
         # アニメーションをスキップ可能にする

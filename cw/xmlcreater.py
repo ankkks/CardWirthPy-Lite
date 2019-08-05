@@ -518,6 +518,11 @@ def create_settings(setting, writeplayingdata=True, fpath="Settings_Lite.xml"):
             e = cw.data.make_element("UnconvertTargetFolder", setting.unconvert_targetfolder)
             element.append(e)
 
+    # 右フリックを右クリック相当の操作を行う
+    if setting.enabled_right_flick <> setting.enabled_right_flick_init:
+        e = cw.data.make_element("EnabledRightFlick", str(setting.enabled_right_flick))
+        element.append(e)
+
     # 空白時間をスキップ可能にする
     if setting.can_skipwait <> setting.can_skipwait_init:
         e = cw.data.make_element("CanSkipWait", str(setting.can_skipwait))

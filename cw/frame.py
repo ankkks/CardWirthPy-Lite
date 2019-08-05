@@ -7,6 +7,7 @@ import time
 import datetime
 import threading
 import wx
+import wx.richtext
 import pygame
 import pygame.locals
 
@@ -1322,8 +1323,20 @@ class Frame(wx.Frame):
         pos = self.GetPosition()
         return (size[0] - csize[0]) + pos[0], (size[1] - csize[1]) + pos[1]
 
+FLICK_NONE = 0
+FLICK_START = 1
+
+class NoFlick(object):
+    pass
 
 class MyApp(wx.App):
+    def __init__(self):
+        wx.App.__init__(self, 0)
+        self.flick_status = FLICK_NONE
+        self.flick_window = None
+        self.flick_start_pos = (-1, -1)
+        self.flick_start_time = 0
+
     def OnInit(self):
         wx.Log.SetLogLevel(wx.LOG_Error)
         self.SetAppName(cw.APP_NAME)
@@ -1393,11 +1406,71 @@ class MyApp(wx.App):
         if not cw.cwpy.is_showingdlg():
             return -1
 
-        if not isinstance(event, wx.KeyEvent):
+        if not isinstance(event, (wx.KeyEvent, wx.MouseEvent)):
             return -1
 
         if not event.GetEventObject():
             return -1
+
+        # ダイアログ上でのフリック操作
+        # フリック開始位置で右クリックを発生させる
+        if cw.cwpy and cw.cwpy.setting.enabled_right_flick and isinstance(event, wx.MouseEvent):
+
+            def end_flick():
+                mousepos = wx.GetMousePosition()
+                xmove = cw.ppis(mousepos[0] - self.flick_start_pos[0])
+                ymove = cw.ppis(mousepos[1] - self.flick_start_pos[1])
+                dur = time.time() - self.flick_start_time
+                exit_value = -1
+                if self.flick_window and cw.ppis(cw.cwpy.setting.flick_distance) <= xmove and\
+                                         dur <= cw.cwpy.setting.flick_time_msec/1000.0:
+                    event2 = wx.PyCommandEvent(wx.wxEVT_RIGHT_UP, wx.ID_UP)
+                    event2.GetPosition = lambda: self.flick_window.ScreenToClient(self.flick_start_pos)
+                    self.flick_window.ProcessEvent(event2)
+                    exit_value = True
+
+                self.flick_status = FLICK_NONE
+                self.flick_window = None
+                self.flick_start_pos = (-1, -1)
+                self.flick_start_time = 0
+                return exit_value
+
+            if event.GetEventType() == wx.EVT_LEFT_DOWN.typeId:
+                window = event.GetEventObject()
+                if isinstance(window, wx.Window):
+                    if isinstance(window, (NoFlick, wx.Slider, wx.TextCtrl, wx.richtext.RichTextCtrl)):
+                        return -1
+                    self.flick_status = FLICK_START
+                    self.flick_window = window
+                    self.flick_start_pos = wx.GetMousePosition()
+                    self.flick_start_time = time.time()
+
+                    # 画面外にマウスポインタが出ていった時に
+                    # マウスボタンアップを検知できないので
+                    # 1フレームごとにマウスボタンの状態を確認し、
+                    # フリック中かつボタンが押されていなければ
+                    # フリックイベントを発生させる。
+                    def watch_mousebutton():
+                        if self.flick_status <> FLICK_START:
+                            return
+                        dur = time.time() - self.flick_start_time
+                        if cw.cwpy.setting.flick_time_msec / 1000.0 <= dur:
+                            return
+                        if not wx.GetMouseState().LeftIsDown():
+                            end_flick()
+                        else:
+                            wx.CallLater(cw.cwpy.setting.frametime, watch_mousebutton)
+                    wx.CallLater(cw.cwpy.setting.frametime, watch_mousebutton)
+
+            elif self.flick_status == FLICK_START and event.GetEventType() == wx.EVT_LEFT_UP.typeId:
+                return end_flick()
+
+        if cw.cwpy and cw.cwpy.setting.enabled_right_flick and isinstance(event, wx.MouseEvent):
+            if self.flick_status == FLICK_START and event.GetEventType() == wx.EVT_MOTION.typeId:
+                # フリックの制限時間が経過済みでない場合はポインタ移動イベントをキャンセルする
+                dur = time.time() - self.flick_start_time
+                if dur < cw.cwpy.setting.flick_time_msec/1000.0:
+                    return True
 
         # スクリーンショットの撮影
         if isinstance(event, wx.KeyEvent) and\
